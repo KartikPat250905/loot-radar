@@ -9,6 +9,7 @@ import com.example.lootradarkmp.ui.components.TopBar
 import com.example.lootradarkmp.ui.navigation.AppNavigation
 import com.example.lootradarkmp.ui.theme.ModernDarkTheme
 
+// Testing CI/CD pipeline
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun App() {
