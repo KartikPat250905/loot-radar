@@ -71,13 +71,11 @@ jobs:
       - name: Show Xcode Version
         run: xcodebuild -version
 
-
-      # === FIXED SIMULATOR AUTO-DETECTION (name + UDID) ===
-      - name: Select iPhone Simulator (Name + UDID)
+      - name: Select iPhone Simulator
         id: sim
         run: |
           echo "📱 Detecting simulators..."
-
+          
           DEVICE_INFO=$(xcrun simctl list --json devices \
             | jq -r '
                 .devices | to_entries[].value[]
@@ -85,23 +83,19 @@ jobs:
                 | select(.isAvailable == true)
                 | "\(.name)|\(.udid)"
               ' | head -1)
-
+          
           if [ -z "$DEVICE_INFO" ]; then
             echo "❌ No available iPhone simulator found!"
-            xcrun simctl list devices
             exit 1
           fi
-
+          
           DEVICE_NAME=$(echo "$DEVICE_INFO" | cut -d '|' -f1)
           DEVICE_UDID=$(echo "$DEVICE_INFO" | cut -d '|' -f2)
-
+          
           echo "📱 Using simulator: $DEVICE_NAME ($DEVICE_UDID)"
-
           echo "name=$DEVICE_NAME" >> $GITHUB_OUTPUT
           echo "udid=$DEVICE_UDID" >> $GITHUB_OUTPUT
 
-
-      # === BUILD iOS APP ===
       - name: Build iOS App for Simulator
         working-directory: iosApp
         run: |
@@ -115,78 +109,65 @@ jobs:
             CODE_SIGNING_ALLOWED=NO \
             CODE_SIGNING_REQUIRED=NO
 
-
-      # === BOOT SIMULATOR ===
       - name: Boot the Simulator
         run: |
           xcrun simctl boot "${{ steps.sim.outputs.udid }}" || true
           sleep 12
           xcrun simctl bootstatus "${{ steps.sim.outputs.udid }}" -b
 
-
-      # === FIND THE BUILT .APP ===
       - name: Find Built .app
         id: app
         run: |
           echo "🔍 Searching for built .app..."
-
+          
           APP_PATH=$(find iosApp/build/Build/Products/Debug-iphonesimulator \
                      -maxdepth 1 -name "*.app" | head -1)
-
+          
           if [ -z "$APP_PATH" ]; then
             echo "❌ No .app found!"
             ls -R iosApp/build/Build/Products
             exit 1
           fi
-
+          
           echo "Found app: $APP_PATH"
           echo "path=$APP_PATH" >> $GITHUB_OUTPUT
 
-
-      # === INSTALL APP ON SIMULATOR ===
       - name: Install App on Simulator
         run: |
           xcrun simctl install "${{ steps.sim.outputs.udid }}" "${{ steps.app.outputs.path }}"
 
-
-      # === LAUNCH + TAKE SCREENSHOT ===
       - name: Launch App and Take Screenshot
         run: |
           mkdir -p screenshots
-
-          # Support both Info.plist locations:
-          #   App.app/Info.plist
-          #   App.app/Contents/Info.plist
+          
+          # Get Bundle ID using PlistBuddy
           PLIST_PATH="${{ steps.app.outputs.path }}/Info.plist"
-          if [ ! -f "$PLIST_PATH" ]; then
-            PLIST_PATH="${{ steps.app.outputs.path }}/Contents/Info.plist"
-          fi
-
-          echo "ℹ️ Using Info.plist at: $PLIST_PATH"
-
-          BUNDLE_ID=$(defaults read "$PLIST_PATH" CFBundleIdentifier)
+          echo "ℹ️ Reading Bundle ID from: $PLIST_PATH"
+          
+          BUNDLE_ID=$(/usr/libexec/PlistBuddy -c "Print :CFBundleIdentifier" "$PLIST_PATH")
           echo "📦 Bundle ID: $BUNDLE_ID"
-
-          xcrun simctl launch "${{ steps.sim.outputs.udid }}" "$BUNDLE_ID" || true
+          
+          # Launch app
+          xcrun simctl launch "${{ steps.sim.outputs.udid }}" "$BUNDLE_ID"
           sleep 6
-
+          
+          # Take screenshot
           xcrun simctl io "${{ steps.sim.outputs.udid }}" screenshot screenshots/01-home-screen.png
+          echo "✅ Screenshot captured!"
 
-
-      # === SHUTDOWN SIMULATOR ===
       - name: Shutdown Simulator
+        if: always()
         run: xcrun simctl shutdown all || true
 
-
-      # === UPLOAD ARTIFACTS ===
       - name: Upload Screenshots
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: ios-app-screenshots
           path: screenshots/*.png
           retention-days: 30
 
-      - name: Upload iOS Build Logs (on failure)
+      - name: Upload iOS Build Logs
         if: failure()
         uses: actions/upload-artifact@v4
         with:
