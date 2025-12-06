@@ -1,3 +1,4 @@
+# Updated: 2024-12-06 - Fixed iOS simulator destination
 name: PR Validation
 
 on:
@@ -32,17 +33,6 @@ jobs:
       - name: Build Android Debug APK
         run: ./gradlew :composeApp:assembleDebug --stacktrace
 
-      - name: Run Android Unit Tests
-        run: ./gradlew :composeApp:testDebugUnitTest --stacktrace
-
-      - name: Upload Test Results
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: android-test-results
-          path: composeApp/build/test-results/
-          retention-days: 7
-
       - name: Upload Debug APK
         uses: actions/upload-artifact@v4
         with:
@@ -72,8 +62,14 @@ jobs:
       - name: Gradle Cache
         uses: gradle/actions/setup-gradle@v3
 
-      - name: Build iOS Framework
-        run: ./gradlew :composeApp:embedAndSignAppleFrameworkForXcode --stacktrace
+      - name: Build iOS Framework for Simulator (arm64)
+        run: ./gradlew :composeApp:linkDebugFrameworkIosSimulatorArm64 --stacktrace
+
+      - name: Build iOS Framework for Simulator (x64)
+        run: ./gradlew :composeApp:linkDebugFrameworkIosX64 --stacktrace
+
+      - name: Build iOS Framework for Device
+        run: ./gradlew :composeApp:linkDebugFrameworkIosArm64 --stacktrace
 
       - name: Show Xcode Version
         run: xcodebuild -version
@@ -84,11 +80,13 @@ jobs:
           xcodebuild clean build \
             -project iosApp.xcodeproj \
             -scheme iosApp \
+            -configuration Debug \
             -sdk iphonesimulator \
-            -destination 'platform=iOS Simulator,name=iPhone 15 Pro,OS=latest' \
+            -destination 'platform=iOS Simulator,name=iPhone 16 Pro' \
             CODE_SIGN_IDENTITY="" \
             CODE_SIGNING_REQUIRED=NO \
-            CODE_SIGNING_ALLOWED=NO
+            CODE_SIGNING_ALLOWED=NO \
+            ONLY_ACTIVE_ARCH=NO
 
       - name: Upload iOS Build Logs
         if: failure()

@@ -3,7 +3,7 @@ name: Deploy to Production
 on:
   push:
     branches: [ main ]
-  workflow_dispatch:  # Allows manual trigger
+  workflow_dispatch:
 
 jobs:
   build-android-release:
@@ -80,8 +80,19 @@ jobs:
       - name: Gradle Cache
         uses: gradle/actions/setup-gradle@v3
 
-      - name: Build iOS Framework (Release)
-        run: ./gradlew :composeApp:embedAndSignAppleFrameworkForXcode -PconfigurationName=Release --stacktrace
+      - name: Build iOS Frameworks (Release)
+        run: |
+          ./gradlew :composeApp:linkReleaseFrameworkIosArm64 --stacktrace
+          ./gradlew :composeApp:linkReleaseFrameworkIosSimulatorArm64 --stacktrace
+          ./gradlew :composeApp:linkReleaseFrameworkIosX64 --stacktrace
+
+      - name: Create XCFramework
+        run: |
+          xcodebuild -create-xcframework \
+            -framework composeApp/build/bin/iosArm64/releaseFramework/ComposeApp.framework \
+            -framework composeApp/build/bin/iosSimulatorArm64/releaseFramework/ComposeApp.framework \
+            -framework composeApp/build/bin/iosX64/releaseFramework/ComposeApp.framework \
+            -output composeApp/build/ComposeApp.xcframework
 
       - name: Show Xcode Version
         run: xcodebuild -version
@@ -89,20 +100,29 @@ jobs:
       - name: Build iOS Archive
         working-directory: iosApp
         run: |
-          xcodebuild archive \
+            xcodebuild archive \
             -project iosApp.xcodeproj \
             -scheme iosApp \
+            -configuration Release \
             -archivePath build/iosApp.xcarchive \
             -sdk iphoneos \
             CODE_SIGN_IDENTITY="" \
             CODE_SIGNING_REQUIRED=NO \
-            CODE_SIGNING_ALLOWED=NO
+            CODE_SIGNING_ALLOWED=NO \
+            ONLY_ACTIVE_ARCH=NO
 
       - name: Upload iOS Archive
         uses: actions/upload-artifact@v4
         with:
           name: ios-release-archive
           path: iosApp/build/iosApp.xcarchive
+          retention-days: 30
+
+      - name: Upload XCFramework
+        uses: actions/upload-artifact@v4
+        with:
+          name: ios-xcframework
+          path: composeApp/build/ComposeApp.xcframework
           retention-days: 30
 
   deploy-notification:
