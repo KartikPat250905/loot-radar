@@ -100,7 +100,7 @@ jobs:
       - name: Build iOS Archive
         working-directory: iosApp
         run: |
-          xcodebuild archive \
+            xcodebuild archive \
             -project iosApp.xcodeproj \
             -scheme iosApp \
             -configuration Release \
