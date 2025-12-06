@@ -1,4 +1,4 @@
-# Updated: 2024-12-06 - Fixed iOS build output path + screenshots
+# Updated: Auto-detect simulator + auto-detect .app name
 name: PR Validation
 
 on:
@@ -62,17 +62,26 @@ jobs:
       - name: Gradle Cache
         uses: gradle/actions/setup-gradle@v3
 
-      - name: Build iOS Framework for Simulator (arm64)
-        run: ./gradlew :composeApp:linkDebugFrameworkIosSimulatorArm64 --stacktrace
-
-      - name: Build iOS Framework for Simulator (x64)
-        run: ./gradlew :composeApp:linkDebugFrameworkIosX64 --stacktrace
-
-      - name: Build iOS Framework for Device
-        run: ./gradlew :composeApp:linkDebugFrameworkIosArm64 --stacktrace
+      - name: Build iOS Frameworks
+        run: |
+          ./gradlew :composeApp:linkDebugFrameworkIosSimulatorArm64 --stacktrace
+          ./gradlew :composeApp:linkDebugFrameworkIosX64 --stacktrace
+          ./gradlew :composeApp:linkDebugFrameworkIosArm64 --stacktrace
 
       - name: Show Xcode Version
         run: xcodebuild -version
+
+      - name: Select First Available iOS Simulator
+        id: sim
+        run: |
+          echo "📱 Detecting available simulators..."
+          DEVICE=$(xcrun simctl list devices available | grep -m1 "(available)" | sed 's/.*\(iPhone.*\) (.*/\1/')
+          if [ -z "$DEVICE" ]; then
+            echo "❌ No iPhone simulator found."
+            exit 1
+          fi
+          echo "Using simulator: $DEVICE"
+          echo "device=$DEVICE" >> $GITHUB_OUTPUT
 
       - name: Build iOS App for Simulator
         working-directory: iosApp
@@ -82,65 +91,58 @@ jobs:
             -scheme iosApp \
             -configuration Debug \
             -sdk iphonesimulator \
-            -destination 'platform=iOS Simulator,name=iPhone 16 Pro' \
+            -destination "platform=iOS Simulator,name=${{ steps.sim.outputs.device }}" \
             -derivedDataPath build \
-            CODE_SIGN_IDENTITY="" \
-            CODE_SIGNING_REQUIRED=NO \
             CODE_SIGNING_ALLOWED=NO \
-            ONLY_ACTIVE_ARCH=NO
+            CODE_SIGNING_REQUIRED=NO
 
-      - name: Boot iOS Simulator
+      - name: Boot the Simulator
         run: |
-          xcrun simctl list devices available | grep "iPhone 16 Pro" || true
-          xcrun simctl boot "iPhone 16 Pro" || echo "Simulator already booted"
+          xcrun simctl boot "${{ steps.sim.outputs.device }}" || true
           sleep 15
 
-      - name: Install App on Simulator
+      - name: Find Built .app
+        id: app
         run: |
-          APP_PATH="iosApp/build/Build/Products/Debug-iphonesimulator/iosApp.app"
-          echo "Looking for app at: $APP_PATH"
+          echo "🔍 Searching for built .app..."
+          APP_PATH=$(find iosApp/build/Build/Products/Debug-iphonesimulator -maxdepth 1 -name "*.app" | head -1)
 
-          if [ ! -d "$APP_PATH" ]; then
-            echo "❌ App not found! Listing Products folder:"
-            ls -R iosApp/build/Build/Products || true
+          if [ -z "$APP_PATH" ]; then
+            echo "❌ No .app found. Dumping build folder:"
+            ls -R iosApp/build/Build/Products
             exit 1
           fi
 
           echo "✅ Found app: $APP_PATH"
-          xcrun simctl install booted "$APP_PATH"
+          echo "path=$APP_PATH" >> $GITHUB_OUTPUT
 
-      - name: Launch App and Take Screenshots
+      - name: Install App on Simulator
+        run: |
+          xcrun simctl install booted "${{ steps.app.outputs.path }}"
+
+      - name: Launch App and Take Screenshot
         run: |
           mkdir -p screenshots
-          BUNDLE_ID="com.example.lootradarkmp"
-
-          echo "Launching app $BUNDLE_ID"
-          xcrun simctl launch booted "$BUNDLE_ID" || echo "Launch may have failed"
-          sleep 8
-
-          # Screenshot 1: home screen
+          # Auto-detect bundle ID from Info.plist
+          BUNDLE_ID=$(defaults read "${{ steps.app.outputs.path }}/Info.plist" CFBundleIdentifier)
+          echo "📦 Bundle ID: $BUNDLE_ID"
+          xcrun simctl launch booted "$BUNDLE_ID" || true
+          sleep 6
           xcrun simctl io booted screenshot screenshots/01-home-screen.png
-          echo "📸 Captured home screen"
 
       - name: Shutdown Simulator
-        if: always()
-        run: |
-          xcrun simctl shutdown "iPhone 16 Pro" || echo "Simulator already shut down"
+        run: xcrun simctl shutdown all || true
 
-      - name: Upload iOS Screenshots
-        if: always()
+      - name: Upload Screenshots
         uses: actions/upload-artifact@v4
         with:
           name: ios-app-screenshots
           path: screenshots/*.png
           retention-days: 30
 
-      - name: Upload iOS Build Logs
+      - name: Upload iOS Build Logs (on failure)
         if: failure()
         uses: actions/upload-artifact@v4
         with:
           name: ios-build-logs
-          path: |
-            iosApp/build/
-            composeApp/build/
-          retention-days: 7
+          path: iosApp/build/
