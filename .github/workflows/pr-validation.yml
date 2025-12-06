@@ -1,4 +1,3 @@
-# Updated: Auto-detect simulator + auto-detect .app name
 name: PR Validation
 
 on:
@@ -71,18 +70,37 @@ jobs:
       - name: Show Xcode Version
         run: xcodebuild -version
 
-      - name: Select First Available iOS Simulator
+      #
+      # --- FIXED & ROBUST SIMULATOR AUTO-DETECTION ---
+      #
+      - name: Select iPhone Simulator (Name + UDID)
         id: sim
         run: |
-          echo "📱 Detecting available simulators..."
-          DEVICE=$(xcrun simctl list devices available | grep -m1 "(available)" | sed 's/.*\(iPhone.*\) (.*/\1/')
-          if [ -z "$DEVICE" ]; then
-            echo "❌ No iPhone simulator found."
+          echo "📱 Detecting simulators..."
+
+          DEVICE_INFO=$(xcrun simctl list --json devices \
+            | jq -r '
+                .devices | to_entries[].value[]
+                | select(.name | test("^iPhone"))
+                | select(.isAvailable == true)
+                | "\(.name)|\(.udid)"
+              ' | head -1)
+
+          if [ -z "$DEVICE_INFO" ]; then
+            echo "❌ No available iPhone simulator found!"
+            xcrun simctl list devices
             exit 1
           fi
-          echo "Using simulator: $DEVICE"
-          echo "device=$DEVICE" >> $GITHUB_OUTPUT
 
+          DEVICE_NAME=$(echo "$DEVICE_INFO" | cut -d '|' -f1)
+          DEVICE_UDID=$(echo "$DEVICE_INFO" | cut -d '|' -f2)
+
+          echo "📱 Using simulator: $DEVICE_NAME ($DEVICE_UDID)"
+
+          echo "name=$DEVICE_NAME" >> $GITHUB_OUTPUT
+          echo "udid=$DEVICE_UDID" >> $GITHUB_OUTPUT
+
+      # Build iOS App
       - name: Build iOS App for Simulator
         working-directory: iosApp
         run: |
@@ -91,48 +109,71 @@ jobs:
             -scheme iosApp \
             -configuration Debug \
             -sdk iphonesimulator \
-            -destination "platform=iOS Simulator,name=${{ steps.sim.outputs.device }}" \
+            -destination "platform=iOS Simulator,id=${{ steps.sim.outputs.udid }}" \
             -derivedDataPath build \
             CODE_SIGNING_ALLOWED=NO \
             CODE_SIGNING_REQUIRED=NO
 
+      #
+      # --- SIMULATOR BOOT ---
+      #
       - name: Boot the Simulator
         run: |
-          xcrun simctl boot "${{ steps.sim.outputs.device }}" || true
+          xcrun simctl boot "${{ steps.sim.outputs.udid }}" || true
           sleep 15
+          xcrun simctl bootstatus "${{ steps.sim.outputs.udid }}" -b
 
+      #
+      # --- FIND BUILT .APP ---
+      #
       - name: Find Built .app
         id: app
         run: |
           echo "🔍 Searching for built .app..."
+
           APP_PATH=$(find iosApp/build/Build/Products/Debug-iphonesimulator -maxdepth 1 -name "*.app" | head -1)
 
           if [ -z "$APP_PATH" ]; then
-            echo "❌ No .app found. Dumping build folder:"
+            echo "❌ No .app found!"
             ls -R iosApp/build/Build/Products
             exit 1
           fi
 
-          echo "✅ Found app: $APP_PATH"
+          echo "Found app: $APP_PATH"
           echo "path=$APP_PATH" >> $GITHUB_OUTPUT
 
+      #
+      # --- INSTALL APP ---
+      #
       - name: Install App on Simulator
         run: |
-          xcrun simctl install booted "${{ steps.app.outputs.path }}"
+          xcrun simctl install "${{ steps.sim.outputs.udid }}" "${{ steps.app.outputs.path }}"
 
+      #
+      # --- LAUNCH + SCREENSHOT ---
+      #
       - name: Launch App and Take Screenshot
         run: |
           mkdir -p screenshots
-          # Auto-detect bundle ID from Info.plist
+
+          # Extract bundle ID
           BUNDLE_ID=$(defaults read "${{ steps.app.outputs.path }}/Info.plist" CFBundleIdentifier)
           echo "📦 Bundle ID: $BUNDLE_ID"
-          xcrun simctl launch booted "$BUNDLE_ID" || true
-          sleep 6
-          xcrun simctl io booted screenshot screenshots/01-home-screen.png
 
+          xcrun simctl launch "${{ steps.sim.outputs.udid }}" "$BUNDLE_ID" || true
+          sleep 6
+
+          xcrun simctl io "${{ steps.sim.outputs.udid }}" screenshot screenshots/01-home-screen.png
+
+      #
+      # --- SHUTDOWN ---
+      #
       - name: Shutdown Simulator
         run: xcrun simctl shutdown all || true
 
+      #
+      # --- UPLOADS ---
+      #
       - name: Upload Screenshots
         uses: actions/upload-artifact@v4
         with:
