@@ -1,4 +1,4 @@
-# Updated: 2024-12-06 - Fixed iOS simulator destination and added iOS screenshots
+# Updated: 2024-12-06 - Fixed iOS build output path + screenshots
 name: PR Validation
 
 on:
@@ -77,12 +77,13 @@ jobs:
       - name: Build iOS App for Simulator
         working-directory: iosApp
         run: |
-          xcodebuild clean build \
+          xcodebuild \
             -project iosApp.xcodeproj \
             -scheme iosApp \
             -configuration Debug \
             -sdk iphonesimulator \
             -destination 'platform=iOS Simulator,name=iPhone 16 Pro' \
+            -derivedDataPath build \
             CODE_SIGN_IDENTITY="" \
             CODE_SIGNING_REQUIRED=NO \
             CODE_SIGNING_ALLOWED=NO \
@@ -90,40 +91,36 @@ jobs:
 
       - name: Boot iOS Simulator
         run: |
-          # show available (and confirm our target exists)
           xcrun simctl list devices available | grep "iPhone 16 Pro" || true
-          # attempt to boot (if already booted, this will just echo)
           xcrun simctl boot "iPhone 16 Pro" || echo "Simulator already booted"
-          # give the simulator a moment to finish booting
           sleep 15
 
       - name: Install App on Simulator
         run: |
-          APP_PATH=$(find iosApp/build/Build/Products/Debug-iphonesimulator -name "*.app" -type d | head -1)
-          echo "Found app at: $APP_PATH"
-          if [ -z "$APP_PATH" ]; then
-            echo "No built app found; listing build dir for debugging:"
-            ls -la iosApp/build || true
+          APP_PATH="iosApp/build/Build/Products/Debug-iphonesimulator/iosApp.app"
+          echo "Looking for app at: $APP_PATH"
+
+          if [ ! -d "$APP_PATH" ]; then
+            echo "❌ App not found! Listing Products folder:"
+            ls -R iosApp/build/Build/Products || true
             exit 1
           fi
+
+          echo "✅ Found app: $APP_PATH"
           xcrun simctl install booted "$APP_PATH"
 
       - name: Launch App and Take Screenshots
         run: |
           mkdir -p screenshots
-          # replace with your real bundle id if different
           BUNDLE_ID="com.example.lootradarkmp"
-          xcrun simctl launch booted "$BUNDLE_ID" || echo "Launch may have failed or app already running"
-          sleep 8
-          # take home screen screenshot
-          xcrun simctl io booted screenshot screenshots/01-home-screen.png
-          echo "✅ Captured home screen"
 
-          # Example additional screenshots (uncomment/adjust coordinates as needed)
-          # xcrun simctl io booted tap 200 850
-          # sleep 2
-          # xcrun simctl io booted screenshot screenshots/02-browse-screen.png
-          # echo "✅ Captured browse screen"
+          echo "Launching app $BUNDLE_ID"
+          xcrun simctl launch booted "$BUNDLE_ID" || echo "Launch may have failed"
+          sleep 8
+
+          # Screenshot 1: home screen
+          xcrun simctl io booted screenshot screenshots/01-home-screen.png
+          echo "📸 Captured home screen"
 
       - name: Shutdown Simulator
         if: always()
