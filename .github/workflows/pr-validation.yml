@@ -1,6 +1,4 @@
-# ============================================
-# FILE 1: .github/workflows/pr-validation.yml (UPDATED)
-# ============================================
+# Updated: 2024-12-06 - Fixed iOS simulator destination
 name: PR Validation
 
 on:
