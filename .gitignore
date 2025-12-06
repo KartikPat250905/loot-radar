@@ -17,3 +17,35 @@ captures
 !*.xcworkspace/contents.xcworkspacedata
 **/xcshareddata/WorkspaceSettings.xcsettings
 node_modules/
+# Gradle
+.gradle/
+build/
+*/build/
+gradlew
+gradlew.bat
+gradle-wrapper.jar
+gradle-wrapper.properties
+
+# Android Studio
+.idea/
+
+# Android
+*.apk
+*.aab
+*.ap_
+*.dex
+
+# iOS
+iosApp/Pods/
+iosApp/*.xcworkspace
+iosApp/build/
+iosApp/*.moved-aside
+DerivedData/
+*.hmap
+*.ipa
+*.xcuserstate
+xcuserdata/
+
+# Kotlin Multiplatform
+.kotlin/
+composeApp/build/
