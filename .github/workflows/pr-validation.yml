@@ -39,6 +39,7 @@ jobs:
           path: composeApp/build/outputs/apk/debug/*.apk
           retention-days: 7
 
+
   validate-ios:
     name: Validate iOS Build
     runs-on: macos-latest
@@ -70,9 +71,8 @@ jobs:
       - name: Show Xcode Version
         run: xcodebuild -version
 
-      #
-      # --- FIXED & ROBUST SIMULATOR AUTO-DETECTION ---
-      #
+
+      # === FIXED SIMULATOR AUTO-DETECTION (name + UDID) ===
       - name: Select iPhone Simulator (Name + UDID)
         id: sim
         run: |
@@ -100,7 +100,8 @@ jobs:
           echo "name=$DEVICE_NAME" >> $GITHUB_OUTPUT
           echo "udid=$DEVICE_UDID" >> $GITHUB_OUTPUT
 
-      # Build iOS App
+
+      # === BUILD iOS APP ===
       - name: Build iOS App for Simulator
         working-directory: iosApp
         run: |
@@ -114,24 +115,23 @@ jobs:
             CODE_SIGNING_ALLOWED=NO \
             CODE_SIGNING_REQUIRED=NO
 
-      #
-      # --- SIMULATOR BOOT ---
-      #
+
+      # === BOOT SIMULATOR ===
       - name: Boot the Simulator
         run: |
           xcrun simctl boot "${{ steps.sim.outputs.udid }}" || true
-          sleep 15
+          sleep 12
           xcrun simctl bootstatus "${{ steps.sim.outputs.udid }}" -b
 
-      #
-      # --- FIND BUILT .APP ---
-      #
+
+      # === FIND THE BUILT .APP ===
       - name: Find Built .app
         id: app
         run: |
           echo "🔍 Searching for built .app..."
 
-          APP_PATH=$(find iosApp/build/Build/Products/Debug-iphonesimulator -maxdepth 1 -name "*.app" | head -1)
+          APP_PATH=$(find iosApp/build/Build/Products/Debug-iphonesimulator \
+                     -maxdepth 1 -name "*.app" | head -1)
 
           if [ -z "$APP_PATH" ]; then
             echo "❌ No .app found!"
@@ -142,22 +142,29 @@ jobs:
           echo "Found app: $APP_PATH"
           echo "path=$APP_PATH" >> $GITHUB_OUTPUT
 
-      #
-      # --- INSTALL APP ---
-      #
+
+      # === INSTALL APP ON SIMULATOR ===
       - name: Install App on Simulator
         run: |
           xcrun simctl install "${{ steps.sim.outputs.udid }}" "${{ steps.app.outputs.path }}"
 
-      #
-      # --- LAUNCH + SCREENSHOT ---
-      #
+
+      # === LAUNCH + TAKE SCREENSHOT ===
       - name: Launch App and Take Screenshot
         run: |
           mkdir -p screenshots
 
-          # Extract bundle ID
-          BUNDLE_ID=$(defaults read "${{ steps.app.outputs.path }}/Info.plist" CFBundleIdentifier)
+          # Support both Info.plist locations:
+          #   App.app/Info.plist
+          #   App.app/Contents/Info.plist
+          PLIST_PATH="${{ steps.app.outputs.path }}/Info.plist"
+          if [ ! -f "$PLIST_PATH" ]; then
+            PLIST_PATH="${{ steps.app.outputs.path }}/Contents/Info.plist"
+          fi
+
+          echo "ℹ️ Using Info.plist at: $PLIST_PATH"
+
+          BUNDLE_ID=$(defaults read "$PLIST_PATH" CFBundleIdentifier)
           echo "📦 Bundle ID: $BUNDLE_ID"
 
           xcrun simctl launch "${{ steps.sim.outputs.udid }}" "$BUNDLE_ID" || true
@@ -165,15 +172,13 @@ jobs:
 
           xcrun simctl io "${{ steps.sim.outputs.udid }}" screenshot screenshots/01-home-screen.png
 
-      #
-      # --- SHUTDOWN ---
-      #
+
+      # === SHUTDOWN SIMULATOR ===
       - name: Shutdown Simulator
         run: xcrun simctl shutdown all || true
 
-      #
-      # --- UPLOADS ---
-      #
+
+      # === UPLOAD ARTIFACTS ===
       - name: Upload Screenshots
         uses: actions/upload-artifact@v4
         with:
