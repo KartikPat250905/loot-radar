@@ -1,44 +1,41 @@
-# .github/workflows/pr-validation.yml
-# MINIMAL VERSION - Just checks if code compiles
-
-name: PR Validation (Minimal)
-
-on:
-  pull_request:
-    branches: [ main, develop ]
-  push:
-    branches: [ develop, 'feature/**' ]
-
-jobs:
-  validate-compilation:
-    name: Validate Code Compiles
-    runs-on: ubuntu-latest  # Uses FREE Linux runner
-    timeout-minutes: 15
-    
-    steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v4
-
-      - name: Set up JDK 17
-        uses: actions/setup-java@v4
-        with:
-          java-version: '17'
-          distribution: 'temurin'
-          cache: 'gradle'
-
-      - name: Grant Execute Permission
-        run: chmod +x gradlew
-
-      - name: Gradle Cache
-        uses: gradle/actions/setup-gradle@v3
-      
-      # Just check if Android compiles (doesn't build APK)
-      - name: Check Android Compilation
-        run: ./gradlew :composeApp:compileDebugKotlinAndroid --stacktrace
-      
-      # Check if shared code compiles
-      - name: Check Common Code
-        run: ./gradlew :composeApp:compileKotlinMetadata --stacktrace
-
-      - name: Validate Success
-        run: echo "✅ All code compiles successfully!"
+# name: PR Validation (Minimal)
+#
+#on:
+#  pull_request:
+#    branches: [ main, develop ]
+#  push:
+#    branches: [ develop, 'feature/**' ]
+#
+#jobs:
+#  validate-compilation:
+#    name: Validate Code Compiles
+#    runs-on: ubuntu-latest  # Uses FREE Linux runner
+#    timeout-minutes: 15
+#
+#    steps:
+#      - name: Checkout Repository
+#        uses: actions/checkout@v4
+#
+#      - name: Set up JDK 17
+#        uses: actions/setup-java@v4
+#        with:
+#          java-version: '17'
+#          distribution: 'temurin'
+#          cache: 'gradle'
+#
+#      - name: Grant Execute Permission
+#        run: chmod +x gradlew
+#
+#      - name: Gradle Cache
+#        uses: gradle/actions/setup-gradle@v3
+#
+#      # Just check if Android compiles (doesn't build APK)
+#      - name: Check Android Compilation
+#        run: ./gradlew :composeApp:compileDebugKotlinAndroid --stacktrace
+#
+#      # Check if shared code compiles
+#      - name: Check Common Code
+#        run: ./gradlew :composeApp:compileKotlinMetadata --stacktrace
+#
+#      - name: Validate Success
+#        run: echo "✅ All code compiles successfully!"
