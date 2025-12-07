@@ -13,7 +13,7 @@ fun GameList() {
         val repository = GameRepository()
 
         try {
-            val games: List<GameDto> = repository.getFreeGames()
+            val games: List<GameDto> = repository.getFreeGames() as List<GameDto>
             println("Fetched ${games.size} games")
             games.forEach { println(it) }  // Print full DTO for testing
         } catch (e: Exception) {
