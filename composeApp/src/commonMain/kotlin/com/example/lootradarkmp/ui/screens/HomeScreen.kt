@@ -8,6 +8,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
+import com.example.lootradarkmp.ui.components.GameList
 import com.example.lootradarkmp.ui.navigation.Screen
 
 @Composable
@@ -15,4 +16,5 @@ fun HomeScreen(navController: NavHostController, modifier: Modifier = Modifier) 
     Box(modifier = modifier.fillMaxSize()) {
         Text(text = "Home Screen Section")
     }
+    GameList()
 }
