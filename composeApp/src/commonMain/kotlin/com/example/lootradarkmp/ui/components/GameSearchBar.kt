@@ -23,9 +23,6 @@ fun GameSearchBar(
             onValueChange = onTextChange,
             label = { Text("Search games") },
             singleLine = true,
-            textStyle = LocalTextStyle.current.copy(
-                textAlign = TextAlign.Center
-            ),
             modifier = Modifier
                 .fillMaxWidth(0.9f)
                 .padding(vertical = 8.dp)

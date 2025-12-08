@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -18,6 +19,7 @@ import androidx.navigation.NavHostController
 import com.example.lootradarkmp.data.repository.GameRepository
 import com.example.lootradarkmp.ui.components.GameGrid
 import com.example.lootradarkmp.ui.components.GameSearchBar
+import com.example.lootradarkmp.ui.components.TotalWorthBar
 import com.example.lootradarkmp.ui.viewmodel.GameViewModel
 
 @Composable
@@ -36,6 +38,7 @@ fun HomeScreen(navController: NavHostController, modifier: Modifier = Modifier) 
                 gameViewModel.updateSearch(it)
             }
         )
+        TotalWorthBar(games = games)
         Box(contentAlignment = Alignment.Center) {
             if (isLoading) {
                 CircularProgressIndicator()
@@ -49,5 +52,11 @@ fun HomeScreen(navController: NavHostController, modifier: Modifier = Modifier) 
     LaunchedEffect(Unit) {
         gameViewModel.loadGames()
         isLoading = false
+    }
+
+    DisposableEffect(Unit) {
+        onDispose {
+            gameViewModel.clear()
+        }
     }
 }
