@@ -1,6 +1,7 @@
 package com.example.lootradarkmp.ui.components
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -14,8 +15,7 @@ fun GameSearchBar(
     onTextChange: (String) -> Unit
 ) {
     Column(
-        modifier = Modifier
-            .fillMaxWidth(),
+        modifier = Modifier.fillMaxWidth(),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         OutlinedTextField(
@@ -23,9 +23,11 @@ fun GameSearchBar(
             onValueChange = onTextChange,
             label = { Text("Search games") },
             singleLine = true,
+            shape = RoundedCornerShape(25),
             modifier = Modifier
                 .fillMaxWidth(0.9f)
                 .padding(vertical = 8.dp)
         )
     }
 }
+
