@@ -49,7 +49,7 @@ fun GameItemCard(gameDto: GameDto) {
             Spacer(modifier = Modifier.height(4.dp))
             Text(text = gameDto.type ?: "Unknown Type")
             Spacer(modifier = Modifier.height(4.dp))
-            Text(text = gameDto.worth ?: "Free")
+            GameWorth(gameDto.worth)
         }
     }
 }
