@@ -22,6 +22,7 @@ fun AppNavigation(navController: NavHostController, innerPadding: PaddingValues)
             HomeScreen(
                 navController = navController,
                 modifier = Modifier.padding(innerPadding)
+
             )
         }
         composable(Screen.Details.route) {
