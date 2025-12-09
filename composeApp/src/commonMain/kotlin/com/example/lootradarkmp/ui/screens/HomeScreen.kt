@@ -17,6 +17,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
 import com.example.lootradarkmp.data.repository.GameRepository
+import com.example.lootradarkmp.ui.components.FilterBar
 import com.example.lootradarkmp.ui.components.GameGrid
 import com.example.lootradarkmp.ui.components.GameSearchBar
 import com.example.lootradarkmp.ui.components.TotalWorthBar
@@ -38,6 +39,7 @@ fun HomeScreen(navController: NavHostController, modifier: Modifier = Modifier) 
                 gameViewModel.updateSearch(it)
             }
         )
+        FilterBar(gameViewModel)
         TotalWorthBar(games = games)
         Box(contentAlignment = Alignment.Center) {
             if (isLoading) {
