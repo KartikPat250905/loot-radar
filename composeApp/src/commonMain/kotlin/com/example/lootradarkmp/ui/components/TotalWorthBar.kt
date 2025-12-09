@@ -153,15 +153,6 @@ fun TotalWorthBar(games: List<GameDto>) {
                             text = priceText,
                             style = MaterialTheme.typography.displaySmall
                         )
-
-                        Spacer(modifier = Modifier.height(4.dp))
-
-                        Text(
-                            text = "✨ ${games.size} premium titles unlocked",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = Color(0xFF94A3B8),
-                            fontWeight = FontWeight.Normal
-                        )
                     }
                 }
             }
