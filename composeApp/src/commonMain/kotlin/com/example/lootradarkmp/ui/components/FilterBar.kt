@@ -60,7 +60,7 @@ fun FilterBar(viewModel: GameViewModel) {
         "android", "ios", "vr", "battlenet", "origin", "drm-free", "xbox-360"
     )
 
-    val types = listOf("game", "dlc")
+    val types = listOf("game", "dlc", "early access")
 
     val filteredPlatforms = remember(platformSearch) {
         if (platformSearch.isBlank()) platforms
