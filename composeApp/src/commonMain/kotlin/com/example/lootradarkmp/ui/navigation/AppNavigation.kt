@@ -16,19 +16,13 @@ import com.example.lootradarkmp.ui.screens.Settings
 fun AppNavigation(navController: NavHostController, innerPadding: PaddingValues) {
     NavHost(
         navController = navController,
-        startDestination = "home"
+        startDestination = Screen.Home.route
     ) {
         composable(Screen.Home.route) {
             HomeScreen(
                 navController = navController,
                 modifier = Modifier.padding(innerPadding)
 
-            )
-        }
-        composable(Screen.Details.route) {
-            GameDetailScreen(
-                navController = navController,
-                modifier = Modifier.padding(innerPadding)
             )
         }
         composable(Screen.Notification.route) {
@@ -46,6 +40,14 @@ fun AppNavigation(navController: NavHostController, innerPadding: PaddingValues)
         composable(Screen.Settings.route) {
             Settings(
                 navController = navController,
+                modifier = Modifier.padding(innerPadding)
+            )
+        }
+        composable(Screen.Details.route) { backStackEntry ->
+            val gameId = backStackEntry.arguments?.getString("gameId")?.toIntOrNull()
+            GameDetailScreen(
+                navController = navController,
+                gameId = gameId,
                 modifier = Modifier.padding(innerPadding)
             )
         }

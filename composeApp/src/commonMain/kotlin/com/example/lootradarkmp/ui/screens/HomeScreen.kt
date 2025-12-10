@@ -20,7 +20,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
-import com.example.lootradarkmp.data.repository.GameRepository
 import com.example.lootradarkmp.ui.components.FilterBar
 import com.example.lootradarkmp.ui.components.GameGrid
 import com.example.lootradarkmp.ui.components.GameSearchBar
@@ -58,7 +57,7 @@ fun HomeScreen(navController: NavHostController, modifier: Modifier = Modifier) 
                 )
             }
             else {
-                GameGrid(games)
+                GameGrid(games, navController)
             }
         }
     }

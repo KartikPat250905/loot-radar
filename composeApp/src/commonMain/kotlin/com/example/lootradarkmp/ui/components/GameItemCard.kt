@@ -1,6 +1,7 @@
 package com.example.lootradarkmp.ui.components
 
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -20,11 +21,15 @@ import coil3.compose.SubcomposeAsyncImage
 import com.example.lootradarkmp.data.models.GameDto
 
 @Composable
-fun GameItemCard(gameDto: GameDto) {
+fun GameItemCard(
+    gameDto: GameDto,
+    onClick: () -> Unit
+) {
     Card(
         modifier = Modifier
             .padding(4.dp)
             .fillMaxWidth()
+            .clickable { onClick() }
     ) {
         Column(
             modifier = Modifier
