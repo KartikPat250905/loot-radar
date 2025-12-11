@@ -8,17 +8,27 @@ import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.navigation.NavHostController
 import com.example.lootradarkmp.data.models.GameDto
+import com.example.lootradarkmp.ui.navigation.Screen
 
 @Composable
-fun GameGrid(gameList: List<GameDto>) {
+fun GameGrid(
+    gameList: List<GameDto>,
+    navController: NavHostController,
+
+    ) {
     LazyVerticalGrid(
         columns = GridCells.Fixed(2), // 2 items per row
         modifier = Modifier.fillMaxSize(),
         contentPadding = PaddingValues(8.dp)
     ) {
         items(gameList) { game ->
-            GameItemCard(gameDto = game)
+            GameItemCard(gameDto = game) {
+                navController.navigate(
+                    Screen.Details.createRoute(game.id)
+                )
+            }
         }
     }
 }
