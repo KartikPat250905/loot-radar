@@ -1,7 +1,9 @@
 package com.example.lootradarkmp.ui.screens
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -17,6 +19,10 @@ import com.example.lootradarkmp.data.models.GameDto
 import com.example.lootradarkmp.data.repository.GameRepository
 import com.example.lootradarkmp.ui.components.BackButton
 import com.example.lootradarkmp.ui.components.GameWorth
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
+import kotlinx.datetime.*
+import kotlin.time.Duration.Companion.seconds
 
 @Composable
 fun GameDetailScreen(
@@ -27,11 +33,22 @@ fun GameDetailScreen(
     var game by remember { mutableStateOf<GameDto?>(null) }
     val repository = remember { GameRepository() }
     val uriHandler = LocalUriHandler.current
+    var timeRemaining by remember { mutableStateOf<String?>(null) }
 
     // Load selected game based on ID
     LaunchedEffect(gameId) {
         repository.getFreeGames().collect { list ->
             game = list.find { it.id == gameId }
+        }
+    }
+
+    // Update countdown timer every second
+    LaunchedEffect(game) {
+        if (game?.end_date != null) {
+            while (isActive) {
+                timeRemaining = calculateTimeRemaining(game?.end_date!!)
+                delay(1000)
+            }
         }
     }
 
@@ -83,6 +100,65 @@ fun GameDetailScreen(
                     )
 
                     Spacer(modifier = Modifier.height(12.dp))
+
+                    // Expiry Information Card
+                    if (!g.end_date.isNullOrBlank()) {
+                        Card(
+                            modifier = Modifier.fillMaxWidth(),
+                            colors = CardDefaults.cardColors(
+                                containerColor = MaterialTheme.colorScheme.secondaryContainer
+                            ),
+                            shape = RoundedCornerShape(12.dp)
+                        ) {
+                            Column(
+                                modifier = Modifier.padding(16.dp)
+                            ) {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Column {
+                                        Text(
+                                            text = "⏰ Expires",
+                                            style = MaterialTheme.typography.labelMedium,
+                                            color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.7f)
+                                        )
+                                        Text(
+                                            text = formatEndDate(g.end_date!!),
+                                            style = MaterialTheme.typography.bodyMedium,
+                                            fontWeight = FontWeight.Medium,
+                                            color = MaterialTheme.colorScheme.onSecondaryContainer
+                                        )
+                                    }
+                                }
+
+                                if (timeRemaining != null) {
+                                    Spacer(modifier = Modifier.height(8.dp))
+                                    HorizontalDivider(color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.2f))
+                                    Spacer(modifier = Modifier.height(8.dp))
+
+                                    Text(
+                                        text = "Time Remaining",
+                                        style = MaterialTheme.typography.labelMedium,
+                                        color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.7f)
+                                    )
+                                    Text(
+                                        text = timeRemaining!!,
+                                        style = MaterialTheme.typography.titleMedium,
+                                        fontWeight = FontWeight.Bold,
+                                        color = if (isExpiringSoon(g.end_date!!)) {
+                                            MaterialTheme.colorScheme.error
+                                        } else {
+                                            MaterialTheme.colorScheme.onSecondaryContainer
+                                        }
+                                    )
+                                }
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(12.dp))
+                    }
 
                     // Platforms
                     Text(
@@ -143,5 +219,89 @@ fun GameDetailScreen(
         ) {
             BackButton(onClick = { navController.popBackStack() })
         }
+    }
+}
+
+// Helper function to calculate time remaining
+fun calculateTimeRemaining(endDateStr: String): String? {
+    return try {
+        // Many APIs return date as "2023-10-27 23:59:00" which doesn't adhere to ISO 8601 strict T separator
+        // We replace space with T to make it ISO compliant for Instant.parse if needed
+        val isoDateStr = endDateStr.replace(" ", "T")
+        // Appending Z if timezone is missing, assuming UTC
+        val finalDateStr = if (isoDateStr.endsWith("Z")) isoDateStr else "${isoDateStr}Z"
+        
+        val endInstant = Instant.parse(finalDateStr)
+        val now = Clock.System.now()
+        val duration = endInstant - now
+
+        if (duration.isNegative()) {
+            "Expired"
+        } else {
+            val days = duration.inWholeDays
+            val hours = duration.inWholeHours % 24
+            val minutes = duration.inWholeMinutes % 60
+            val seconds = duration.inWholeSeconds % 60
+
+            when {
+                days > 0 -> "${days}d ${hours}h ${minutes}m ${seconds}s"
+                hours > 0 -> "${hours}h ${minutes}m ${seconds}s"
+                minutes > 0 -> "${minutes}m ${seconds}s"
+                else -> "${seconds}s"
+            }
+        }
+    } catch (e: Exception) {
+        // Fallback or debug print
+        println("Error parsing date: $endDateStr -> ${e.message}")
+        null
+    }
+}
+
+// Helper function to format the end date
+fun formatEndDate(endDateStr: String): String {
+    return try {
+        val isoDateStr = endDateStr.replace(" ", "T")
+        val finalDateStr = if (isoDateStr.endsWith("Z")) isoDateStr else "${isoDateStr}Z"
+        
+        val instant = Instant.parse(finalDateStr)
+        val localDateTime = instant.toLocalDateTime(TimeZone.UTC)
+
+        val monthName = when (localDateTime.month) {
+            Month.JANUARY -> "Jan"
+            Month.FEBRUARY -> "Feb"
+            Month.MARCH -> "Mar"
+            Month.APRIL -> "Apr"
+            Month.MAY -> "May"
+            Month.JUNE -> "Jun"
+            Month.JULY -> "Jul"
+            Month.AUGUST -> "Aug"
+            Month.SEPTEMBER -> "Sep"
+            Month.OCTOBER -> "Oct"
+            Month.NOVEMBER -> "Nov"
+            Month.DECEMBER -> "Dec"
+            else -> "Unknown"
+        }
+
+        val hour = localDateTime.hour.toString().padStart(2, '0')
+        val minute = localDateTime.minute.toString().padStart(2, '0')
+
+        "$monthName ${localDateTime.dayOfMonth}, ${localDateTime.year} at $hour:$minute UTC"
+    } catch (e: Exception) {
+        endDateStr
+    }
+}
+
+// Helper function to check if expiring within 24 hours
+fun isExpiringSoon(endDateStr: String): Boolean {
+    return try {
+        val isoDateStr = endDateStr.replace(" ", "T")
+        val finalDateStr = if (isoDateStr.endsWith("Z")) isoDateStr else "${isoDateStr}Z"
+        
+        val endInstant = Instant.parse(finalDateStr)
+        val now = Clock.System.now()
+        val duration = endInstant - now
+        duration.inWholeHours in 0..24
+    } catch (e: Exception) {
+        false
     }
 }
