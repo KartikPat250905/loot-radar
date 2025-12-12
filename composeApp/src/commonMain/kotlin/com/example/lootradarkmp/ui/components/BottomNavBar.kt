@@ -14,7 +14,7 @@ import com.example.lootradarkmp.ui.navigation.Screen
 
 @Composable
 fun BottomNavBar(navController: NavController) {
-    val screens = listOf(Screen.Home, Screen.Browse, Screen.Notification, Screen.Settings)
+    val screens = listOf(Screen.Home, Screen.HotDeals, Screen.Notification, Screen.Settings)
     val startDestination = Screen.Home
     var currentScreen by rememberSaveable { mutableStateOf(startDestination.route) }
 
