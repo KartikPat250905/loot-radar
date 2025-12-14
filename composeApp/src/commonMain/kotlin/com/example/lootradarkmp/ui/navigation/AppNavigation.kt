@@ -6,7 +6,7 @@ import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
-import com.example.lootradarkmp.ui.screens.Browse
+import com.example.lootradarkmp.ui.screens.HotDealsScreen
 import com.example.lootradarkmp.ui.screens.GameDetailScreen
 import com.example.lootradarkmp.ui.screens.HomeScreen
 import com.example.lootradarkmp.ui.screens.Notification
@@ -31,8 +31,8 @@ fun AppNavigation(navController: NavHostController, innerPadding: PaddingValues)
                 modifier = Modifier.padding(innerPadding)
             )
         }
-        composable(Screen.Browse.route) {
-            Browse(
+        composable(Screen.HotDeals.route) {
+            HotDealsScreen(
                 navController = navController,
                 modifier = Modifier.padding(innerPadding)
             )
