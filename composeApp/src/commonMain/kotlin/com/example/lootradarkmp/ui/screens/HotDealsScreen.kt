@@ -62,7 +62,7 @@ fun HotDealsScreen(
 
             LaunchedEffect(isDragged) {
                 while (!isDragged) {
-                    delay(5000) // Auto-advance every 5 seconds
+                    delay(2250) // Auto-advance every 5 seconds
                     val nextPage = (pagerState.currentPage + 1) % heroItems.size
                     pagerState.animateScrollToPage(nextPage)
                 }
