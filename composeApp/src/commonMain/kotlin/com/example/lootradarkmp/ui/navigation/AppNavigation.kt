@@ -6,7 +6,7 @@ import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
-import com.example.lootradarkmp.ui.screens.Browse
+import com.example.lootradarkmp.ui.screens.HotDealsScreen
 import com.example.lootradarkmp.ui.screens.GameDetailScreen
 import com.example.lootradarkmp.ui.screens.HomeScreen
 import com.example.lootradarkmp.ui.screens.Notification
@@ -16,7 +16,7 @@ import com.example.lootradarkmp.ui.screens.Settings
 fun AppNavigation(navController: NavHostController, innerPadding: PaddingValues) {
     NavHost(
         navController = navController,
-        startDestination = "home"
+        startDestination = Screen.Home.route
     ) {
         composable(Screen.Home.route) {
             HomeScreen(
@@ -25,20 +25,14 @@ fun AppNavigation(navController: NavHostController, innerPadding: PaddingValues)
 
             )
         }
-        composable(Screen.Details.route) {
-            GameDetailScreen(
-                navController = navController,
-                modifier = Modifier.padding(innerPadding)
-            )
-        }
         composable(Screen.Notification.route) {
             Notification(
                 navController = navController,
                 modifier = Modifier.padding(innerPadding)
             )
         }
-        composable(Screen.Browse.route) {
-            Browse(
+        composable(Screen.HotDeals.route) {
+            HotDealsScreen(
                 navController = navController,
                 modifier = Modifier.padding(innerPadding)
             )
@@ -46,6 +40,14 @@ fun AppNavigation(navController: NavHostController, innerPadding: PaddingValues)
         composable(Screen.Settings.route) {
             Settings(
                 navController = navController,
+                modifier = Modifier.padding(innerPadding)
+            )
+        }
+        composable(Screen.Details.route) { backStackEntry ->
+            val gameId = backStackEntry.arguments?.getString("gameId")?.toIntOrNull()
+            GameDetailScreen(
+                navController = navController,
+                gameId = gameId,
                 modifier = Modifier.padding(innerPadding)
             )
         }
