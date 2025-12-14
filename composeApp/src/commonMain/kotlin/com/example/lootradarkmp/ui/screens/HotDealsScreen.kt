@@ -1,5 +1,6 @@
 package com.example.lootradarkmp.ui.screens
 
+import androidx.compose.foundation.interaction.collectIsDraggedAsState
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
@@ -18,7 +19,8 @@ import androidx.navigation.NavHostController
 import com.example.lootradarkmp.ui.components.HeroBanner
 import com.example.lootradarkmp.ui.components.HotDealCard
 import com.example.lootradarkmp.ui.viewmodel.HotDealsViewModel
-import androidx.compose.foundation.pager.PagerState
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 @Composable
 fun HotDealsScreen(
@@ -56,11 +58,21 @@ fun HotDealsScreen(
         
         if (heroItems.isNotEmpty()) {
             val pagerState = rememberPagerState(pageCount = { heroItems.size })
+            val isDragged by pagerState.interactionSource.collectIsDraggedAsState()
+
+            LaunchedEffect(isDragged) {
+                while (!isDragged) {
+                    delay(5000) // Auto-advance every 5 seconds
+                    val nextPage = (pagerState.currentPage + 1) % heroItems.size
+                    pagerState.animateScrollToPage(nextPage)
+                }
+            }
             
             HorizontalPager(
                 state = pagerState,
                 modifier = Modifier.fillMaxWidth().height(220.dp), // Fixed height for hero area
-                pageSpacing = 16.dp
+                pageSpacing = 16.dp,
+                contentPadding = PaddingValues(horizontal = 0.dp) // Show full card
             ) { page ->
                 val game = heroItems[page]
                 HeroBanner(game = game) {
