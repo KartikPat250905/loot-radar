@@ -22,9 +22,9 @@ fun Games.toDto(): GameDto =
         gamerpower_url = gamerpower_url
     )
 
-fun GameDto.toEntity() =
-    arrayOf(
-        id,
+fun GameDto.toEntity(): Array<Any?> {
+    return arrayOf(
+        id?.toLong(),
         title,
         worth,
         thumbnail,
@@ -40,3 +40,4 @@ fun GameDto.toEntity() =
         status,
         gamerpower_url
     )
+}
