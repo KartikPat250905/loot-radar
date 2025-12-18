@@ -4,7 +4,7 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class GameDto(
-    val id: Int? = null,
+    val id: Long? = null,
     val title: String? = null,
     val worth: String? = null,
     val thumbnail: String? = null,

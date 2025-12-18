@@ -27,7 +27,7 @@ import kotlin.time.Duration.Companion.seconds
 @Composable
 fun GameDetailScreen(
     navController: NavHostController,
-    gameId: Int?,
+    gameId: Long?,
     modifier: Modifier = Modifier
 ) {
     var game by remember { mutableStateOf<GameDto?>(null) }

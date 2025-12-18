@@ -44,7 +44,7 @@ fun AppNavigation(navController: NavHostController, innerPadding: PaddingValues)
             )
         }
         composable(Screen.Details.route) { backStackEntry ->
-            val gameId = backStackEntry.arguments?.getString("gameId")?.toIntOrNull()
+            val gameId = backStackEntry.arguments?.getString("gameId")?.toLongOrNull()
             GameDetailScreen(
                 navController = navController,
                 gameId = gameId,
