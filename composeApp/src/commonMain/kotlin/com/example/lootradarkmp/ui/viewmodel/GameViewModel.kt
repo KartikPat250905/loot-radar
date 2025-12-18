@@ -1,6 +1,7 @@
 package com.example.lootradarkmp.ui.viewmodel
 
 import com.example.lootradarkmp.data.models.GameDto
+import com.example.lootradarkmp.data.remote.ApiService
 import com.example.lootradarkmp.data.repository.GameRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -21,7 +22,7 @@ data class GameFilters(
 )
 
 class GameViewModel(
-    private val repository: GameRepository = GameRepository()
+    private val repository: GameRepository = GameRepository(ApiService())
 ) {
     private val _filters = MutableStateFlow(GameFilters())
     val filters: StateFlow<GameFilters> = _filters

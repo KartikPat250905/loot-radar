@@ -1,18 +1,17 @@
 package com.example.lootradarkmp.data.repository
 
+import com.example.lootradarkmp.data.GameDatabaseProvider
 import com.example.lootradarkmp.data.mappers.toDto
-import com.example.lootradarkmp.data.mappers.toEntity
 import com.example.lootradarkmp.data.models.GameDto
 import com.example.lootradarkmp.data.remote.ApiService
-import com.example.lootradarkmp.db.GameDatabase
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.flow.map
 
 class GameRepository(
-    private val api: ApiService,
-    private val database: GameDatabase
+    private val api: ApiService
 ) {
+
+    private val database = GameDatabaseProvider.getDatabase()
 
     fun getFreeGames(): Flow<List<GameDto>> = flow {
         val cached = database.gameQueries.selectAll().executeAsList().map { it.toDto() }
