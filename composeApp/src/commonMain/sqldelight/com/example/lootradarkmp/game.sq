@@ -1,0 +1,52 @@
+-- games.sq
+-- This file defines the cached games table and queries
+
+CREATE TABLE games (
+    id INTEGER PRIMARY KEY,
+    title TEXT,
+    worth TEXT,
+    thumbnail TEXT,
+    image TEXT,
+    description TEXT,
+    instructions TEXT,
+    open_giveaway_url TEXT,
+    published_date TEXT,
+    type TEXT,
+    platforms TEXT,
+    end_date TEXT,
+    users INTEGER,
+    status TEXT,
+    gamerpower_url TEXT
+);
+
+-- Insert or replace a game (used after API fetch)
+insertGame:
+INSERT OR REPLACE INTO games (
+    id,
+    title,
+    worth,
+    thumbnail,
+    image,
+    description,
+    instructions,
+    open_giveaway_url,
+    published_date,
+    type,
+    platforms,
+    end_date,
+    users,
+    status,
+    gamerpower_url
+) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+
+-- Remove all cached games
+deleteAll:
+DELETE FROM games;
+
+-- Get all cached games
+selectAll:
+SELECT * FROM games;
+
+-- Get one game by ID (detail screen)
+selectById:
+SELECT * FROM games WHERE id = ?;
