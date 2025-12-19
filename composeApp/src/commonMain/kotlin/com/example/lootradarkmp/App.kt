@@ -14,15 +14,17 @@ import com.example.lootradarkmp.ui.theme.ModernDarkTheme
 @Composable
 fun App() {
     val navController = rememberNavController()
-    ModernDarkTheme {
-        Scaffold(
-            topBar = { TopBar(navController) },
-            bottomBar = { BottomNavBar(navController) }
-        ) { innerPadding ->
-            AppNavigation(
-                navController = navController,
-                innerPadding = innerPadding
-            )
+    AppContainer {
+        ModernDarkTheme {
+            Scaffold(
+                topBar = { TopBar(navController) },
+                bottomBar = { BottomNavBar(navController) }
+            ) { innerPadding ->
+                AppNavigation(
+                    navController = navController,
+                    innerPadding = innerPadding
+                )
+            }
         }
     }
 }

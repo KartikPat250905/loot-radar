@@ -50,7 +50,7 @@ fun HomeScreen(navController: NavHostController, modifier: Modifier = Modifier) 
             }
             else if (games.isEmpty()) {
                 Text(
-                    text = "No freebies found here... \uD83D\uDE22\nTry adjusting your filters!",
+                    text = "No freebies found here... 😥\nTry adjusting your filters!",
                     textAlign = TextAlign.Center,
                     modifier = Modifier.padding(16.dp),
                     fontSize = 18.sp
