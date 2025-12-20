@@ -32,6 +32,7 @@ fun HomeScreen(navController: NavHostController, modifier: Modifier = Modifier) 
     var isLoading by remember { mutableStateOf(true) }
     val games by gameViewModel.games.collectAsState()
     var searchText by remember { mutableStateOf("") }
+    val dataSource by gameViewModel.dataSource.collectAsState()
     Column (
         modifier = modifier.fillMaxSize()
     ) {
@@ -43,7 +44,10 @@ fun HomeScreen(navController: NavHostController, modifier: Modifier = Modifier) 
             }
         )
         FilterBar(gameViewModel)
-        TotalWorthBar(games = games)
+        TotalWorthBar(
+            games = games,
+            dataSource = dataSource
+        )
         Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
             if (isLoading) {
                 CircularProgressIndicator()

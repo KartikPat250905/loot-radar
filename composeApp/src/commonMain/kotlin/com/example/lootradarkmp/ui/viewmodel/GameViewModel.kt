@@ -4,6 +4,7 @@ import com.example.lootradarkmp.data.GameDatabaseProvider
 import com.example.lootradarkmp.data.models.GameDto
 import com.example.lootradarkmp.data.remote.ApiService
 import com.example.lootradarkmp.data.repository.GameRepository
+import com.example.lootradarkmp.data.state.DataSource
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -15,6 +16,7 @@ import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+
 
 data class GameFilters(
     val platforms: Set<String> = emptySet(),
@@ -30,6 +32,9 @@ class GameViewModel(
     private val viewModelScope = CoroutineScope(
         SupervisorJob() + Dispatchers.Default
     )
+
+    val dataSource: StateFlow<DataSource> = repository.dataSource
+
     private var _allGames = MutableStateFlow<List<GameDto>>(emptyList())
     private val _searchQuery = MutableStateFlow("")
 

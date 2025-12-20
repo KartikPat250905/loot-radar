@@ -18,7 +18,7 @@ actual object AppImageLoader {
         return ImageLoader.Builder(AndroidContextHolder.context)
             .memoryCache {
                 MemoryCache.Builder()
-                    .maxSizePercent(AndroidContextHolder.context, 0.20) // Smaller memory cache
+                    .maxSizePercent(AndroidContextHolder.context, 0.20)
                     .build()
             }
             .diskCache {
@@ -27,7 +27,6 @@ actual object AppImageLoader {
                     .maxSizeBytes(512L * 1024 * 1024) // 512 mb cache
                     .build()
             }
-            // This is critical - READ_ONLY means it will read from disk when offline
             .diskCachePolicy(CachePolicy.ENABLED)
             .memoryCachePolicy(CachePolicy.ENABLED)
             .networkCachePolicy(CachePolicy.ENABLED)

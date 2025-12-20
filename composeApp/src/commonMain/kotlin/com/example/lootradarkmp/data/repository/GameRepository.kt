@@ -4,18 +4,26 @@ import com.example.lootradarkmp.data.GameDatabaseProvider
 import com.example.lootradarkmp.data.mappers.toDto
 import com.example.lootradarkmp.data.models.GameDto
 import com.example.lootradarkmp.data.remote.ApiService
+import com.example.lootradarkmp.data.state.DataSource
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.flow
+
 
 class GameRepository(
     private val api: ApiService
 ) {
-
+    private val _dataSource = MutableStateFlow(DataSource.NETWORK)
+    val dataSource: StateFlow<DataSource> = _dataSource
     private val database = GameDatabaseProvider.getDatabase()
 
     fun getFreeGames(): Flow<List<GameDto>> = flow {
         val cached = database.gameQueries.selectAll().executeAsList().map { it.toDto() }
-        if (cached.isNotEmpty()) emit(cached)
+        if (cached.isNotEmpty()){
+            _dataSource.value = DataSource.CACHE
+            emit(cached)
+        }
 
         try {
             api.getFreeGamesFlow().collect { remoteGames ->
@@ -41,7 +49,7 @@ class GameRepository(
                         )
                     }
                 }
-
+                _dataSource.value = DataSource.NETWORK
                 emit(remoteGames)
             }
         } catch (e: Exception) {
