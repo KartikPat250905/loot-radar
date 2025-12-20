@@ -16,7 +16,8 @@ CREATE TABLE games (
     end_date TEXT,
     users INTEGER,
     status TEXT,
-    gamerpower_url TEXT
+    gamerpower_url TEXT,
+    api_order INTEGER NOT NULL
 );
 
 -- Insert or replace a game (used after API fetch)
@@ -36,16 +37,18 @@ INSERT OR REPLACE INTO games (
     end_date,
     users,
     status,
-    gamerpower_url
-) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+    gamerpower_url,
+    api_order
+) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
 
 -- Remove all cached games
 deleteAll:
 DELETE FROM games;
 
--- Get all cached games
+-- Get all cached games in API order
 selectAll:
-SELECT * FROM games;
+SELECT * FROM games
+ORDER BY api_order ASC;
 
 -- Get one game by ID (detail screen)
 selectById:

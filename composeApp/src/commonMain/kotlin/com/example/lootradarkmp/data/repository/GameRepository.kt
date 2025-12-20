@@ -29,9 +29,9 @@ class GameRepository(
             api.getFreeGamesFlow().collect { remoteGames ->
                 database.transaction {
                     database.gameQueries.deleteAll()
-                    remoteGames.forEach { game ->
+                    remoteGames.forEachIndexed { index, game ->
                         database.gameQueries.insertGame(
-                            id = game.id?.toLong() ?: return@forEach,
+                            id = game.id?.toLong() ?: return@forEachIndexed,
                             title = game.title,
                             worth = game.worth,
                             thumbnail = game.thumbnail,
@@ -45,7 +45,8 @@ class GameRepository(
                             end_date = game.end_date,
                             users = game.users?.toLong(),
                             status = game.status,
-                            gamerpower_url = game.gamerpower_url
+                            gamerpower_url = game.gamerpower_url,
+                            api_order = index.toLong()
                         )
                     }
                 }
@@ -53,7 +54,7 @@ class GameRepository(
                 emit(remoteGames)
             }
         } catch (e: Exception) {
-            // API failed, just continue using cached DB data
+            _dataSource.value = DataSource.CACHE
             println("API failed, returning cached DB: ${e.message}")
         }
     }
