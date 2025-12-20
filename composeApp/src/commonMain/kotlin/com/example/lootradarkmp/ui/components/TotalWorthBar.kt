@@ -18,10 +18,14 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.lootradarkmp.data.models.GameDto
+import com.example.lootradarkmp.data.state.DataSource
 import kotlin.math.round
 
 @Composable
-fun TotalWorthBar(games: List<GameDto>) {
+fun TotalWorthBar(
+    games: List<GameDto>,
+    dataSource: DataSource
+) {
     val total = games.mapNotNull { game ->
         val priceStr = game.worth?.replace("$", "")?.replace(",", "")?.trim()
         when {
@@ -153,6 +157,34 @@ fun TotalWorthBar(games: List<GameDto>) {
                             text = priceText,
                             style = MaterialTheme.typography.displaySmall
                         )
+
+                        Spacer(modifier = Modifier.height(6.dp))
+
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            val (label, color) = when (dataSource) {
+                                DataSource.NETWORK -> "LIVE DATA" to Color(0xFF10B981)
+                                DataSource.CACHE -> "CACHED DATA" to Color(0xFFF59E0B)
+                            }
+
+                            Box(
+                                modifier = Modifier
+                                    .size(8.dp)
+                                    .background(color, shape = RoundedCornerShape(50))
+                            )
+
+                            Spacer(modifier = Modifier.width(6.dp))
+
+                            Text(
+                                text = label,
+                                style = MaterialTheme.typography.labelSmall,
+                                color = color,
+                                letterSpacing = 1.2.sp,
+                                fontWeight = FontWeight.SemiBold
+                            )
+                        }
+
                     }
                 }
             }

@@ -20,6 +20,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
+import com.example.lootradarkmp.data.state.DataSource
 import com.example.lootradarkmp.ui.components.FilterBar
 import com.example.lootradarkmp.ui.components.GameGrid
 import com.example.lootradarkmp.ui.components.GameSearchBar
@@ -32,6 +33,7 @@ fun HomeScreen(navController: NavHostController, modifier: Modifier = Modifier) 
     var isLoading by remember { mutableStateOf(true) }
     val games by gameViewModel.games.collectAsState()
     var searchText by remember { mutableStateOf("") }
+    val dataSource by gameViewModel.dataSource.collectAsState()
     Column (
         modifier = modifier.fillMaxSize()
     ) {
@@ -43,14 +45,25 @@ fun HomeScreen(navController: NavHostController, modifier: Modifier = Modifier) 
             }
         )
         FilterBar(gameViewModel)
-        TotalWorthBar(games = games)
+        TotalWorthBar(
+            games = games,
+            dataSource = dataSource
+        )
         Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
             if (isLoading) {
                 CircularProgressIndicator()
             }
+            else if (games.isEmpty() && dataSource == DataSource.CACHE) {
+                Text(
+                    text = "\uD83D\uDE3F No freebies found!\nCache is empty and new data couldn't load.\nCheck your internet connection and try again.",
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.padding(16.dp),
+                    fontSize = 18.sp
+                )
+            }
             else if (games.isEmpty()) {
                 Text(
-                    text = "No freebies found here... \uD83D\uDE22\nTry adjusting your filters!",
+                    text = "No freebies found here... 😥\nTry adjusting your filters!",
                     textAlign = TextAlign.Center,
                     modifier = Modifier.padding(16.dp),
                     fontSize = 18.sp

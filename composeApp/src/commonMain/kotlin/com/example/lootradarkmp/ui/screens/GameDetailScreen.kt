@@ -16,6 +16,7 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import coil3.compose.AsyncImage
 import com.example.lootradarkmp.data.models.GameDto
+import com.example.lootradarkmp.data.remote.ApiService
 import com.example.lootradarkmp.data.repository.GameRepository
 import com.example.lootradarkmp.ui.components.BackButton
 import com.example.lootradarkmp.ui.components.GameWorth
@@ -27,11 +28,11 @@ import kotlin.time.Duration.Companion.seconds
 @Composable
 fun GameDetailScreen(
     navController: NavHostController,
-    gameId: Int?,
+    gameId: Long?,
     modifier: Modifier = Modifier
 ) {
     var game by remember { mutableStateOf<GameDto?>(null) }
-    val repository = remember { GameRepository() }
+    val repository = remember { GameRepository(ApiService()) }
     val uriHandler = LocalUriHandler.current
     var timeRemaining by remember { mutableStateOf<String?>(null) }
 
