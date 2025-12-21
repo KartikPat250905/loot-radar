@@ -35,6 +35,7 @@ kotlin {
             implementation(libs.ktor.client.okhttp)
             implementation(kotlin("reflect"))
             implementation(libs.sqldelight.android.driver)
+            implementation("com.google.firebase:firebase-auth-ktx:21.2.0")
         }
         iosMain.dependencies {
             implementation(libs.ktor.client.darwin)
