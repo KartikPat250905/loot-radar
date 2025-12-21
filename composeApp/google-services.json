@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "1028502883068",
+    "project_id": "lootradar-kmp",
+    "storage_bucket": "lootradar-kmp.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1028502883068:android:f432931cedb043bd306579",
+        "android_client_info": {
+          "package_name": "com.example.lootradarkmp"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCySQowKZz9OOQUZlxckICn_4XX0Te_j78"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

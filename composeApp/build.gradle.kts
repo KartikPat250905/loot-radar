@@ -8,6 +8,7 @@ plugins {
     alias(libs.plugins.compose.compiler)
     alias(libs.plugins.kotlinSerialization)
     alias(libs.plugins.sqldelight)
+    alias(libs.plugins.google.services)
 }
 
 kotlin {
@@ -35,7 +36,10 @@ kotlin {
             implementation(libs.ktor.client.okhttp)
             implementation(kotlin("reflect"))
             implementation(libs.sqldelight.android.driver)
-            implementation("com.google.firebase:firebase-auth-ktx:21.2.0")
+            // Import the Firebase BoM
+            implementation(platform("com.google.firebase:firebase-bom:33.1.0"))
+            implementation("com.google.firebase:firebase-auth-ktx")
+            implementation("com.google.firebase:firebase-analytics")
         }
         iosMain.dependencies {
             implementation(libs.ktor.client.darwin)
