@@ -7,12 +7,17 @@
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:1028502883068:android:f432931cedb043bd306579",
+        "mobilesdk_app_id": "1:1028502883068:android:fc43489af6fc4fcc306579",
         "android_client_info": {
-          "package_name": "com.example.lootradarkmp"
+          "package_name": "com.example.freegameradar"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "1028502883068-d0jr3apdu1t1olevvsbt4dopn92464s0.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyCySQowKZz9OOQUZlxckICn_4XX0Te_j78"
@@ -20,7 +25,55 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "1028502883068-d0jr3apdu1t1olevvsbt4dopn92464s0.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "1028502883068-ohv1gaiimid08mj678rjn1qviemhh7ru.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.lootradarkmp.LootRadarKMP"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1028502883068:android:f432931cedb043bd306579",
+        "android_client_info": {
+          "package_name": "com.example.lootradarkmp"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "1028502883068-d0jr3apdu1t1olevvsbt4dopn92464s0.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCySQowKZz9OOQUZlxckICn_4XX0Te_j78"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "1028502883068-d0jr3apdu1t1olevvsbt4dopn92464s0.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "1028502883068-ohv1gaiimid08mj678rjn1qviemhh7ru.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.lootradarkmp.LootRadarKMP"
+              }
+            }
+          ]
         }
       }
     }

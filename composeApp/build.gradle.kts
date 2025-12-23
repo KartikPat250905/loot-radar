@@ -69,11 +69,11 @@ kotlin {
 }
 
 android {
-    namespace = "com.example.lootradarkmp"
+    namespace = "com.example.freegameradar"
     compileSdk = libs.versions.android.compileSdk.get().toInt()
 
     defaultConfig {
-        applicationId = "com.example.lootradarkmp"
+        applicationId = "com.example.freegameradar"
         minSdk = libs.versions.android.minSdk.get().toInt()
         targetSdk = libs.versions.android.targetSdk.get().toInt()
         versionCode = 1
@@ -102,7 +102,7 @@ dependencies {
 sqldelight {
     databases {
         create("GameDatabase") {
-            packageName.set("com.example.lootradarkmp.db")
+            packageName.set("com.example.freegameradar.db")
         }
     }
 }

@@ -1,4 +1,4 @@
-rootProject.name = "LootRadarKMP"
+rootProject.name = "FreeGameRadar"
 enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
 
 pluginManagement {
