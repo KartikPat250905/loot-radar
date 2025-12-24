@@ -14,6 +14,14 @@
       },
       "oauth_client": [
         {
+          "client_id": "1028502883068-mpnti0f4vcu2hab0omidnj6ung9dri6l.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.freegameradar",
+            "certificate_hash": "a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2"
+          }
+        },
+        {
           "client_id": "1028502883068-d0jr3apdu1t1olevvsbt4dopn92464s0.apps.googleusercontent.com",
           "client_type": 3
         }

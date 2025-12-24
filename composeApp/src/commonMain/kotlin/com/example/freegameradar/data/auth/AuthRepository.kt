@@ -7,4 +7,6 @@ interface AuthRepository {
     suspend fun register(email: String, password: String): Result<User>
     suspend fun continueAsGuest(): Result<User>
     suspend fun getCurrentUser(): User?
+    suspend fun signInWithGoogle(idToken: String): Result<User>
+    suspend fun signInWithMicrosoft(accessToken: String): Result<User>
 }

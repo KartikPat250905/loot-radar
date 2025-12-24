@@ -9,7 +9,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import com.example.freegameradar.data.auth.AuthState
-import com.example.freegameradar.ui.screens.LoginScreen
+import com.example.freegameradar.ui.screens.AuthScreen
 import com.example.freegameradar.ui.theme.ModernDarkTheme
 import com.example.freegameradar.ui.viewmodel.AuthViewModel
 
@@ -21,7 +21,7 @@ fun AuthGate(
     val authState by authViewModel.authState.collectAsState()
 
     ModernDarkTheme {
-        when (val state = authState) {
+        when (authState) {
             AuthState.Loading -> {
                 Box(
                     modifier = Modifier.fillMaxSize(),
@@ -37,9 +37,8 @@ fun AuthGate(
             }
 
             is AuthState.Error -> {
-                LoginScreen(
-                    authViewModel = authViewModel,
-                    error = state.message
+                AuthScreen(
+                    authViewModel = authViewModel
                 )
             }
         }

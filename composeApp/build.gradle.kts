@@ -38,6 +38,7 @@ kotlin {
             implementation(libs.sqldelight.android.driver)
             // Import the Firebase BoM
             implementation(platform("com.google.firebase:firebase-bom:33.1.0"))
+            implementation(platform("io.opentelemetry:opentelemetry-bom:1.18.0"))
             implementation("com.google.firebase:firebase-auth-ktx")
             implementation("com.google.firebase:firebase-analytics")
         }

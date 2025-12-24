@@ -13,13 +13,14 @@ import com.example.freegameradar.ui.viewmodel.AuthViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun LoginScreen(
+fun SignUpScreen(
     authViewModel: AuthViewModel,
-    onSignUpClicked: () -> Unit,
+    onLoginClicked: () -> Unit,
     error: String? = null
 ) {
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
+    var confirmPassword by remember { mutableStateOf("") }
     var localError by remember { mutableStateOf<String?>(null) }
 
     LaunchedEffect(error) {
@@ -51,7 +52,7 @@ fun LoginScreen(
                 Spacer(modifier = Modifier.height(8.dp))
 
                 Text(
-                    text = "Welcome Back",
+                    text = "Create Account",
                     style = MaterialTheme.typography.headlineSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -59,7 +60,7 @@ fun LoginScreen(
                 Spacer(modifier = Modifier.height(4.dp))
 
                 Text(
-                    text = "Login to your account",
+                    text = "Sign up to get started",
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -99,6 +100,25 @@ fun LoginScreen(
                     )
                 )
 
+                Spacer(modifier = Modifier.height(16.dp))
+
+                OutlinedTextField(
+                    value = confirmPassword,
+                    onValueChange = {
+                        confirmPassword = it
+                        localError = null
+                    },
+                    label = { Text("Confirm Password") },
+                    visualTransformation = PasswordVisualTransformation(),
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth(),
+                    isError = localError == "Passwords do not match",
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = MaterialTheme.colorScheme.primary,
+                        focusedLabelColor = MaterialTheme.colorScheme.primary
+                    )
+                )
+
                 Spacer(modifier = Modifier.height(24.dp))
 
                 val currentError = localError
@@ -122,7 +142,11 @@ fun LoginScreen(
 
                 Button(
                     onClick = {
-                        authViewModel.login(email, password)
+                        if (password == confirmPassword) {
+                            authViewModel.register(email, password)
+                        } else {
+                            localError = "Passwords do not match"
+                        }
                     },
                     modifier = Modifier
                         .fillMaxWidth()
@@ -130,7 +154,7 @@ fun LoginScreen(
                     shape = MaterialTheme.shapes.medium
                 ) {
                     Text(
-                        "Login",
+                        "Sign Up",
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold
                     )
@@ -143,16 +167,16 @@ fun LoginScreen(
                     horizontalArrangement = Arrangement.Center
                 ) {
                     Text(
-                        "Don't have an account?",
+                        "Already have an account?",
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                     TextButton(
-                        onClick = onSignUpClicked,
+                        onClick = onLoginClicked,
                         contentPadding = PaddingValues(horizontal = 8.dp, vertical = 0.dp)
                     ) {
                         Text(
-                            "Sign Up",
+                            "Login",
                             fontWeight = FontWeight.Bold,
                             style = MaterialTheme.typography.bodyMedium
                         )

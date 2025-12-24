@@ -55,4 +55,40 @@ class AuthViewModel(
             _authState.value = AuthState.Guest
         }
     }
+
+    fun signInWithGoogle(idToken: String?) {
+        if (idToken == null) {
+            _authState.value = AuthState.Error("Google sign in failed.")
+            return
+        }
+        CoroutineScope(getCoroutineContext()).launch {
+            authRepository.signInWithGoogle(idToken)
+                .onSuccess {
+                    _authState.value = AuthState.LoggedIn
+                }
+                .onFailure {
+                    _authState.value = AuthState.Error(it.message ?: "Google sign in failed.")
+                }
+        }
+    }
+
+    fun signInWithMicrosoft(accessToken: String?) {
+        if (accessToken == null) {
+            _authState.value = AuthState.Error("Microsoft sign in failed.")
+            return
+        }
+        CoroutineScope(getCoroutineContext()).launch {
+            authRepository.signInWithMicrosoft(accessToken)
+                .onSuccess {
+                    _authState.value = AuthState.LoggedIn
+                }
+                .onFailure {
+                    _authState.value = AuthState.Error(it.message ?: "Microsoft sign in failed.")
+                }
+        }
+    }
+
+    fun showNotImplementedError() {
+        _authState.value = AuthState.Error("This feature is not yet implemented.")
+    }
 }
