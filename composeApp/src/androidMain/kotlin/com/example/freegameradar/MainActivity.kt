@@ -1,4 +1,3 @@
-// composeApp/src/androidMain/kotlin/com/example/lootradar/MainActivity.kt
 package com.example.freegameradar
 
 import android.os.Bundle
