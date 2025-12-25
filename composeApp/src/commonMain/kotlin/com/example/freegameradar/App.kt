@@ -3,7 +3,6 @@ package com.example.freegameradar
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.navigation.compose.rememberNavController
 import com.example.freegameradar.ui.auth.AuthGate
 import com.example.freegameradar.ui.components.BottomNavBar
@@ -17,10 +16,6 @@ fun App(
     authViewModel: AuthViewModel
 ) {
     val navController = rememberNavController()
-
-    LaunchedEffect(Unit) {
-        authViewModel.checkAuthState()
-    }
 
     AppContainer {
         AuthGate(authViewModel = authViewModel) {
