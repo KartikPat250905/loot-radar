@@ -6,18 +6,31 @@ import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import com.example.freegameradar.data.auth.AuthRepository
+import com.example.freegameradar.data.repository.UserSettingsRepositoryImpl
 import com.example.freegameradar.ui.screens.HotDealsScreen
 import com.example.freegameradar.ui.screens.GameDetailScreen
 import com.example.freegameradar.ui.screens.HomeScreen
 import com.example.freegameradar.ui.screens.Notification
 import com.example.freegameradar.ui.screens.Settings
+import com.example.freegameradar.ui.screens.SetupScreen
+import com.example.freegameradar.ui.viewmodel.SetupViewModel
 
 @Composable
-fun AppNavigation(navController: NavHostController, innerPadding: PaddingValues) {
+fun AppNavigation(navController: NavHostController, innerPadding: PaddingValues, authRepository: AuthRepository) {
     NavHost(
         navController = navController,
-        startDestination = Screen.Home.route
+        startDestination = Screen.Setup.route
     ) {
+        composable(Screen.Setup.route) {
+            SetupScreen(
+                viewModel = SetupViewModel(
+                    userSettingsRepository = UserSettingsRepositoryImpl(authRepository),
+                    authRepository = authRepository
+                ),
+                onNavigateToHome = { navController.navigate(Screen.Home.route) }
+            )
+        }
         composable(Screen.Home.route) {
             HomeScreen(
                 navController = navController,

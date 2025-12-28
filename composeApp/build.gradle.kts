@@ -41,6 +41,7 @@ kotlin {
             implementation(platform("io.opentelemetry:opentelemetry-bom:1.18.0"))
             implementation("com.google.firebase:firebase-auth-ktx")
             implementation("com.google.firebase:firebase-analytics")
+            implementation(libs.firebase.firestore.ktx)
         }
         iosMain.dependencies {
             implementation(libs.ktor.client.darwin)
@@ -65,6 +66,8 @@ kotlin {
             implementation(libs.coil.network.ktor)
             implementation(libs.kotlinx.datetime)
             implementation(libs.sqldelight.runtime)
+            implementation(libs.sqldelight.coroutines.extensions)
+            implementation(libs.multiplatform.settings)
         }
     }
 }

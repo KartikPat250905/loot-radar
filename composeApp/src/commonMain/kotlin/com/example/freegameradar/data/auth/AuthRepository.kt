@@ -8,4 +8,5 @@ interface AuthRepository {
     suspend fun register(email: String, password: String): Result<User>
     suspend fun continueAsGuest(): Result<User>
     fun getAuthStateFlow(): Flow<User?>
+    fun isUserLoggedIn(): Boolean
 }

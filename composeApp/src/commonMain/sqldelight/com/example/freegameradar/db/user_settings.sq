@@ -1,0 +1,15 @@
+-- User Settings
+CREATE TABLE user_settings (
+    id INTEGER PRIMARY KEY DEFAULT 0,
+    preferred_platform TEXT NOT NULL,
+    currency TEXT NOT NULL,
+    notifications_enabled INTEGER NOT NULL DEFAULT 1
+);
+
+-- Get user settings
+getSettings:
+SELECT * FROM user_settings WHERE id = 0;
+
+-- Insert or replace user settings
+insertSettings:
+INSERT OR REPLACE INTO user_settings (id, preferred_platform, currency, notifications_enabled) VALUES (0, ?, ?, ?);

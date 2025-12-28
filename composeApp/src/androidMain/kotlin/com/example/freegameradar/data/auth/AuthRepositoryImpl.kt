@@ -46,4 +46,9 @@ actual class AuthRepositoryImpl : AuthRepository {
         firebaseAuth.addAuthStateListener(authStateListener)
         awaitClose { firebaseAuth.removeAuthStateListener(authStateListener) }
     }
+
+    actual override fun isUserLoggedIn(): Boolean {
+        val user = firebaseAuth.currentUser
+        return user != null && !user.isAnonymous
+    }
 }

@@ -1,6 +1,7 @@
 {
   "project_info": {
     "project_number": "1028502883068",
+    "firebase_url": "https://lootradar-kmp-default-rtdb.firebaseio.com",
     "project_id": "lootradar-kmp",
     "storage_bucket": "lootradar-kmp.firebasestorage.app"
   },
