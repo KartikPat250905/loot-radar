@@ -6,6 +6,7 @@ import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import com.example.freegameradar.core.LocalSettings
 import com.example.freegameradar.data.auth.AuthRepository
 import com.example.freegameradar.data.repository.UserSettingsRepositoryImpl
 import com.example.freegameradar.ui.screens.HotDealsScreen
@@ -18,9 +19,11 @@ import com.example.freegameradar.ui.viewmodel.SetupViewModel
 
 @Composable
 fun AppNavigation(navController: NavHostController, innerPadding: PaddingValues, authRepository: AuthRepository) {
+    val startDestination = if (LocalSettings.isSetupComplete) Screen.Home.route else Screen.Setup.route
+
     NavHost(
         navController = navController,
-        startDestination = Screen.Setup.route
+        startDestination = startDestination
     ) {
         composable(Screen.Setup.route) {
             SetupScreen(
@@ -28,7 +31,12 @@ fun AppNavigation(navController: NavHostController, innerPadding: PaddingValues,
                     userSettingsRepository = UserSettingsRepositoryImpl(authRepository),
                     authRepository = authRepository
                 ),
-                onNavigateToHome = { navController.navigate(Screen.Home.route) }
+                onNavigateToHome = { 
+                    LocalSettings.isSetupComplete = true
+                    navController.navigate(Screen.Home.route) { 
+                        popUpTo(Screen.Setup.route) { inclusive = true } 
+                    }
+                }
             )
         }
         composable(Screen.Home.route) {

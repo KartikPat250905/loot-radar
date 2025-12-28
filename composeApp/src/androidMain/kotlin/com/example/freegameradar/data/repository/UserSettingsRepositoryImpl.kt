@@ -38,9 +38,9 @@ actual class UserSettingsRepositoryImpl actual constructor(
                 if (settings != null) {
                     // Sync remote settings with local db for offline access
                     db.insertSettings(
-                        preferred_platform = settings.preferredPlatform,
-                        currency = settings.currency,
-                        notifications_enabled = if (settings.notificationsEnabled) 1L else 0L
+                        notifications_enabled = if (settings.notificationsEnabled) 1L else 0L,
+                        preferred_game_platforms = settings.preferredGamePlatforms.joinToString(","),
+                        preferred_game_types = settings.preferredGameTypes.joinToString(",")
                     )
                     emit(settings)
                 } else {
@@ -49,20 +49,20 @@ actual class UserSettingsRepositoryImpl actual constructor(
             } catch (e: Exception) {
                 // Fallback to local DB if Firebase fails (e.g., offline)
                 println("Failed to fetch remote settings, falling back to local. Reason: ${e.message}")
-                val localSettings = db.getSettings().asFlow().mapToOneOrDefault(User_settings(0, "PC", "USD", 1L), Dispatchers.IO).first()
+                val localSettings = db.getSettings().asFlow().mapToOneOrDefault(User_settings(0, 1L, "", ""), Dispatchers.IO).first()
                 emit(UserSettings(
-                    preferredPlatform = localSettings.preferred_platform,
-                    currency = localSettings.currency,
-                    notificationsEnabled = localSettings.notifications_enabled == 1L
+                    notificationsEnabled = localSettings.notifications_enabled == 1L,
+                    preferredGamePlatforms = localSettings.preferred_game_platforms.split(",").filter { it.isNotEmpty() },
+                    preferredGameTypes = localSettings.preferred_game_types.split(",").filter { it.isNotEmpty() }
                 ))
             }
         } else {
             // Guest user or not logged in: use local DB
-            val localSettings = db.getSettings().asFlow().mapToOneOrDefault(User_settings(0, "PC", "USD", 1L), Dispatchers.IO).first()
+            val localSettings = db.getSettings().asFlow().mapToOneOrDefault(User_settings(0, 1L, "", ""), Dispatchers.IO).first()
             emit(UserSettings(
-                preferredPlatform = localSettings.preferred_platform,
-                currency = localSettings.currency,
-                notificationsEnabled = localSettings.notifications_enabled == 1L
+                notificationsEnabled = localSettings.notifications_enabled == 1L,
+                preferredGamePlatforms = localSettings.preferred_game_platforms.split(",").filter { it.isNotEmpty() },
+                preferredGameTypes = localSettings.preferred_game_types.split(",").filter { it.isNotEmpty() }
             ))
         }
     }.flowOn(Dispatchers.IO) // Ensure all logic in the flow runs on a background thread
@@ -71,9 +71,9 @@ actual class UserSettingsRepositoryImpl actual constructor(
         withContext(Dispatchers.IO) { // Ensure all logic runs on a background thread
             // Always save to local DB first
             db.insertSettings(
-                preferred_platform = userSettings.preferredPlatform,
-                currency = userSettings.currency,
-                notifications_enabled = if (userSettings.notificationsEnabled) 1L else 0L
+                notifications_enabled = if (userSettings.notificationsEnabled) 1L else 0L,
+                preferred_game_platforms = userSettings.preferredGamePlatforms.joinToString(","),
+                preferred_game_types = userSettings.preferredGameTypes.joinToString(",")
             )
 
             if (authRepository.isUserLoggedIn()) {

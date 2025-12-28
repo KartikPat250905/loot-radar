@@ -1,9 +1,9 @@
 -- User Settings
 CREATE TABLE user_settings (
     id INTEGER PRIMARY KEY DEFAULT 0,
-    preferred_platform TEXT NOT NULL,
-    currency TEXT NOT NULL,
-    notifications_enabled INTEGER NOT NULL DEFAULT 1
+    notifications_enabled INTEGER NOT NULL DEFAULT 1,
+    preferred_game_platforms TEXT NOT NULL DEFAULT '',
+    preferred_game_types TEXT NOT NULL DEFAULT ''
 );
 
 -- Get user settings
@@ -12,4 +12,4 @@ SELECT * FROM user_settings WHERE id = 0;
 
 -- Insert or replace user settings
 insertSettings:
-INSERT OR REPLACE INTO user_settings (id, preferred_platform, currency, notifications_enabled) VALUES (0, ?, ?, ?);
+INSERT OR REPLACE INTO user_settings (id, notifications_enabled, preferred_game_platforms, preferred_game_types) VALUES (0, ?, ?, ?);

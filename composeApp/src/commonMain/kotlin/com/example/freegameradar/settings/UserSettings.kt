@@ -4,7 +4,7 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class UserSettings(
-    val preferredPlatform: String = "PC",
-    val currency: String = "USD",
-    val notificationsEnabled: Boolean = true
+    val notificationsEnabled: Boolean = true,
+    val preferredGamePlatforms: List<String> = emptyList(),
+    val preferredGameTypes: List<String> = emptyList()
 )
