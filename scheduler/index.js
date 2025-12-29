@@ -25,7 +25,7 @@ async function importDeals() {
 
   if (!Array.isArray(dealsFromApi) || dealsFromApi.length === 0) {
     console.log('API did not return an array or it was empty. Aborting.');
-    return [];
+    return { newDeals: [], apiDealIds: [] };
   }
 
   const dealsCollection = db.collection('deals');
@@ -68,7 +68,7 @@ async function importDeals() {
     console.log('No new deals to import.');
   }
 
-  return newDeals;
+  return { newDeals, apiDealIds };
 }
 
 /**
@@ -151,11 +151,56 @@ async function sendPersonalizedNotifications(userDealsMap) {
 }
 
 /**
+ * Deletes notifications for deals that are no longer active.
+ */
+async function cleanupExpiredNotifications(validDealIds) {
+  console.log('Starting expired notifications cleanup...');
+  const validDealIdsSet = new Set(validDealIds);
+  const usersSnapshot = await db.collection('users').get();
+
+  if (usersSnapshot.empty) {
+    console.log('No users found for cleanup.');
+    return;
+  }
+
+  console.log(`Found ${usersSnapshot.size} users to check for cleanup.`);
+
+  const cleanupPromises = [];
+  for (const userDoc of usersSnapshot.docs) {
+    const notificationsCollection = userDoc.ref.collection('notifications');
+    const promise = notificationsCollection.get().then(notificationsSnapshot => {
+      if (notificationsSnapshot.empty) {
+        return; // No notifications for this user, do nothing.
+      }
+      const batch = db.batch();
+      let deletedCountForUser = 0;
+      notificationsSnapshot.forEach(notificationDoc => {
+        if (!validDealIdsSet.has(notificationDoc.id)) {
+          batch.delete(notificationDoc.ref);
+          deletedCountForUser++;
+        }
+      });
+      if (deletedCountForUser > 0) {
+        console.log(`Deleting ${deletedCountForUser} expired notifications for user ${userDoc.id}.`);
+        return batch.commit();
+      }
+    });
+    cleanupPromises.push(promise);
+  }
+
+  await Promise.all(cleanupPromises);
+  console.log('Expired notifications cleanup finished.');
+}
+
+/**
  * Main function to run the entire process.
  */
 async function main() {
   try {
-    const newDeals = await importDeals();
+    const { newDeals, apiDealIds } = await importDeals();
+    if (apiDealIds && apiDealIds.length > 0) {
+      await cleanupExpiredNotifications(apiDealIds);
+    }
     if (newDeals.length > 0) {
       const userDealsMap = await createInAppNotifications(newDeals);
       await sendPersonalizedNotifications(userDealsMap);
