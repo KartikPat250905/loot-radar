@@ -3,5 +3,5 @@ package com.example.freegameradar.core.image
 import coil3.ImageLoader
 
 expect object AppImageLoader {
-    fun get(): ImageLoader
+    fun get(context: Any): ImageLoader
 }

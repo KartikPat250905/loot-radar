@@ -7,22 +7,18 @@ import coil3.disk.directory
 import coil3.memory.MemoryCache
 import coil3.request.CachePolicy
 
-object AndroidContextHolder {
-    lateinit var context: Context
-}
-
 actual object AppImageLoader {
-
-    actual fun get(): ImageLoader {
-        return ImageLoader.Builder(AndroidContextHolder.context)
+    actual fun get(context: Any): ImageLoader {
+        val androidContext = context as Context
+        return ImageLoader.Builder(androidContext)
             .memoryCache {
                 MemoryCache.Builder()
-                    .maxSizePercent(AndroidContextHolder.context, 0.20)
+                    .maxSizePercent(androidContext, 0.20)
                     .build()
             }
             .diskCache {
                 DiskCache.Builder()
-                    .directory(AndroidContextHolder.context.cacheDir.resolve("image_cache"))
+                    .directory(androidContext.cacheDir.resolve("image_cache"))
                     .maxSizeBytes(512L * 1024 * 1024) // 512 mb cache
                     .build()
             }
