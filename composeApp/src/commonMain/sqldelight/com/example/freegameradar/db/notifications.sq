@@ -33,6 +33,10 @@ UPDATE deal_notification SET isRead = 1;
 deleteNotificationById:
 DELETE FROM deal_notification WHERE id = ?;
 
+-- Delete expired notifications
+deleteExpiredNotifications:
+DELETE FROM deal_notification WHERE id NOT IN ?;
+
 -- Clear all notifications
 clearAllNotifications:
 DELETE FROM deal_notification;
