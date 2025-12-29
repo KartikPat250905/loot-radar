@@ -16,6 +16,7 @@ ktor = "2.3.12"
 sqlDelight = "2.0.2"
 multiplatformSettings = "1.1.1"
 firebase-firestore = "25.0.0"
+firebase-messaging = "24.0.0"
 
 [libraries]
 androidx-activity-compose = { module = "androidx.activity:activity-compose", version.ref = "androidx-activityCompose" }
@@ -41,6 +42,7 @@ sqldelight-coroutines-extensions = { module = "app.cash.sqldelight:coroutines-ex
 multiplatform-settings = { module = "com.russhwolf:multiplatform-settings-no-arg", version.ref = "multiplatformSettings" }
 
 firebase-firestore-ktx = { module = "com.google.firebase:firebase-firestore-ktx", version.ref = "firebase-firestore" }
+firebase-messaging-ktx = { module = "com.google.firebase:firebase-messaging-ktx", version.ref = "firebase-messaging" }
 
 [plugins]
 androidApplication = { id = "com.android.application", version.ref = "agp" }

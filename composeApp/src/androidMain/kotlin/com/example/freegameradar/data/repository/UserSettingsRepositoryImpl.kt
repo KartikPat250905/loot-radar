@@ -7,8 +7,10 @@ import com.example.freegameradar.data.auth.AuthRepository
 import com.example.freegameradar.db.User_settings
 import com.example.freegameradar.settings.UserSettings
 import com.google.firebase.auth.ktx.auth
+import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
+import com.google.firebase.messaging.ktx.messaging
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
@@ -32,6 +34,13 @@ actual class UserSettingsRepositoryImpl actual constructor(
                     return@flow
                 }
                 val remoteDb = Firebase.firestore
+
+                // Get FCM token and update user's profile with it
+                val token = Firebase.messaging.token.await()
+                if(token.isNotBlank()){
+                    remoteDb.collection("users").document(userId).update("notificationTokens", FieldValue.arrayUnion(token)).await()
+                }
+
                 val settings = remoteDb.collection("users").document(userId).get().await()
                     .toObject(UserSettings::class.java)
 
@@ -53,7 +62,8 @@ actual class UserSettingsRepositoryImpl actual constructor(
                 emit(UserSettings(
                     notificationsEnabled = localSettings.notifications_enabled == 1L,
                     preferredGamePlatforms = localSettings.preferred_game_platforms.split(",").filter { it.isNotEmpty() },
-                    preferredGameTypes = localSettings.preferred_game_types.split(",").filter { it.isNotEmpty() }
+                    preferredGameTypes = localSettings.preferred_game_types.split(",").filter { it.isNotEmpty() },
+                    notificationTokens = emptyList() // Tokens are not stored locally
                 ))
             }
         } else {
@@ -62,7 +72,8 @@ actual class UserSettingsRepositoryImpl actual constructor(
             emit(UserSettings(
                 notificationsEnabled = localSettings.notifications_enabled == 1L,
                 preferredGamePlatforms = localSettings.preferred_game_platforms.split(",").filter { it.isNotEmpty() },
-                preferredGameTypes = localSettings.preferred_game_types.split(",").filter { it.isNotEmpty() }
+                preferredGameTypes = localSettings.preferred_game_types.split(",").filter { it.isNotEmpty() },
+                notificationTokens = emptyList() // Tokens are not stored locally
             ))
         }
     }.flowOn(Dispatchers.IO) // Ensure all logic in the flow runs on a background thread
