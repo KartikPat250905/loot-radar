@@ -8,6 +8,7 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.example.freegameradar.core.LocalSettings
 import com.example.freegameradar.data.auth.AuthRepositoryImpl
+import com.example.freegameradar.db.GameDatabase
 import com.example.freegameradar.ui.auth.AuthGate
 import com.example.freegameradar.ui.components.BottomNavBar
 import com.example.freegameradar.ui.components.TopBar
@@ -28,7 +29,7 @@ fun App(
 
     val startDestination = startRoute ?: if (LocalSettings.isSetupComplete) Screen.Home.route else Screen.Setup.route
 
-    AppContainer {
+    AppContainer { database ->
         AuthGate(authViewModel = authViewModel) {
             Scaffold(
                 topBar = {
@@ -46,7 +47,8 @@ fun App(
                     navController = navController,
                     innerPadding = innerPadding,
                     authRepository = authRepository,
-                    startDestination = startDestination
+                    startDestination = startDestination,
+                    database = database
                 )
             }
         }

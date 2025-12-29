@@ -3,18 +3,22 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import com.example.freegameradar.core.LocalSettings
 import com.example.freegameradar.data.auth.AuthRepository
+import com.example.freegameradar.data.repository.NotificationRepository
 import com.example.freegameradar.data.repository.UserSettingsRepositoryImpl
+import com.example.freegameradar.db.GameDatabase
 import com.example.freegameradar.ui.screens.HotDealsScreen
 import com.example.freegameradar.ui.screens.GameDetailScreen
 import com.example.freegameradar.ui.screens.HomeScreen
 import com.example.freegameradar.ui.screens.NotificationScreen
 import com.example.freegameradar.ui.screens.Settings
 import com.example.freegameradar.ui.screens.SetupScreen
+import com.example.freegameradar.ui.viewmodel.NotificationViewModel
 import com.example.freegameradar.ui.viewmodel.SetupViewModel
 
 @Composable
@@ -22,8 +26,10 @@ fun AppNavigation(
     navController: NavHostController, 
     innerPadding: PaddingValues, 
     authRepository: AuthRepository,
-    startDestination: String
+    startDestination: String,
+    database: GameDatabase
 ) {
+    val notificationRepository = NotificationRepository(database)
 
     NavHost(
         navController = navController,
@@ -51,7 +57,8 @@ fun AppNavigation(
             )
         }
         composable(Screen.Notification.route) {
-            NotificationScreen()
+            val viewModel: NotificationViewModel = viewModel { NotificationViewModel(notificationRepository) }
+            NotificationScreen(viewModel)
         }
         composable(Screen.HotDeals.route) {
             HotDealsScreen(
