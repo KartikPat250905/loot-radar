@@ -1,0 +1,29 @@
+name: Import Game Deals
+
+on:
+  schedule:
+    # Runs every 30 minutes
+    - cron: '*/30 * * * *'
+  workflow_dispatch: # Allows you to run this workflow manually from the Actions tab
+
+jobs:
+  import-deals:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+
+      - name: Install dependencies
+        run: npm install
+        working-directory: ./scheduler
+
+      - name: Run script
+        run: node index.js
+        working-directory: ./scheduler
+        env:
+          SERVICE_ACCOUNT_KEY_JSON: ${{ secrets.SERVICE_ACCOUNT_KEY_JSON }}
