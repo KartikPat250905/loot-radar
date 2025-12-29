@@ -1,0 +1,38 @@
+CREATE TABLE deal_notification (
+    id INTEGER NOT NULL PRIMARY KEY,
+    title TEXT NOT NULL,
+    description TEXT NOT NULL,
+    url TEXT NOT NULL,
+    imageUrl TEXT NOT NULL,
+    timestamp INTEGER NOT NULL,
+    isRead INTEGER NOT NULL DEFAULT 0
+);
+
+-- Insert a notification
+insertNotification:
+INSERT OR REPLACE INTO deal_notification (id, title, description, url, imageUrl, timestamp, isRead)
+VALUES (?, ?, ?, ?, ?, ?, ?);
+
+-- Get all notifications, newest first
+getAllNotifications:
+SELECT * FROM deal_notification ORDER BY timestamp DESC;
+
+-- Get unread notifications count
+getUnreadNotificationCount:
+SELECT count(*) FROM deal_notification WHERE isRead = 0;
+
+-- Mark a notification as read
+markAsRead:
+UPDATE deal_notification SET isRead = 1 WHERE id = ?;
+
+-- Mark all as read
+markAllAsRead:
+UPDATE deal_notification SET isRead = 1;
+
+-- Delete a notification by id
+deleteNotificationById:
+DELETE FROM deal_notification WHERE id = ?;
+
+-- Clear all notifications
+clearAllNotifications:
+DELETE FROM deal_notification;
