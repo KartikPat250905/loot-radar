@@ -2,7 +2,8 @@ name: Import Game Deals
 
 on:
   schedule:
-    - cron: '*/30 * * * *'
+    - cron: "*/30 * * * *"   # Use double quotes, not single quotes
+  workflow_dispatch: {}       # Add {} to explicitly define manual trigger
 
 jobs:
   import-deals:
