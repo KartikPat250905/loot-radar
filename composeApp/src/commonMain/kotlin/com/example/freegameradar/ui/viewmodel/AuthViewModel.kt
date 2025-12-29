@@ -6,6 +6,8 @@ import com.example.freegameradar.data.auth.getCoroutineContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 
 class AuthViewModel(
@@ -14,23 +16,21 @@ class AuthViewModel(
     private val _authState = MutableStateFlow<AuthState>(AuthState.Loading)
     val authState: StateFlow<AuthState> = _authState
 
-    fun checkAuthState() {
-        _authState.value = AuthState.Loading
-
-        CoroutineScope(getCoroutineContext()).launch {
-            val user = authRepository.getCurrentUser()
-            _authState.value =
-                if (user != null) AuthState.LoggedIn
-                else AuthState.Error("Not logged in")
-        }
+    init {
+        authRepository.getAuthStateFlow()
+            .onEach { user ->
+                _authState.value = when {
+                    user == null -> AuthState.Error("Not logged in")
+                    user.isAnonymous -> AuthState.Guest
+                    else -> AuthState.LoggedIn
+                }
+            }
+            .launchIn(CoroutineScope(getCoroutineContext()))
     }
 
     fun login(email: String, password: String) {
         CoroutineScope(getCoroutineContext()).launch {
             authRepository.login(email, password)
-                .onSuccess {
-                    _authState.value = AuthState.LoggedIn
-                }
                 .onFailure {
                     _authState.value = AuthState.Error(it.message ?: "Login failed")
                 }
@@ -40,9 +40,6 @@ class AuthViewModel(
     fun register(email: String, password: String) {
         CoroutineScope(getCoroutineContext()).launch {
              authRepository.register(email, password)
-                .onSuccess {
-                    _authState.value = AuthState.LoggedIn
-                }
                 .onFailure {
                     _authState.value = AuthState.Error(it.message ?: "Registration failed")
                 }
@@ -52,7 +49,9 @@ class AuthViewModel(
     fun continueAsGuest() {
         CoroutineScope(getCoroutineContext()).launch {
             authRepository.continueAsGuest()
-            _authState.value = AuthState.Guest
+                .onFailure {
+                    _authState.value = AuthState.Error(it.message ?: "Guest sign-in failed")
+                }
         }
     }
 
