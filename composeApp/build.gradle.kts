@@ -42,6 +42,7 @@ kotlin {
             implementation("com.google.firebase:firebase-auth-ktx")
             implementation("com.google.firebase:firebase-analytics")
             implementation(libs.firebase.firestore.ktx)
+            implementation(libs.firebase.messaging.ktx)
         }
         iosMain.dependencies {
             implementation(libs.ktor.client.darwin)

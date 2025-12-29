@@ -6,5 +6,6 @@ import kotlinx.serialization.Serializable
 data class UserSettings(
     val notificationsEnabled: Boolean = true,
     val preferredGamePlatforms: List<String> = emptyList(),
-    val preferredGameTypes: List<String> = emptyList()
+    val preferredGameTypes: List<String> = emptyList(),
+    val notificationTokens: List<String> = emptyList()
 )
