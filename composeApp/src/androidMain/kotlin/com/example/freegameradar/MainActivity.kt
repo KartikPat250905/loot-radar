@@ -9,8 +9,14 @@ import com.example.freegameradar.ui.viewmodel.AuthViewModel
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        
+        val startRoute = intent.getStringExtra("route")
+
         setContent {
-            App(AuthViewModel(AuthRepositoryImpl()))
+            App(
+                authViewModel = AuthViewModel(AuthRepositoryImpl()),
+                startRoute = startRoute
+            )
         }
     }
 }

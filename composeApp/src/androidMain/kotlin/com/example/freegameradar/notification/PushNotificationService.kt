@@ -12,6 +12,14 @@ class PushNotificationService : FirebaseMessagingService() {
 
     override fun onMessageReceived(message: RemoteMessage) {
         super.onMessageReceived(message)
-        // TODO: Handle incoming messages and show a notification
+
+        val notificationService = NotificationService(applicationContext)
+        notificationService.createNotificationChannel() // Ensure channel is created
+
+        // Extract deal count from the notification, with a fallback to 1
+        val dealCount = message.data["dealCount"]?.toIntOrNull() ?: 1
+        
+        // Show the summary notification
+        notificationService.showNewDealsNotification(dealCount)
     }
 }

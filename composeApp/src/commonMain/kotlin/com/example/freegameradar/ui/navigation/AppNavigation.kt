@@ -12,14 +12,18 @@ import com.example.freegameradar.data.repository.UserSettingsRepositoryImpl
 import com.example.freegameradar.ui.screens.HotDealsScreen
 import com.example.freegameradar.ui.screens.GameDetailScreen
 import com.example.freegameradar.ui.screens.HomeScreen
-import com.example.freegameradar.ui.screens.Notification
+import com.example.freegameradar.ui.screens.NotificationScreen
 import com.example.freegameradar.ui.screens.Settings
 import com.example.freegameradar.ui.screens.SetupScreen
 import com.example.freegameradar.ui.viewmodel.SetupViewModel
 
 @Composable
-fun AppNavigation(navController: NavHostController, innerPadding: PaddingValues, authRepository: AuthRepository) {
-    val startDestination = if (LocalSettings.isSetupComplete) Screen.Home.route else Screen.Setup.route
+fun AppNavigation(
+    navController: NavHostController, 
+    innerPadding: PaddingValues, 
+    authRepository: AuthRepository,
+    startDestination: String
+) {
 
     NavHost(
         navController = navController,
@@ -47,10 +51,7 @@ fun AppNavigation(navController: NavHostController, innerPadding: PaddingValues,
             )
         }
         composable(Screen.Notification.route) {
-            Notification(
-                navController = navController,
-                modifier = Modifier.padding(innerPadding)
-            )
+            NotificationScreen()
         }
         composable(Screen.HotDeals.route) {
             HotDealsScreen(
