@@ -2,7 +2,6 @@ const admin = require('firebase-admin');
 const axios = require('axios');
 
 // The service account key will be provided as an environment variable
-// This is more secure than keeping a file in the repository
 if (!process.env.SERVICE_ACCOUNT_KEY_JSON) {
   throw new Error('The SERVICE_ACCOUNT_KEY_JSON environment variable is not set.');
 }
@@ -17,34 +16,62 @@ const messaging = admin.messaging();
 const GAME_API_URL = 'https://www.gamerpower.com/api/giveaways';
 
 /**
- * Fetches all deals from the API and saves/updates them in Firestore.
+ * Efficiently fetches deals, identifies only the new ones, and saves them to Firestore.
+ * This version handles a variable number of API results by chunking queries.
  * @returns {Array} A list of the new deals that were just imported.
  */
 async function importDeals() {
   console.log('Starting deal import...');
   const response = await axios.get(GAME_API_URL);
-  const deals = response.data;
+  const dealsFromApi = response.data;
 
-  if (!Array.isArray(deals)) {
-    console.error('API did not return an array. Aborting.');
+  if (!Array.isArray(dealsFromApi) || dealsFromApi.length === 0) {
+    console.log('API did not return an array or it was empty. Aborting.');
     return [];
   }
 
   const dealsCollection = db.collection('deals');
-  const newDeals = [];
+  const apiDealIds = dealsFromApi.map(deal => String(deal.id));
 
-  for (const deal of deals) {
-    const docRef = dealsCollection.doc(String(deal.id));
-    const doc = await docRef.get();
-
-    if (!doc.exists) {
-      // This is a brand new deal
-      newDeals.push(deal);
-      await docRef.set(deal);
-    }
+  // --- CHUNKING LOGIC --- //
+  const CHUNK_SIZE = 30; // Firestore 'in' query limit
+  const idChunks = [];
+  for (let i = 0; i < apiDealIds.length; i += CHUNK_SIZE) {
+    idChunks.push(apiDealIds.slice(i, i + CHUNK_SIZE));
   }
 
-  console.log(`Import complete. Found ${newDeals.length} new deals.`);
+  const existingDealIds = new Set();
+  const queryPromises = idChunks.map(chunk =>
+    dealsCollection.where(admin.firestore.FieldPath.documentId(), 'in', chunk).get()
+  );
+
+  const snapshots = await Promise.all(queryPromises);
+  snapshots.forEach(snapshot => {
+    snapshot.docs.forEach(doc => existingDealIds.add(doc.id));
+  });
+  // --- END CHUNKING LOGIC --- //
+
+  console.log(`API returned ${apiDealIds.length} deals. Found ${existingDealIds.size} existing deals in DB.`);
+
+  const newDeals = [];
+  const batch = db.batch();
+
+  dealsFromApi.forEach(deal => {
+    const dealId = String(deal.id);
+    if (!existingDealIds.has(dealId)) {
+      newDeals.push(deal);
+      const docRef = dealsCollection.doc(dealId);
+      batch.set(docRef, deal);
+    }
+  });
+
+  if (newDeals.length > 0) {
+    await batch.commit();
+    console.log(`Successfully imported ${newDeals.length} new deals.`);
+  } else {
+    console.log('No new deals to import.');
+  }
+
   return newDeals;
 }
 
@@ -60,7 +87,7 @@ async function notifyUsersForDeal(deal) {
   const dealPlatforms = deal.platforms.split(',').map(p => p.trim().toLowerCase());
   const dealType = deal.type.toLowerCase();
 
-  // Find users who want notifications for this platform and type
+  // This query is already efficient as it targets only relevant users.
   const usersSnapshot = await db.collection('users')
     .where('notificationsEnabled', '==', true)
     .where('preferredGamePlatforms', 'array-contains-any', dealPlatforms)
@@ -81,9 +108,9 @@ async function notifyUsersForDeal(deal) {
       const message = {
         notification: {
           title: 'New Free Game Alert!',
-          body: `A new deal is available: ${deal.title}`
+          body: `A new deal is available: ${deal.title}`,
         },
-        tokens: user.notificationTokens // Send to all of the user's devices
+        tokens: user.notificationTokens,
       };
       notificationsToSend.push(messaging.sendEachForMulticast(message));
     }
