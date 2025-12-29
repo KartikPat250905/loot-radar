@@ -18,7 +18,6 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -27,6 +26,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.example.freegameradar.permissions.rememberPermissionHandler
 import com.example.freegameradar.settings.UserSettings
 import com.example.freegameradar.ui.components.FilterChip
 import com.example.freegameradar.ui.viewmodel.SetupViewModel
@@ -37,10 +37,12 @@ fun SetupScreen(
     viewModel: SetupViewModel,
     onNavigateToHome: () -> Unit
 ) {
-    val userSettings by viewModel.userSettings.collectAsState()
-    var notificationsEnabled by remember { mutableStateOf(userSettings.notificationsEnabled) }
-    var selectedPlatforms by remember { mutableStateOf(userSettings.preferredGamePlatforms) }
-    var selectedTypes by remember { mutableStateOf(userSettings.preferredGameTypes) }
+    // Default notifications to OFF to ensure user interaction triggers permission request.
+    var notificationsEnabled by remember { mutableStateOf(false) }
+    var selectedPlatforms by remember { mutableStateOf(emptyList<String>()) }
+    var selectedTypes by remember { mutableStateOf(emptyList<String>()) }
+
+    val permissionHandler = rememberPermissionHandler()
 
     val platforms = listOf(
         "pc", "steam", "epic-games-store", "ubisoft", "gog", "itchio",
@@ -117,7 +119,15 @@ fun SetupScreen(
                 Text("Enable Notifications")
                 Switch(
                     checked = notificationsEnabled,
-                    onCheckedChange = { notificationsEnabled = it }
+                    onCheckedChange = { wantsToEnable ->
+                        if (wantsToEnable) {
+                            permissionHandler.requestNotificationPermission { isGranted ->
+                                notificationsEnabled = isGranted
+                            }
+                        } else {
+                            notificationsEnabled = false
+                        }
+                    }
                 )
             }
             Spacer(modifier = Modifier.height(32.dp))
