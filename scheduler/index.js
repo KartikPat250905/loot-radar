@@ -72,90 +72,118 @@ async function importDeals() {
 }
 
 /**
- * For each new deal, finds matching users and adds the deal to their personal notification inbox.
- * @returns {Map<string, Array<Object>>} A map where keys are user IDs and values are the new deals for that user.
+ * REWRITTEN: Collects all matching deals for each user and builds a map.
+ * This follows the correct flow of checking each user against all new deals.
+ * @returns {Map<string, Array<Object>>} A map where keys are user IDs and values are their matching deals.
  */
 async function createInAppNotifications(newDeals) {
   const userDealsMap = new Map();
+  
+  // 1. Get all users who have notifications enabled.
+  const usersSnapshot = await db.collection('users').where('notificationsEnabled', '==', true).get();
 
-  for (const deal of newDeals) {
-    const dealPlatforms = deal.platforms.split(',').map(p => p.trim().toLowerCase());
-    const dealType = deal.type.toLowerCase();
+  if (usersSnapshot.empty) {
+    console.log("No users have notifications enabled. Skipping deal matching.");
+    return userDealsMap;
+  }
+  
+  console.log(`Matching ${newDeals.length} new deals against ${usersSnapshot.size} users.`);
 
-    const usersSnapshot = await db.collection('users')
-      .where('notificationsEnabled', '==', true)
-      .where('preferredGamePlatforms', 'array-contains-any', dealPlatforms)
-      .get();
-
-    if (usersSnapshot.empty) {
-      continue;
+  // 2. For each user, iterate through all new deals to find matches.
+  for (const userDoc of usersSnapshot.docs) {
+    const user = userDoc.data();
+    const userId = userDoc.id;
+    const userPlatforms = new Set((user.preferredGamePlatforms || []).map(p => p.toLowerCase()));
+    
+    if (userPlatforms.size === 0) {
+      continue; // Skip user if they haven't set any preferred platforms.
     }
 
-    for (const userDoc of usersSnapshot.docs) {
-      const user = userDoc.data();
-      const userWantsType = user.preferredGameTypes.includes(dealType);
-
-      if (userWantsType) {
-        // Add this deal to the user's personal notification inbox
-        const notificationRef = db.collection('users').doc(userDoc.id).collection('notifications').doc(String(deal.id));
-        await notificationRef.set({ ...deal, receivedAt: new Date(), read: false });
-        
-        // Track which deals belong to which user
-        if (!userDealsMap.has(userDoc.id)) {
-          userDealsMap.set(userDoc.id, []);
-        }
-        userDealsMap.get(userDoc.id).push(deal);
+    const matchingDealsForUser = [];
+    
+    for (const deal of newDeals) {
+      const dealPlatforms = deal.platforms.split(',').map(p => p.trim().toLowerCase());
+      const hasMatchingPlatform = dealPlatforms.some(p => userPlatforms.has(p));
+      
+      if (hasMatchingPlatform) {
+        matchingDealsForUser.push(deal);
       }
     }
+    
+    // 3. If matches were found, add them to the user's list in the map.
+    if (matchingDealsForUser.length > 0) {
+      console.log(`User ${userId} has ${matchingDealsForUser.length} matching deals.`);
+      userDealsMap.set(userId, matchingDealsForUser);
+
+      // Also update their in-app notification inbox in a single batch.
+      const batch = db.batch();
+      const notificationsCollection = db.collection('users').doc(userId).collection('notifications');
+      matchingDealsForUser.forEach(deal => {
+        const notificationRef = notificationsCollection.doc(String(deal.id));
+        batch.set(notificationRef, { ...deal, receivedAt: new Date(), read: false });
+      });
+      await batch.commit();
+    }
   }
+  
   return userDealsMap;
 }
 
+
 /**
- * Sends a personalized, summary push notification to each user who has new deals.
+ * REWRITTEN: Sends ONE personalized data message per user, containing ALL their deals.
  */
 async function sendPersonalizedNotifications(userDealsMap) {
   if (userDealsMap.size === 0) {
-    console.log('No users to notify.');
+    console.log('No users with matching deals to notify.');
     return;
   }
 
-  console.log(`Preparing to send personalized notifications to ${userDealsMap.size} users.`);
+  console.log(`Starting to send ONE notification each to ${userDealsMap.size} users.`);
 
-  for (const [userId, deals] of userDealsMap.entries()) {
-    const userDoc = await db.collection('users').doc(userId).get();
-    const user = userDoc.data();
-
-    if (user && user.notificationTokens && user.notificationTokens.length > 0) {
-      const dealCount = deals.length;
-      let title, body;
-
-      if (dealCount === 1) {
-        title = 'Your Loot Radar is beeping!';
-        body = 'A new free game deal matching your preferences just dropped!';
-      } else {
-        title = 'Heads up, new loot spotted!';
-        body = `You\'ve got ${dealCount} new free game deals waiting for you!`;
+  const userIds = Array.from(userDealsMap.keys());
+  // Fetch all required user documents at once to get their tokens
+  const userDocs = await db.collection('users').where(admin.firestore.FieldPath.documentId(), 'in', userIds).get();
+  
+  const userIdToTokens = new Map();
+  userDocs.forEach(doc => {
+      const data = doc.data();
+      if (data.notificationTokens && data.notificationTokens.length > 0) {
+          userIdToTokens.set(doc.id, data.notificationTokens);
       }
+  });
 
+  // For each user in the map, send ONE message containing ALL their deals.
+  for (const [userId, deals] of userDealsMap.entries()) {
+    const tokens = userIdToTokens.get(userId);
+
+    if (tokens && tokens.length > 0) {
       const message = {
-        notification: { title, body },
-        tokens: user.notificationTokens,
+        data: {
+          // The 'deals' field now contains the full array of deals as a JSON string.
+          deals: JSON.stringify(deals)
+        },
+        tokens: tokens,
       };
 
-      console.log(`Sending notification to user ${userId} for ${dealCount} deals.`);
+      console.log(`Sending ONE message with ${deals.length} deals to user ${userId}.`);
+      // This sends a single multicast message to all of a user's devices.
       await messaging.sendEachForMulticast(message);
+    } else {
+        console.log(`User ${userId} had matching deals but no registered notification tokens.`);
     }
   }
-  console.log('Personalized notifications sent successfully.');
+  
+  console.log('Finished sending all personalized data messages.');
 }
+
 
 /**
  * Deletes notifications for deals that are no longer active.
  */
 async function cleanupExpiredNotifications(validDealIds) {
   console.log('Starting expired notifications cleanup...');
-  const validDealIdsSet = new Set(validDealIds);
+  const validDealIdsSet = new Set(validDealIds.map(String));
   const usersSnapshot = await db.collection('users').get();
 
   if (usersSnapshot.empty) {
@@ -163,14 +191,12 @@ async function cleanupExpiredNotifications(validDealIds) {
     return;
   }
 
-  console.log(`Found ${usersSnapshot.size} users to check for cleanup.`);
-
   const cleanupPromises = [];
-  for (const userDoc of usersSnapshot.docs) {
+  usersSnapshot.forEach(userDoc => {
     const notificationsCollection = userDoc.ref.collection('notifications');
     const promise = notificationsCollection.get().then(notificationsSnapshot => {
       if (notificationsSnapshot.empty) {
-        return; // No notifications for this user, do nothing.
+        return;
       }
       const batch = db.batch();
       let deletedCountForUser = 0;
@@ -186,11 +212,12 @@ async function cleanupExpiredNotifications(validDealIds) {
       }
     });
     cleanupPromises.push(promise);
-  }
+  });
 
   await Promise.all(cleanupPromises);
   console.log('Expired notifications cleanup finished.');
 }
+
 
 /**
  * Main function to run the entire process.
@@ -198,9 +225,8 @@ async function cleanupExpiredNotifications(validDealIds) {
 async function main() {
   try {
     const { newDeals, apiDealIds } = await importDeals();
-    if (apiDealIds && apiDealIds.length > 0) {
-      await cleanupExpiredNotifications(apiDealIds);
-    }
+    await cleanupExpiredNotifications(apiDealIds);
+
     if (newDeals.length > 0) {
       const userDealsMap = await createInAppNotifications(newDeals);
       await sendPersonalizedNotifications(userDealsMap);

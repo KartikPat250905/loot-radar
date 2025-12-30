@@ -19,6 +19,22 @@ class NotificationRepository(private val database: GameDatabase) {
         )
     }
 
+    fun saveNotifications(notifications: List<DealNotification>) {
+        queries.transaction {
+            notifications.forEach { notification ->
+                queries.insertNotification(
+                    id = notification.id,
+                    title = notification.title,
+                    description = notification.description,
+                    url = notification.url,
+                    imageUrl = notification.imageUrl,
+                    timestamp = notification.timestamp,
+                    isRead = if (notification.isRead) 1L else 0L
+                )
+            }
+        }
+    }
+
     fun getAllNotifications(): List<DealNotification> {
         return queries.getAllNotifications().executeAsList().map {
             DealNotification(
@@ -35,6 +51,10 @@ class NotificationRepository(private val database: GameDatabase) {
 
     fun markAsRead(id: Long) {
         queries.markAsRead(id)
+    }
+
+    fun markAllAsRead() {
+        queries.markAllAsRead()
     }
 
     fun getUnreadCount(): Int {

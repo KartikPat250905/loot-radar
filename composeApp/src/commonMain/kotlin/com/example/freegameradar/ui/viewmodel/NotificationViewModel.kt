@@ -15,12 +15,25 @@ class NotificationViewModel(private val notificationRepository: NotificationRepo
     val notifications: StateFlow<List<DealNotification>> = _notifications.asStateFlow()
 
     init {
+        // The init block already calls loadNotifications, as requested.
         loadNotifications()
     }
 
     private fun loadNotifications() {
         viewModelScope.launch {
-            _notifications.value = notificationRepository.getAllNotifications()
+            val notificationsFromRepo = notificationRepository.getAllNotifications()
+            // Added logging to check the data from the repository.
+            println("NotificationViewModel: Loaded ${notificationsFromRepo.size} notifications from repository.")
+            // Sort notifications by timestamp, newest first, as requested.
+            _notifications.value = notificationsFromRepo.sortedByDescending { it.timestamp }
+        }
+    }
+
+    fun markAllAsRead() {
+        viewModelScope.launch {
+            notificationRepository.markAllAsRead()
+            loadNotifications() // Refresh the list to show them as read.
+            println("NotificationViewModel: Marked all notifications as read.")
         }
     }
 

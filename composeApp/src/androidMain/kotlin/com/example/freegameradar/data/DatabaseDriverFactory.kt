@@ -6,7 +6,7 @@ import app.cash.sqldelight.driver.android.AndroidSqliteDriver
 import com.example.freegameradar.db.GameDatabase
 
 actual object DatabaseDriverFactory {
-    lateinit var context: Context
+    private lateinit var context: Context
 
     fun init(context: Context) {
         this.context = context

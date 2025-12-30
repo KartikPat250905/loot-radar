@@ -11,7 +11,6 @@ import com.example.freegameradar.core.LocalSettings
 import com.example.freegameradar.data.auth.AuthRepository
 import com.example.freegameradar.data.repository.NotificationRepository
 import com.example.freegameradar.data.repository.UserSettingsRepositoryImpl
-import com.example.freegameradar.db.GameDatabase
 import com.example.freegameradar.ui.screens.HotDealsScreen
 import com.example.freegameradar.ui.screens.GameDetailScreen
 import com.example.freegameradar.ui.screens.HomeScreen
@@ -27,10 +26,8 @@ fun AppNavigation(
     innerPadding: PaddingValues, 
     authRepository: AuthRepository,
     startDestination: String,
-    database: GameDatabase
+    notificationRepository: NotificationRepository
 ) {
-    val notificationRepository = NotificationRepository(database)
-
     NavHost(
         navController = navController,
         startDestination = startDestination
@@ -58,7 +55,10 @@ fun AppNavigation(
         }
         composable(Screen.Notification.route) {
             val viewModel: NotificationViewModel = viewModel { NotificationViewModel(notificationRepository) }
-            NotificationScreen(viewModel)
+            NotificationScreen(
+                viewModel = viewModel,
+                modifier = Modifier.padding(innerPadding) // Pass the padding from the main Scaffold
+            )
         }
         composable(Screen.HotDeals.route) {
             HotDealsScreen(
