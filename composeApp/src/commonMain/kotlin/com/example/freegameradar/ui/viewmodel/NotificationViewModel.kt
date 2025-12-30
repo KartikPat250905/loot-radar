@@ -9,38 +9,60 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
-class NotificationViewModel(private val notificationRepository: NotificationRepository) : ViewModel() {
+class NotificationViewModel(
+    private val repository: NotificationRepository
+) : ViewModel() {
 
     private val _notifications = MutableStateFlow<List<DealNotification>>(emptyList())
     val notifications: StateFlow<List<DealNotification>> = _notifications.asStateFlow()
 
     init {
-        // The init block already calls loadNotifications, as requested.
+        println("NotificationViewModel: ViewModel initialized, loading notifications...")
         loadNotifications()
     }
 
     private fun loadNotifications() {
         viewModelScope.launch {
-            val notificationsFromRepo = notificationRepository.getAllNotifications()
-            // Added logging to check the data from the repository.
-            println("NotificationViewModel: Loaded ${notificationsFromRepo.size} notifications from repository.")
-            // Sort notifications by timestamp, newest first, as requested.
-            _notifications.value = notificationsFromRepo.sortedByDescending { it.timestamp }
+            try {
+                val allNotifications = repository.getAllNotifications()
+                println("NotificationViewModel: Loaded ${allNotifications.size} notifications from repository")
+                _notifications.value = allNotifications.sortedByDescending { it.timestamp }
+            } catch (e: Exception) {
+                println("NotificationViewModel: Error loading notifications - ${e.message}")
+                e.printStackTrace()
+                _notifications.value = emptyList()
+            }
         }
     }
 
     fun markAllAsRead() {
         viewModelScope.launch {
-            notificationRepository.markAllAsRead()
-            loadNotifications() // Refresh the list to show them as read.
-            println("NotificationViewModel: Marked all notifications as read.")
+            try {
+                repository.markAllAsRead()
+                println("NotificationViewModel: Marked all notifications as read")
+                loadNotifications() // Reload to update UI
+            } catch (e: Exception) {
+                println("NotificationViewModel: Error marking all as read - ${e.message}")
+                e.printStackTrace()
+            }
         }
     }
 
     fun deleteNotification(id: Long) {
         viewModelScope.launch {
-            notificationRepository.deleteNotification(id)
-            loadNotifications() // Refresh the list
+            try {
+                repository.deleteNotification(id)
+                println("NotificationViewModel: Deleted notification with id: $id")
+                loadNotifications() // Reload to update UI
+            } catch (e: Exception) {
+                println("NotificationViewModel: Error deleting notification - ${e.message}")
+                e.printStackTrace()
+            }
         }
+    }
+
+    fun refreshNotifications() {
+        println("NotificationViewModel: Manually refreshing notifications...")
+        loadNotifications()
     }
 }
