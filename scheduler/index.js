@@ -113,7 +113,8 @@ async function notifyUsersAboutNewDeals(newDeals) {
       };
 
       allNotifications.push(messaging.sendEachForMulticast(message));
-      console.log(`Preparing to send ${matchingDealsForUser.length} deal IDs to user ${doc.id}`);
+      // Updated log message for clarity
+      console.log(`Sending notification for ${matchingDealsForUser.length} game(s) to user ${doc.id}.`);
     }
   });
 
