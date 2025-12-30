@@ -10,25 +10,23 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
-class NotificationViewModel(
-    private val notificationRepository: NotificationRepository
-) : ViewModel() {
+class NotificationViewModel(private val notificationRepository: NotificationRepository) : ViewModel() {
 
-    val notifications: StateFlow<List<DealNotification>> =
-        notificationRepository.getAllNotifications()
-            .map { list ->
-                println("UI loaded ${list.size} notifications")
-                list.sortedByDescending { it.timestamp }
-            }
-            .stateIn(
-                viewModelScope,
-                SharingStarted.WhileSubscribed(5_000),
-                emptyList()
-            )
+    val notifications: StateFlow<List<DealNotification>> = notificationRepository.getAllNotifications()
+        .map { list -> 
+            println("NotificationViewModel: Loaded ${list.size} notifications from repository.")
+            list.sortedByDescending { it.timestamp } 
+        }
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = emptyList()
+        )
 
     fun markAllAsRead() {
         viewModelScope.launch {
             notificationRepository.markAllAsRead()
+            println("NotificationViewModel: Marked all notifications as read.")
         }
     }
 
@@ -36,5 +34,13 @@ class NotificationViewModel(
         viewModelScope.launch {
             notificationRepository.deleteNotification(id)
         }
+    }
+
+    // Added this function to fix the build error.
+    // Since the UI is reactive, no action is needed here to refresh from the local DB.
+    // This can be used later for server-side fetching.
+    fun refreshNotifications() {
+        // Currently empty as the notifications Flow is always up-to-date.
+        println("NotificationViewModel: Refresh requested (currently a no-op).")
     }
 }

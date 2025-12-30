@@ -57,7 +57,8 @@ fun AppNavigation(
             val viewModel: NotificationViewModel = viewModel { NotificationViewModel(notificationRepository) }
             NotificationScreen(
                 viewModel = viewModel,
-                modifier = Modifier.padding(innerPadding) // Pass the padding from the main Scaffold
+                navController = navController, // Pass the NavController
+                modifier = Modifier.padding(innerPadding)
             )
         }
         composable(Screen.HotDeals.route) {

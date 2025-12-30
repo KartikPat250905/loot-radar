@@ -13,24 +13,13 @@ class NotificationRepository(private val database: GameDatabase) {
 
     private val queries = database.notificationsQueries
 
-    fun saveNotification(notification: DealNotification) {
-        queries.insertNotification(
-            id = notification.id,
-            title = notification.title,
-            description = notification.description,
-            url = notification.url,
-            imageUrl = notification.imageUrl,
-            timestamp = notification.timestamp,
-            isRead = if (notification.isRead) 1L else 0L
-        )
-    }
-
     fun saveNotifications(notifications: List<DealNotification>) {
         queries.transaction {
             notifications.forEach { notification ->
                 queries.insertNotification(
                     id = notification.id,
                     title = notification.title,
+                    worth = notification.worth,
                     description = notification.description,
                     url = notification.url,
                     imageUrl = notification.imageUrl,
@@ -46,18 +35,19 @@ class NotificationRepository(private val database: GameDatabase) {
             .asFlow()
             .mapToList(Dispatchers.IO)
             .map { list ->
-            list.map { entity ->
-                DealNotification(
-                    id = entity.id,
-                    title = entity.title,
-                    description = entity.description,
-                    url = entity.url,
-                    imageUrl = entity.imageUrl,
-                    timestamp = entity.timestamp,
-                    isRead = entity.isRead == 1L
-                )
+                list.map { entity ->
+                    DealNotification(
+                        id = entity.id,
+                        title = entity.title,
+                        worth = entity.worth,
+                        description = entity.description,
+                        url = entity.url,
+                        imageUrl = entity.imageUrl,
+                        timestamp = entity.timestamp,
+                        isRead = entity.isRead == 1L
+                    )
+                }
             }
-        }
     }
 
     fun markAsRead(id: Long) {

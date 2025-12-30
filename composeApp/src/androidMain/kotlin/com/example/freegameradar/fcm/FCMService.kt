@@ -12,6 +12,13 @@ import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 
+// =======================================================================================
+// DEPRECATION NOTICE
+// This service is no longer in use and can be safely deleted.
+// The active service is `PushNotificationService.kt` as defined in `AndroidManifest.xml`.
+// All notification logic has been moved there.
+// =======================================================================================
+
 @Serializable
 data class FcmDeal(
     val id: Long,
@@ -30,7 +37,7 @@ class FCMService : FirebaseMessagingService() {
     private val ioScope = CoroutineScope(Dispatchers.IO)
 
     override fun onMessageReceived(remoteMessage: RemoteMessage) {
-        Log.d("FCMService", "Message received: ${remoteMessage.data}")
+        Log.w("FCMService", "This service is DEPRECATED. Message received: ${remoteMessage.data}")
 
         val dealsJson = remoteMessage.data["deals"] ?: return
 
@@ -55,6 +62,7 @@ class FCMService : FirebaseMessagingService() {
             DealNotification(
                 id = it.id,
                 title = it.title,
+                worth = "N/A", // Added default value to fix build error
                 description = it.description,
                 url = it.open_giveaway_url,
                 imageUrl = it.image,

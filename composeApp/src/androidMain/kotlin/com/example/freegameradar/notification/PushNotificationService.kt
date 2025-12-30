@@ -38,8 +38,6 @@ class PushNotificationService : FirebaseMessagingService() {
     private suspend fun fetchDealsAndNotify(dealIds: List<Long>) {
         try {
             val firestore = Firebase.firestore
-            // Firestore 'in' query is limited to 30 items per query.
-            // We need to chunk the requests if there are more than 30 deals.
             val chunkedDealIds = dealIds.chunked(30)
             val fetchedDeals = mutableListOf<DealNotification>()
 
@@ -50,11 +48,11 @@ class PushNotificationService : FirebaseMessagingService() {
                     .await()
 
                 val dealsFromChunk = documents.mapNotNull { doc ->
-                    // It's safer to manually map fields to avoid crashes if the data model changes.
                     try {
                         DealNotification(
                             id = doc.getLong("id")!!,
                             title = doc.getString("title") ?: "",
+                            worth = doc.getString("worth") ?: "N/A", // Fetch the new worth field
                             description = doc.getString("description") ?: "",
                             url = doc.getString("open_giveaway_url") ?: "",
                             imageUrl = doc.getString("image") ?: "",
@@ -69,22 +67,19 @@ class PushNotificationService : FirebaseMessagingService() {
                 fetchedDeals.addAll(dealsFromChunk)
             }
 
-
             if (fetchedDeals.isNotEmpty()) {
                 Log.d("PushNotificationService", "Successfully fetched ${fetchedDeals.size} deals from Firestore.")
 
-                // 1. Save to local database
                 val repository = FreeGameRadarApp.instance.notificationRepository
                 repository.saveNotifications(fetchedDeals)
                 Log.d("PushNotificationService", "Saved ${fetchedDeals.size} deals to local DB.")
 
-                // 2. Show system notification
                 val notificationService = NotificationService(applicationContext)
                 notificationService.showNewDealsNotification(fetchedDeals)
                 Log.d("PushNotificationService", "Displayed system notification.")
 
             } else {
-                Log.d("PushNotificationService", "Could not find any matching deals in Firestore for the given IDs.")
+                Log.d("PushNotificationService", "Could not find matching deals in Firestore for given IDs.")
             }
         } catch (e: Exception) {
             Log.e("PushNotificationService", "Error fetching deals from Firestore", e)

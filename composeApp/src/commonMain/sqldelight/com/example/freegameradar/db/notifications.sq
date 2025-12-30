@@ -1,6 +1,7 @@
 CREATE TABLE deal_notification (
     id INTEGER NOT NULL PRIMARY KEY,
     title TEXT NOT NULL,
+    worth TEXT NOT NULL,
     description TEXT NOT NULL,
     url TEXT NOT NULL,
     imageUrl TEXT NOT NULL,
@@ -10,8 +11,8 @@ CREATE TABLE deal_notification (
 
 -- Insert a notification
 insertNotification:
-INSERT OR REPLACE INTO deal_notification (id, title, description, url, imageUrl, timestamp, isRead)
-VALUES (?, ?, ?, ?, ?, ?, ?);
+INSERT OR REPLACE INTO deal_notification (id, title, worth, description, url, imageUrl, timestamp, isRead)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?);
 
 -- Get all notifications, newest first
 getAllNotifications:
