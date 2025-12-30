@@ -17,6 +17,8 @@ const GAME_API_URL = 'https://www.gamerpower.com/api/giveaways';
 
 /**
  * Efficiently fetches deals, identifies only the new ones, and saves them to Firestore.
+ * This version handles a variable number of API results by chunking queries.
+ * @returns {Array} A list of the new deals that were just imported.
  */
 async function importDeals() {
   console.log('Starting deal import...');
@@ -25,13 +27,14 @@ async function importDeals() {
 
   if (!Array.isArray(dealsFromApi) || dealsFromApi.length === 0) {
     console.log('API did not return an array or it was empty. Aborting.');
-    return { newDeals: [], apiDealIds: [] };
+    return [];
   }
 
   const dealsCollection = db.collection('deals');
   const apiDealIds = dealsFromApi.map(deal => String(deal.id));
 
-  const CHUNK_SIZE = 30;
+  // --- CHUNKING LOGIC --- //
+  const CHUNK_SIZE = 30; // Firestore 'in' query limit
   const idChunks = [];
   for (let i = 0; i < apiDealIds.length; i += CHUNK_SIZE) {
     idChunks.push(apiDealIds.slice(i, i + CHUNK_SIZE));
@@ -46,6 +49,7 @@ async function importDeals() {
   snapshots.forEach(snapshot => {
     snapshot.docs.forEach(doc => existingDealIds.add(doc.id));
   });
+  // --- END CHUNKING LOGIC --- //
 
   console.log(`API returned ${apiDealIds.length} deals. Found ${existingDealIds.size} existing deals in DB.`);
 
@@ -68,168 +72,67 @@ async function importDeals() {
     console.log('No new deals to import.');
   }
 
-  return { newDeals, apiDealIds };
+  return newDeals;
 }
 
 /**
- * REWRITTEN: Collects all matching deals for each user and builds a map.
- * This follows the correct flow of checking each user against all new deals.
- * @returns {Map<string, Array<Object>>} A map where keys are user IDs and values are their matching deals.
+ * Finds users whose preferences match a given deal and sends them a notification.
+ * @param {Object} deal - The game deal to check against user preferences.
  */
-async function createInAppNotifications(newDeals) {
-  const userDealsMap = new Map();
-  
-  // 1. Get all users who have notifications enabled.
-  const usersSnapshot = await db.collection('users').where('notificationsEnabled', '==', true).get();
-
-  if (usersSnapshot.empty) {
-    console.log("No users have notifications enabled. Skipping deal matching.");
-    return userDealsMap;
-  }
-  
-  console.log(`Matching ${newDeals.length} new deals against ${usersSnapshot.size} users.`);
-
-  // 2. For each user, iterate through all new deals to find matches.
-  for (const userDoc of usersSnapshot.docs) {
-    const user = userDoc.data();
-    const userId = userDoc.id;
-    const userPlatforms = new Set((user.preferredGamePlatforms || []).map(p => p.toLowerCase()));
-    
-    if (userPlatforms.size === 0) {
-      continue; // Skip user if they haven't set any preferred platforms.
-    }
-
-    const matchingDealsForUser = [];
-    
-    for (const deal of newDeals) {
-      const dealPlatforms = deal.platforms.split(',').map(p => p.trim().toLowerCase());
-      const hasMatchingPlatform = dealPlatforms.some(p => userPlatforms.has(p));
-      
-      if (hasMatchingPlatform) {
-        matchingDealsForUser.push(deal);
-      }
-    }
-    
-    // 3. If matches were found, add them to the user's list in the map.
-    if (matchingDealsForUser.length > 0) {
-      console.log(`User ${userId} has ${matchingDealsForUser.length} matching deals.`);
-      userDealsMap.set(userId, matchingDealsForUser);
-
-      // Also update their in-app notification inbox in a single batch.
-      const batch = db.batch();
-      const notificationsCollection = db.collection('users').doc(userId).collection('notifications');
-      matchingDealsForUser.forEach(deal => {
-        const notificationRef = notificationsCollection.doc(String(deal.id));
-        batch.set(notificationRef, { ...deal, receivedAt: new Date(), read: false });
-      });
-      await batch.commit();
-    }
-  }
-  
-  return userDealsMap;
-}
-
-
-/**
- * REWRITTEN: Sends ONE personalized data message per user, containing ALL their deals.
- */
-async function sendPersonalizedNotifications(userDealsMap) {
-  if (userDealsMap.size === 0) {
-    console.log('No users with matching deals to notify.');
+async function notifyUsersForDeal(deal) {
+  if (!deal || !deal.platforms) {
     return;
   }
 
-  console.log(`Starting to send ONE notification each to ${userDealsMap.size} users.`);
+  const dealPlatforms = deal.platforms.split(',').map(p => p.trim().toLowerCase());
+  const dealType = deal.type.toLowerCase();
 
-  const userIds = Array.from(userDealsMap.keys());
-  // Fetch all required user documents at once to get their tokens
-  const userDocs = await db.collection('users').where(admin.firestore.FieldPath.documentId(), 'in', userIds).get();
-  
-  const userIdToTokens = new Map();
-  userDocs.forEach(doc => {
-      const data = doc.data();
-      if (data.notificationTokens && data.notificationTokens.length > 0) {
-          userIdToTokens.set(doc.id, data.notificationTokens);
-      }
-  });
+  // This query is already efficient as it targets only relevant users.
+  const usersSnapshot = await db.collection('users')
+    .where('notificationsEnabled', '==', true)
+    .where('preferredGamePlatforms', 'array-contains-any', dealPlatforms)
+    .get();
 
-  // For each user in the map, send ONE message containing ALL their deals.
-  for (const [userId, deals] of userDealsMap.entries()) {
-    const tokens = userIdToTokens.get(userId);
+  if (usersSnapshot.empty) {
+    console.log(`No users found for platforms: ${dealPlatforms.join(', ')}`);
+    return;
+  }
 
-    if (tokens && tokens.length > 0) {
+  const notificationsToSend = [];
+
+  usersSnapshot.forEach(doc => {
+    const user = doc.data();
+    const userWantsType = user.preferredGameTypes.includes(dealType);
+
+    if (userWantsType && user.notificationTokens && user.notificationTokens.length > 0) {
       const message = {
-        data: {
-          // The 'deals' field now contains the full array of deals as a JSON string.
-          deals: JSON.stringify(deals)
+        notification: {
+          title: 'New Free Game Alert!',
+          body: `A new deal is available: ${deal.title}`,
         },
-        tokens: tokens,
+        tokens: user.notificationTokens,
       };
-
-      console.log(`Sending ONE message with ${deals.length} deals to user ${userId}.`);
-      // This sends a single multicast message to all of a user's devices.
-      await messaging.sendEachForMulticast(message);
-    } else {
-        console.log(`User ${userId} had matching deals but no registered notification tokens.`);
+      notificationsToSend.push(messaging.sendEachForMulticast(message));
     }
-  }
-  
-  console.log('Finished sending all personalized data messages.');
-}
-
-
-/**
- * Deletes notifications for deals that are no longer active.
- */
-async function cleanupExpiredNotifications(validDealIds) {
-  console.log('Starting expired notifications cleanup...');
-  const validDealIdsSet = new Set(validDealIds.map(String));
-  const usersSnapshot = await db.collection('users').get();
-
-  if (usersSnapshot.empty) {
-    console.log('No users found for cleanup.');
-    return;
-  }
-
-  const cleanupPromises = [];
-  usersSnapshot.forEach(userDoc => {
-    const notificationsCollection = userDoc.ref.collection('notifications');
-    const promise = notificationsCollection.get().then(notificationsSnapshot => {
-      if (notificationsSnapshot.empty) {
-        return;
-      }
-      const batch = db.batch();
-      let deletedCountForUser = 0;
-      notificationsSnapshot.forEach(notificationDoc => {
-        if (!validDealIdsSet.has(notificationDoc.id)) {
-          batch.delete(notificationDoc.ref);
-          deletedCountForUser++;
-        }
-      });
-      if (deletedCountForUser > 0) {
-        console.log(`Deleting ${deletedCountForUser} expired notifications for user ${userDoc.id}.`);
-        return batch.commit();
-      }
-    });
-    cleanupPromises.push(promise);
   });
 
-  await Promise.all(cleanupPromises);
-  console.log('Expired notifications cleanup finished.');
+  if (notificationsToSend.length > 0) {
+    console.log(`Sending notifications to ${notificationsToSend.length} users for deal: ${deal.title}`);
+    await Promise.all(notificationsToSend);
+  }
 }
-
 
 /**
  * Main function to run the entire process.
  */
 async function main() {
   try {
-    const { newDeals, apiDealIds } = await importDeals();
-    await cleanupExpiredNotifications(apiDealIds);
-
+    const newDeals = await importDeals();
     if (newDeals.length > 0) {
-      const userDealsMap = await createInAppNotifications(newDeals);
-      await sendPersonalizedNotifications(userDealsMap);
+      console.log('Checking new deals against user preferences...');
+      for (const deal of newDeals) {
+        await notifyUsersForDeal(deal);
+      }
     }
     console.log('Scheduled job finished successfully.');
   } catch (error) {
