@@ -67,7 +67,7 @@ async function importDeals() {
   return { newDeals, apiDealIds };
 }
 
-async function createInAppNotifications(newDeals) {
+async function buildUserDealsMap(newDeals) {
   const userDealsMap = new Map();
 
   const usersSnapshot = await db.collection('users')
@@ -87,6 +87,7 @@ async function createInAppNotifications(newDeals) {
     const userPlatforms = new Set((user.preferredGamePlatforms || []).map(p => p.toLowerCase()));
 
     if (userPlatforms.size === 0) {
+      console.log(`User ${userId} has no preferred platforms set.`);
       continue;
     }
 
@@ -104,15 +105,6 @@ async function createInAppNotifications(newDeals) {
     if (matchingDealsForUser.length > 0) {
       console.log(`User ${userId} has ${matchingDealsForUser.length} matching deals.`);
       userDealsMap.set(userId, matchingDealsForUser);
-
-      // Save to Firestore for backup
-      const batch = db.batch();
-      const notificationsCollection = db.collection('users').doc(userId).collection('notifications');
-      matchingDealsForUser.forEach(deal => {
-        const notificationRef = notificationsCollection.doc(String(deal.id));
-        batch.set(notificationRef, { ...deal, receivedAt: new Date(), read: false });
-      });
-      await batch.commit();
     }
   }
 
@@ -127,28 +119,59 @@ async function sendPersonalizedNotifications(userDealsMap) {
 
   console.log(`Preparing to send notifications to ${userDealsMap.size} users.`);
 
-  for (const [userId, deals] of userDealsMap.entries()) {
-    const userDoc = await db.collection('users').doc(userId).get();
-    const user = userDoc.data();
+  // Batch fetch all user documents to get tokens
+  const userIds = Array.from(userDealsMap.keys());
+  const userChunks = [];
+  const CHUNK_SIZE = 30; // Firestore 'in' query limit is 30
 
-    if (!user || !user.notificationTokens || user.notificationTokens.length === 0) {
+  for (let i = 0; i < userIds.length; i += CHUNK_SIZE) {
+    userChunks.push(userIds.slice(i, i + CHUNK_SIZE));
+  }
+
+  const userTokensMap = new Map();
+
+  for (const chunk of userChunks) {
+    const usersSnapshot = await db.collection('users')
+      .where(admin.firestore.FieldPath.documentId(), 'in', chunk)
+      .get();
+
+    usersSnapshot.forEach(doc => {
+      const data = doc.data();
+      if (data.notificationTokens && data.notificationTokens.length > 0) {
+        userTokensMap.set(doc.id, data.notificationTokens);
+      }
+    });
+  }
+
+  // Send ONE notification per user with ALL their deals
+  for (const [userId, deals] of userDealsMap.entries()) {
+    const tokens = userTokensMap.get(userId);
+
+    if (!tokens || tokens.length === 0) {
       console.log(`User ${userId} has no notification tokens.`);
       continue;
     }
 
-    // Send ONE message with ALL deals
     const message = {
       data: {
         deals: JSON.stringify(deals)
       },
-      tokens: user.notificationTokens
+      tokens: tokens
     };
 
-    console.log(`Sending ONE notification with ${deals.length} deals to user ${userId}.`);
+    console.log(`Sending ONE notification with ${deals.length} deals to user ${userId} (${tokens.length} devices).`);
 
     try {
       const response = await messaging.sendEachForMulticast(message);
-      console.log(`Successfully sent to user ${userId}. Success: ${response.successCount}, Failure: ${response.failureCount}`);
+      console.log(`User ${userId}: Success=${response.successCount}, Failure=${response.failureCount}`);
+
+      if (response.failureCount > 0) {
+        response.responses.forEach((resp, idx) => {
+          if (!resp.success) {
+            console.error(`  Failed to send to token ${idx}: ${resp.error}`);
+          }
+        });
+      }
     } catch (error) {
       console.error(`Error sending to user ${userId}:`, error);
     }
@@ -157,55 +180,51 @@ async function sendPersonalizedNotifications(userDealsMap) {
   console.log('Finished sending notifications.');
 }
 
-async function cleanupExpiredNotifications(validDealIds) {
-  console.log('Starting expired notifications cleanup...');
+async function cleanupExpiredDeals(validDealIds) {
+  console.log('Starting cleanup of expired deals from Firestore...');
   const validDealIdsSet = new Set(validDealIds.map(String));
-  const usersSnapshot = await db.collection('users').get();
 
-  if (usersSnapshot.empty) {
-    console.log('No users found for cleanup.');
+  const dealsSnapshot = await db.collection('deals').get();
+
+  if (dealsSnapshot.empty) {
+    console.log('No deals in Firestore to clean up.');
     return;
   }
 
-  const cleanupPromises = [];
-  usersSnapshot.forEach(userDoc => {
-    const notificationsCollection = userDoc.ref.collection('notifications');
-    const promise = notificationsCollection.get().then(notificationsSnapshot => {
-      if (notificationsSnapshot.empty) {
-        return;
-      }
-      const batch = db.batch();
-      let deletedCountForUser = 0;
-      notificationsSnapshot.forEach(notificationDoc => {
-        if (!validDealIdsSet.has(notificationDoc.id)) {
-          batch.delete(notificationDoc.ref);
-          deletedCountForUser++;
-        }
-      });
-      if (deletedCountForUser > 0) {
-        console.log(`Deleting ${deletedCountForUser} expired notifications for user ${userDoc.id}.`);
-        return batch.commit();
-      }
-    });
-    cleanupPromises.push(promise);
+  const batch = db.batch();
+  let deleteCount = 0;
+
+  dealsSnapshot.forEach(doc => {
+    if (!validDealIdsSet.has(doc.id)) {
+      batch.delete(doc.ref);
+      deleteCount++;
+    }
   });
 
-  await Promise.all(cleanupPromises);
-  console.log('Expired notifications cleanup finished.');
+  if (deleteCount > 0) {
+    await batch.commit();
+    console.log(`Deleted ${deleteCount} expired deals from Firestore.`);
+  } else {
+    console.log('No expired deals to delete.');
+  }
 }
 
 async function main() {
   try {
     const { newDeals, apiDealIds } = await importDeals();
-    await cleanupExpiredNotifications(apiDealIds);
+    await cleanupExpiredDeals(apiDealIds);
 
     if (newDeals.length > 0) {
-      const userDealsMap = await createInAppNotifications(newDeals);
+      const userDealsMap = await buildUserDealsMap(newDeals);
       await sendPersonalizedNotifications(userDealsMap);
+    } else {
+      console.log('No new deals to notify users about.');
     }
+
     console.log('Scheduled job finished successfully.');
   } catch (error) {
     console.error('Error running scheduled job:', error);
+    console.error(error.stack);
   }
 }
 
