@@ -1,7 +1,13 @@
 package com.example.freegameradar.data.repository
 
+import app.cash.sqldelight.coroutines.asFlow
+import app.cash.sqldelight.coroutines.mapToList
 import com.example.freegameradar.data.model.DealNotification
 import com.example.freegameradar.db.GameDatabase
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.IO
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.map
 
 class NotificationRepository(private val database: GameDatabase) {
 
@@ -35,17 +41,22 @@ class NotificationRepository(private val database: GameDatabase) {
         }
     }
 
-    fun getAllNotifications(): List<DealNotification> {
-        return queries.getAllNotifications().executeAsList().map {
-            DealNotification(
-                id = it.id,
-                title = it.title,
-                description = it.description,
-                url = it.url,
-                imageUrl = it.imageUrl,
-                timestamp = it.timestamp,
-                isRead = it.isRead == 1L
-            )
+    fun getAllNotifications(): Flow<List<DealNotification>> {
+        return queries.getAllNotifications()
+            .asFlow()
+            .mapToList(Dispatchers.IO)
+            .map { list ->
+            list.map { entity ->
+                DealNotification(
+                    id = entity.id,
+                    title = entity.title,
+                    description = entity.description,
+                    url = entity.url,
+                    imageUrl = entity.imageUrl,
+                    timestamp = entity.timestamp,
+                    isRead = entity.isRead == 1L
+                )
+            }
         }
     }
 

@@ -1,9 +1,11 @@
 package com.example.freegameradar
 
 import android.app.Application
+import androidx.core.app.NotificationManagerCompat
 import com.example.freegameradar.data.DatabaseDriverFactory
 import com.example.freegameradar.data.repository.NotificationRepository
 import com.example.freegameradar.db.GameDatabase
+import com.example.freegameradar.notification.NotificationService
 
 class FreeGameRadarApp : Application() {
 
@@ -23,5 +25,12 @@ class FreeGameRadarApp : Application() {
         DatabaseDriverFactory.init(this)
         val database = GameDatabase(DatabaseDriverFactory.createDriver())
         notificationRepository = NotificationRepository(database)
+
+        // Create the notification channel as soon as the app starts
+        val notificationService = NotificationService(this)
+        notificationService.createNotificationChannel()
+
+        // Per your instruction, clear all previously stuck notifications on startup.
+        NotificationManagerCompat.from(this).cancelAll()
     }
 }

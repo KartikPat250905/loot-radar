@@ -10,8 +10,12 @@
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round"
-        android.supportsRtl="true"
-        android.theme="@style/Theme.FreeGameRadar">
+        android:supportsRtl="true"
+        android:theme="@style/Theme.FreeGameRadar">
+
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_channel_id"
+            android:value="@string/default_notification_channel_id" />
 
         <activity
             android:name=".MainActivity"
