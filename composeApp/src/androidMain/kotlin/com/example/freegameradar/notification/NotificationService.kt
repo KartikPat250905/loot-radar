@@ -58,10 +58,13 @@ class NotificationService(private val context: Context) {
                 val deal = deals.first()
                 val bitmap = fetchImage(deal.imageUrl)
 
+                val title = "Psst! A free game is hiding nearby!"
+                val text = "${deal.title} is free right now. Go get your loot!"
+
                 val notification = NotificationCompat.Builder(context, CHANNEL_ID)
                     .setSmallIcon(android.R.drawable.ic_dialog_info)
-                    .setContentTitle("${deal.title} is free! (Worth ${deal.worth})")
-                    .setContentText(deal.description)
+                    .setContentTitle(title)
+                    .setContentText(text)
                     .setLargeIcon(bitmap)
                     .setStyle(NotificationCompat.BigTextStyle().bigText(deal.description))
                     .setPriority(NotificationCompat.PRIORITY_DEFAULT)
@@ -72,36 +75,19 @@ class NotificationService(private val context: Context) {
                 notificationManager.notify(deal.id.toInt(), notification)
 
             } else {
-                val summaryNotification = NotificationCompat.Builder(context, CHANNEL_ID)
-                    .setContentTitle("$dealCount New Free Games")
-                    .setContentText("Claim them before they are gone!")
+                val title = "Your radar is buzzing with new loot!"
+                val text = "Found $dealCount new treasures for your game library!"
+
+                val notification = NotificationCompat.Builder(context, CHANNEL_ID)
                     .setSmallIcon(android.R.drawable.ic_dialog_info)
-                    .setGroup(GROUP_KEY_DEALS)
-                    .setGroupSummary(true)
+                    .setContentTitle(title)
+                    .setContentText(text)
+                    .setPriority(NotificationCompat.PRIORITY_DEFAULT)
                     .setContentIntent(pendingIntent)
                     .setAutoCancel(true)
                     .build()
 
-                val inboxStyle = NotificationCompat.InboxStyle()
-                    .setBigContentTitle("$dealCount New Deals")
-                    .setSummaryText("Click to see all deals")
-
-                deals.forEach { deal ->
-                    inboxStyle.addLine("${deal.title} (Worth ${deal.worth})")
-                }
-
-                val groupedNotification = NotificationCompat.Builder(context, CHANNEL_ID)
-                    .setContentTitle("Heads up, new loot spotted!")
-                    .setContentText("You\'ve got $dealCount new free game deals waiting for you!")
-                    .setSmallIcon(android.R.drawable.ic_dialog_info)
-                    .setStyle(inboxStyle)
-                    .setGroup(GROUP_KEY_DEALS)
-                    .setContentIntent(pendingIntent)
-                    .setAutoCancel(true)
-                    .build()
-
-                notificationManager.notify(GROUPED_NOTIFICATION_ID, groupedNotification)
-                notificationManager.notify(SUMMARY_NOTIFICATION_ID, summaryNotification)
+                notificationManager.notify(SUMMARY_NOTIFICATION_ID, notification)
             }
         }
     }
@@ -149,8 +135,6 @@ class NotificationService(private val context: Context) {
 
     companion object {
         const val CHANNEL_ID = "new_deals_channel"
-        private const val GROUPED_NOTIFICATION_ID = -1000
         private const val SUMMARY_NOTIFICATION_ID = -1001
-        private const val GROUP_KEY_DEALS = "com.example.freegameradar.DEALS"
     }
 }
