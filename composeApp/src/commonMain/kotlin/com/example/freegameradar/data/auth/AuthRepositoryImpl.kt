@@ -9,4 +9,6 @@ expect class AuthRepositoryImpl() : AuthRepository {
     override suspend fun continueAsGuest(): Result<User>
     override fun getAuthStateFlow(): Flow<User?>
     override fun isUserLoggedIn(): Boolean
+    override suspend fun signOut()
+    override suspend fun deleteAccount(): Result<Unit>
 }

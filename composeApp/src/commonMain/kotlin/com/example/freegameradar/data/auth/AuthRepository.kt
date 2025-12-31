@@ -9,4 +9,6 @@ interface AuthRepository {
     suspend fun continueAsGuest(): Result<User>
     fun getAuthStateFlow(): Flow<User?>
     fun isUserLoggedIn(): Boolean
+    suspend fun signOut()
+    suspend fun deleteAccount(): Result<Unit>
 }

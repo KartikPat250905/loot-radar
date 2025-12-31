@@ -8,6 +8,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
 
 class SettingsViewModel(private val authRepository: AuthRepository) : ViewModel() {
 
@@ -18,10 +19,14 @@ class SettingsViewModel(private val authRepository: AuthRepository) : ViewModel(
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), false)
 
     fun signOut() {
-        // TODO: Implement sign out logic
+        viewModelScope.launch {
+            authRepository.signOut()
+        }
     }
 
     fun deleteAccount() {
-        // TODO: Implement delete account logic
+        viewModelScope.launch {
+            authRepository.deleteAccount()
+        }
     }
 }

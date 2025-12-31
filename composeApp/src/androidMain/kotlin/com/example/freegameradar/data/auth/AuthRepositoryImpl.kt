@@ -51,4 +51,17 @@ actual class AuthRepositoryImpl : AuthRepository {
         val user = firebaseAuth.currentUser
         return user != null && !user.isAnonymous
     }
+
+    actual override suspend fun signOut() {
+        firebaseAuth.signOut()
+    }
+
+    actual override suspend fun deleteAccount(): Result<Unit> {
+        return try {
+            firebaseAuth.currentUser?.delete()?.await()
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
 }
