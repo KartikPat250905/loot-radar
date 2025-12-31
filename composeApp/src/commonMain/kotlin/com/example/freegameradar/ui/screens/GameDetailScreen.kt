@@ -4,6 +4,8 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -35,6 +37,8 @@ fun GameDetailScreen(
     val repository = remember { GameRepository(ApiService()) }
     val uriHandler = LocalUriHandler.current
     var timeRemaining by remember { mutableStateOf<String?>(null) }
+    val claimedGameIds by userStatsViewModel.claimedGameIds.collectAsState()
+    val isClaimed = gameId in claimedGameIds
 
     // Load selected game based on ID
     LaunchedEffect(gameId) {
@@ -199,17 +203,26 @@ fun GameDetailScreen(
                     if (!g.open_giveaway_url.isNullOrBlank()) {
                         Button(
                             onClick = { 
-                                g.worth?.let { worth ->
-                                    val value = worth.replace("$", "").toFloatOrNull() ?: 0f
-                                    userStatsViewModel.addToClaimedValue(value)
+                                g.id?.let { id ->
+                                    g.worth?.let { worth ->
+                                        val value = worth.replace("$", "").toFloatOrNull() ?: 0f
+                                        userStatsViewModel.addToClaimedValue(id, value)
+                                    }
                                 }
                                 uriHandler.openUri(g.open_giveaway_url!!)
                              },
+                            enabled = !isClaimed,
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .height(52.dp)
                         ) {
-                            Text("🎁 Claim Game")
+                            if (isClaimed) {
+                                Icon(Icons.Default.Check, contentDescription = "Claimed")
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text("Game Claimed")
+                            } else {
+                                Text("🎁 Claim Game")
+                            }
                         }
                     }
 

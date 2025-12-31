@@ -1,19 +1,24 @@
 package com.example.freegameradar.data.repository
 
 import com.example.freegameradar.data.auth.AuthRepository
+import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.SetOptions
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
 import com.russhwolf.settings.ObservableSettings
 import com.russhwolf.settings.coroutines.FlowSettings
+import com.russhwolf.settings.coroutines.getStringFlow
 import com.russhwolf.settings.coroutines.getFloatFlow
 import com.russhwolf.settings.coroutines.toFlowSettings
 import com.russhwolf.settings.set
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.withContext
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
 
 class UserStatsRepository(private val authRepository: AuthRepository, private val settings: ObservableSettings) {
 
@@ -22,13 +27,20 @@ class UserStatsRepository(private val authRepository: AuthRepository, private va
 
     companion object {
         private const val CLAIMED_VALUE_KEY = "claimed_value"
+        private const val CLAIMED_GAMES_KEY = "claimed_games"
         private const val USERS_COLLECTION = "users"
         private const val TOTAL_CLAIMED_VALUE_FIELD = "totalClaimedValue"
+        private const val CLAIMED_GAME_IDS_FIELD = "claimedGameIds"
     }
 
     fun getClaimedValue(): Flow<Float> {
-        // The UI reads from the local cache for speed and offline availability.
         return flowSettings.getFloatFlow(CLAIMED_VALUE_KEY, 0f)
+    }
+
+    fun getClaimedGameIds(): Flow<List<Long>> {
+        return flowSettings.getStringFlow(CLAIMED_GAMES_KEY, "[]").map {
+            Json.decodeFromString<List<Long>>(it)
+        }
     }
 
     suspend fun syncClaimedValue() = withContext(Dispatchers.IO) {
@@ -37,42 +49,54 @@ class UserStatsRepository(private val authRepository: AuthRepository, private va
             val docRef = firestore.collection(USERS_COLLECTION).document(uid)
             val snapshot = docRef.get().await()
 
-            val remoteValue = if (snapshot.exists()) {
-                (snapshot.getDouble(TOTAL_CLAIMED_VALUE_FIELD) ?: 0.0).toFloat()
+            if (snapshot.exists()) {
+                val remoteValue = (snapshot.getDouble(TOTAL_CLAIMED_VALUE_FIELD) ?: 0.0).toFloat()
+                val remoteGameIds = snapshot.get(CLAIMED_GAME_IDS_FIELD) as? List<Long> ?: emptyList()
+
+                settings[CLAIMED_VALUE_KEY] = remoteValue
+                settings[CLAIMED_GAMES_KEY] = Json.encodeToString(remoteGameIds)
             } else {
-                // If document doesn't exist, create it for the new user.
-                docRef.set(mapOf(TOTAL_CLAIMED_VALUE_FIELD to 0.0)).await()
-                0f
+                docRef.set(mapOf(
+                    TOTAL_CLAIMED_VALUE_FIELD to 0.0,
+                    CLAIMED_GAME_IDS_FIELD to emptyList<Long>()
+                )).await()
+                settings[CLAIMED_VALUE_KEY] = 0f
+                settings[CLAIMED_GAMES_KEY] = "[]"
             }
-            // Update local cache with the source of truth from Firebase.
-            settings[CLAIMED_VALUE_KEY] = remoteValue
         } catch (e: Exception) {
-            // Log the exception, but don't crash. The app will just use the stale local data.
-            println("Failed to sync claimed value with Firestore: ${e.message}")
+            println("Failed to sync user stats with Firestore: ${e.message}")
         }
     }
 
-    suspend fun addToClaimedValue(worth: Float) = withContext(Dispatchers.IO) {
+    suspend fun addToClaimedValue(gameId: Long, worth: Float) = withContext(Dispatchers.IO) {
         val uid = authRepository.getAuthStateFlow().first()?.uid ?: throw IllegalStateException("User not logged in.")
         val userDocRef = firestore.collection(USERS_COLLECTION).document(uid)
 
         try {
-            // Run a transaction to ensure atomic update on the server.
-            val newTotal = firestore.runTransaction { transaction ->
+            firestore.runTransaction { transaction ->
                 val snapshot = transaction.get(userDocRef)
+                val claimedGameIds = snapshot.get(CLAIMED_GAME_IDS_FIELD) as? List<Long> ?: emptyList()
+
+                if (claimedGameIds.contains(gameId)) {
+                    return@runTransaction // Game already claimed, do nothing.
+                }
+
                 val currentTotal = snapshot.getDouble(TOTAL_CLAIMED_VALUE_FIELD) ?: 0.0
                 val newCalculatedTotal = currentTotal + worth.toDouble()
-                transaction.set(userDocRef, mapOf(TOTAL_CLAIMED_VALUE_FIELD to newCalculatedTotal), SetOptions.merge())
-                newCalculatedTotal.toFloat()
+
+                transaction.update(userDocRef, mapOf(
+                    TOTAL_CLAIMED_VALUE_FIELD to newCalculatedTotal,
+                    CLAIMED_GAME_IDS_FIELD to FieldValue.arrayUnion(gameId)
+                ))
+
             }.await()
 
-            // Once Firestore is successfully updated, update our local cache.
-            settings[CLAIMED_VALUE_KEY] = newTotal
+            // Manually update local cache after successful transaction
+            syncClaimedValue()
 
         } catch (e: Exception) {
-            // If the transaction fails, the local cache is not updated, maintaining consistency.
             println("Failed to add claimed value: ${e.message}")
-            throw e // Propagate the error to the ViewModel/UI to give user feedback if needed.
+            throw e
         }
     }
 }

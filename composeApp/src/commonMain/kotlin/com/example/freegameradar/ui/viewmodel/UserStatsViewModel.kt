@@ -17,16 +17,23 @@ class UserStatsViewModel(private val userStatsRepository: UserStatsRepository) :
             initialValue = 0f
         )
 
+    val claimedGameIds: StateFlow<List<Long>> = userStatsRepository.getClaimedGameIds()
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = emptyList()
+        )
+
     fun syncClaimedValue() {
         viewModelScope.launch {
             userStatsRepository.syncClaimedValue()
         }
     }
 
-    fun addToClaimedValue(worth: Float) {
+    fun addToClaimedValue(gameId: Long, worth: Float) {
         viewModelScope.launch {
             try {
-                userStatsRepository.addToClaimedValue(worth)
+                userStatsRepository.addToClaimedValue(gameId, worth)
             } catch (e: Exception) {
                 // Optionally, handle the error in the UI, e.g., show a toast.
                 println("Error adding to claimed value: ${e.message}")
