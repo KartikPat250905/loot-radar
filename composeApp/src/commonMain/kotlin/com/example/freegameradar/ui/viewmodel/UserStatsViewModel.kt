@@ -8,6 +8,7 @@ import com.example.freegameradar.data.repository.UserStatsRepository
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
@@ -30,25 +31,77 @@ class UserStatsViewModel(
             initialValue = emptyList()
         )
 
-    val platformStats: StateFlow<List<PlatformStat>> = combine(
-        claimedGameIds,
-        gameRepository.getFreeGames()
-    ) { claimedIds, allGames ->
-        val claimedGames = allGames.filter { it.id?.toLong() in claimedIds }
-        claimedGames.groupBy { it.platforms }
-            .map { (platform, games) ->
-                PlatformStat(
-                    platform = platform ?: "Unknown",
-                    count = games.size,
-                    totalWorth = games.sumOf { it.worth?.replace("$", "")?.toDoubleOrNull() ?: 0.0 }
-                )
+    // Platform stats for CURRENTLY AVAILABLE free games (not claimed)
+    val platformStats: StateFlow<List<PlatformStat>> = gameRepository.getFreeGames()
+        .map { allGames ->
+            // Filter out DLCs
+            val baseGames = allGames.filter { game ->
+                game.type?.lowercase() != "dlc"
             }
-    }.stateIn(
-        scope = viewModelScope,
-        started = SharingStarted.WhileSubscribed(5000),
-        initialValue = emptyList()
-    )
 
+            // Count games per platform - prioritize store platforms
+            val platformCounts = mutableMapOf<String, MutableList<Double>>()
+
+            baseGames.forEach { game ->
+                val worth = game.worth?.replace("$", "")?.replace("N/A", "0")?.toDoubleOrNull() ?: 0.0
+
+                // Extract the main platform from the platforms string
+                val mainPlatform = extractMainPlatform(game.platforms ?: "Unknown")
+                platformCounts.getOrPut(mainPlatform) { mutableListOf() }.add(worth)
+            }
+
+            // Convert to PlatformStat and sort by count
+            platformCounts.map { (platform, worths) ->
+                PlatformStat(
+                    platform = platform,
+                    count = worths.size,
+                    totalWorth = worths.sum()
+                )
+            }.sortedByDescending { it.count }
+
+        }.stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = emptyList()
+        )
+
+    // Extract the main platform from the platform string
+    // Prioritizes store platforms (Steam, Epic, GOG, Itch.io) over device platforms (PC, Android, iOS)
+    private fun extractMainPlatform(platformString: String): String {
+        val lower = platformString.lowercase()
+
+        // Priority 1: Specific stores/launchers
+        return when {
+            lower.contains("epic games store") || lower.contains("epic-games-store") -> "Epic Games"
+            lower.contains("steam") -> "Steam"
+            lower.contains("gog") -> "GOG"
+            lower.contains("itch.io") || lower.contains("itchio") -> "Itch.io"
+            lower.contains("ubisoft") -> "Ubisoft"
+            lower.contains("origin") -> "EA Origin"
+            lower.contains("battlenet") || lower.contains("battle.net") -> "Battle.net"
+
+            // Priority 2: Console platforms
+            lower.contains("ps5") -> "PlayStation 5"
+            lower.contains("ps4") -> "PlayStation 4"
+            lower.contains("xbox series") || lower.contains("xbox-series-xs") -> "Xbox Series X|S"
+            lower.contains("xbox one") || lower.contains("xbox-one") -> "Xbox One"
+            lower.contains("xbox 360") || lower.contains("xbox-360") -> "Xbox 360"
+            lower.contains("switch") -> "Nintendo Switch"
+
+            // Priority 3: Mobile platforms (only if no store mentioned)
+            lower.contains("android") && !lower.contains("pc") -> "Android"
+            lower.contains("ios") && !lower.contains("pc") -> "iOS"
+
+            // Priority 4: Other platforms
+            lower.contains("vr") -> "VR"
+            lower.contains("drm-free") || lower.contains("drm free") -> "DRM-Free"
+
+            // Priority 5: Generic PC (if no specific store)
+            lower.contains("pc") -> "PC"
+
+            else -> "Other"
+        }
+    }
 
     fun syncClaimedValue() {
         viewModelScope.launch {
@@ -61,7 +114,6 @@ class UserStatsViewModel(
             try {
                 userStatsRepository.addToClaimedValue(gameId, worth)
             } catch (e: Exception) {
-                // Optionally, handle the error in the UI, e.g., show a toast.
                 println("Error adding to claimed value: ${e.message}")
             }
         }
