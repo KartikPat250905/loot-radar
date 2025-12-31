@@ -19,6 +19,7 @@ import com.example.freegameradar.data.remote.ApiService
 import com.example.freegameradar.data.repository.GameRepository
 import com.example.freegameradar.ui.components.BackButton
 import com.example.freegameradar.ui.components.GameWorth
+import com.example.freegameradar.ui.viewmodel.UserStatsViewModel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.datetime.*
@@ -27,6 +28,7 @@ import kotlinx.datetime.*
 fun GameDetailScreen(
     navController: NavHostController,
     gameId: Long?,
+    userStatsViewModel: UserStatsViewModel,
     modifier: Modifier = Modifier
 ) {
     var game by remember { mutableStateOf<GameDto?>(null) }
@@ -196,12 +198,18 @@ fun GameDetailScreen(
                     // Giveaway Button
                     if (!g.open_giveaway_url.isNullOrBlank()) {
                         Button(
-                            onClick = { uriHandler.openUri(g.open_giveaway_url!!) },
+                            onClick = { 
+                                g.worth?.let { worth ->
+                                    val value = worth.replace("$", "").toFloatOrNull() ?: 0f
+                                    userStatsViewModel.addToClaimedValue(value)
+                                }
+                                uriHandler.openUri(g.open_giveaway_url!!)
+                             },
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .height(52.dp)
                         ) {
-                            Text("🎁 Open Giveaway")
+                            Text("🎁 Claim Game")
                         }
                     }
 

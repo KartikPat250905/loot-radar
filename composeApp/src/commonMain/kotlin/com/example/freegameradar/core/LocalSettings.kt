@@ -4,7 +4,7 @@ import com.russhwolf.settings.Settings
 import com.russhwolf.settings.boolean
 
 object LocalSettings {
-    private val settings: Settings by lazy { Settings() }
+    private val settings: Settings = createSettings()
 
     private const val KEY_SETUP_COMPLETE = "setup_complete"
 

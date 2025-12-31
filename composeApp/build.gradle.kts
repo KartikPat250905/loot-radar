@@ -43,6 +43,7 @@ kotlin {
             implementation("com.google.firebase:firebase-analytics")
             implementation(libs.firebase.firestore.ktx)
             implementation(libs.firebase.messaging.ktx)
+            implementation(libs.kotlinx.coroutines.play.services)
         }
         iosMain.dependencies {
             implementation(libs.ktor.client.darwin)
@@ -70,6 +71,7 @@ kotlin {
             implementation(libs.sqldelight.runtime)
             implementation(libs.sqldelight.coroutines.extensions)
             implementation(libs.multiplatform.settings)
+            implementation(libs.multiplatform.settings.coroutines)
         }
     }
 }
