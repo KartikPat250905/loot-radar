@@ -32,13 +32,17 @@ class GameViewModel(
         SupervisorJob() + Dispatchers.Default
     )
 
+    private val _gameTypeFilter = MutableStateFlow(GameTypeFilter.ALL)
+    val gameTypeFilter: StateFlow<GameTypeFilter> = _gameTypeFilter
+
+
     val dataSource: StateFlow<DataSource> = repository.dataSource
 
     private var _allGames = MutableStateFlow<List<GameDto>>(emptyList())
     private val _searchQuery = MutableStateFlow("")
 
     val games: StateFlow<List<GameDto>> =
-        combine(_allGames, _searchQuery, _filters) { games, query, filters ->
+        combine(_allGames, _searchQuery, _filters, _gameTypeFilter) { games, query, filters, typeFilter ->
             games.filter { game ->
 
                 val matchesSearch =
@@ -50,16 +54,20 @@ class GameViewModel(
                                 game.platforms?.contains(it, ignoreCase = true) == true
                             }
 
-                // FIX: 'type' in GameDto might be a single string (e.g., "Game"),
-                // while your filter list has lowercase "game".
-                // We need to check if the game.type equals ANY of the selected types (ignoring case).
                 val matchesType =
                     filters.types.isEmpty() ||
                             filters.types.any { filterType ->
                                 game.type?.equals(filterType, ignoreCase = true) == true
                             }
 
-                matchesSearch && matchesPlatform && matchesType
+                val matchesGameTypeFilter = when (typeFilter) {
+                    GameTypeFilter.ALL -> true
+                    GameTypeFilter.GAMES -> game.type.equals("Game", ignoreCase = true)
+                    GameTypeFilter.DLC -> game.type.equals("DLC", ignoreCase = true)
+                    GameTypeFilter.EARLY_ACCESS -> game.type.equals("Early Access", ignoreCase = true)
+                }
+
+                matchesSearch && matchesPlatform && matchesType && matchesGameTypeFilter
             }
         }.stateIn(
             scope = viewModelScope,
@@ -77,6 +85,10 @@ class GameViewModel(
                     _allGames.value = gameList
                 }
         }
+    }
+
+    fun updateFilter(filter: GameTypeFilter) {
+        _gameTypeFilter.value = filter
     }
 
     fun togglePlatform(platform: String) {
@@ -100,6 +112,7 @@ class GameViewModel(
 
     fun clearFilters() {
         _filters.value = GameFilters()
+        _gameTypeFilter.value = GameTypeFilter.ALL
     }
 
     fun updateSearch(query: String) {
