@@ -75,6 +75,7 @@ fun NotificationScreen(
                             .fillMaxWidth()
                             .padding(bottom = 16.dp)
                             .clickable { // Make the card clickable
+                                viewModel.markAsRead(notification.id)
                                 navController.navigate(Screen.Details.createRoute(notification.id))
                             },
                         shape = MaterialTheme.shapes.medium

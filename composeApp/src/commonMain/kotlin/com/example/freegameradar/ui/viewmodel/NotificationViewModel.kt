@@ -31,6 +31,12 @@ class NotificationViewModel(private val notificationRepository: NotificationRepo
             initialValue = 0
         )
 
+    fun markAsRead(id: Long) {
+        viewModelScope.launch {
+            notificationRepository.markAsRead(id)
+        }
+    }
+
     fun markAllAsRead() {
         viewModelScope.launch {
             notificationRepository.markAllAsRead()

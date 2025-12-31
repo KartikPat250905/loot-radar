@@ -51,7 +51,7 @@ fun App(
                     innerPadding = innerPadding,
                     authRepository = authRepository,
                     startDestination = startDestination,
-                    notificationRepository = notificationRepository
+                    notificationViewModel = notificationViewModel
                 )
             }
         }

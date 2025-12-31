@@ -3,13 +3,11 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import com.example.freegameradar.core.LocalSettings
 import com.example.freegameradar.data.auth.AuthRepository
-import com.example.freegameradar.data.repository.NotificationRepository
 import com.example.freegameradar.data.repository.UserSettingsRepositoryImpl
 import com.example.freegameradar.ui.screens.HotDealsScreen
 import com.example.freegameradar.ui.screens.GameDetailScreen
@@ -27,7 +25,7 @@ fun AppNavigation(
     innerPadding: PaddingValues, 
     authRepository: AuthRepository,
     startDestination: String,
-    notificationRepository: NotificationRepository
+    notificationViewModel: NotificationViewModel
 ) {
     NavHost(
         navController = navController,
@@ -55,9 +53,8 @@ fun AppNavigation(
             )
         }
         composable(Screen.Notification.route) {
-            val viewModel: NotificationViewModel = viewModel { NotificationViewModel(notificationRepository) }
             NotificationScreen(
-                viewModel = viewModel,
+                viewModel = notificationViewModel,
                 navController = navController, // Pass the NavController
                 modifier = Modifier.padding(innerPadding)
             )
