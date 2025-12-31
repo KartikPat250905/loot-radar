@@ -24,6 +24,7 @@ import com.example.freegameradar.data.state.DataSource
 import com.example.freegameradar.ui.components.FilterBar
 import com.example.freegameradar.ui.components.GameGrid
 import com.example.freegameradar.ui.components.GameSearchBar
+import com.example.freegameradar.ui.components.GameTypeFilterTabs
 import com.example.freegameradar.ui.components.TotalWorthBar
 import com.example.freegameradar.ui.viewmodel.GameViewModel
 
@@ -34,6 +35,8 @@ fun HomeScreen(navController: NavHostController, modifier: Modifier = Modifier) 
     val games by gameViewModel.games.collectAsState()
     var searchText by remember { mutableStateOf("") }
     val dataSource by gameViewModel.dataSource.collectAsState()
+    val selectedFilter by gameViewModel.gameTypeFilter.collectAsState()
+
     Column (
         modifier = modifier.fillMaxSize()
     ) {
@@ -45,6 +48,10 @@ fun HomeScreen(navController: NavHostController, modifier: Modifier = Modifier) 
             }
         )
         FilterBar(gameViewModel)
+        GameTypeFilterTabs(
+            selectedFilter = selectedFilter,
+            onFilterSelected = { gameViewModel.updateFilter(it) }
+        )
         TotalWorthBar(
             games = games,
             dataSource = dataSource
@@ -63,7 +70,7 @@ fun HomeScreen(navController: NavHostController, modifier: Modifier = Modifier) 
             }
             else if (games.isEmpty()) {
                 Text(
-                    text = "No freebies found here... 😥\nTry adjusting your filters!",
+                    text = "No freebies found here... \uD83D\uDE25\nTry adjusting your filters!",
                     textAlign = TextAlign.Center,
                     modifier = Modifier.padding(16.dp),
                     fontSize = 18.sp

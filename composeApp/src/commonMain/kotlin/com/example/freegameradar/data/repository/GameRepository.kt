@@ -17,6 +17,7 @@ class GameRepository(
     private val _dataSource = MutableStateFlow(DataSource.NETWORK)
     val dataSource: StateFlow<DataSource> = _dataSource
     private val database = GameDatabaseProvider.getDatabase()
+    private val notificationRepository = NotificationRepository(database)
 
     fun getFreeGames(): Flow<List<GameDto>> = flow {
         val cached = database.gameQueries.selectAll().executeAsList().map { it.toDto() }
@@ -27,6 +28,9 @@ class GameRepository(
 
         try {
             api.getFreeGamesFlow().collect { remoteGames ->
+                val validGameIds = remoteGames.mapNotNull { it.id?.toLong() }
+                notificationRepository.deleteExpiredNotifications(validGameIds)
+                
                 database.transaction {
                     database.gameQueries.deleteAll()
                     remoteGames.forEachIndexed { index, game ->

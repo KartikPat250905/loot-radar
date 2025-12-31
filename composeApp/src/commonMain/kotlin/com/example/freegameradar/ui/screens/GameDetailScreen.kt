@@ -4,10 +4,13 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.text.font.FontWeight
@@ -19,6 +22,7 @@ import com.example.freegameradar.data.remote.ApiService
 import com.example.freegameradar.data.repository.GameRepository
 import com.example.freegameradar.ui.components.BackButton
 import com.example.freegameradar.ui.components.GameWorth
+import com.example.freegameradar.ui.viewmodel.UserStatsViewModel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.datetime.*
@@ -27,12 +31,15 @@ import kotlinx.datetime.*
 fun GameDetailScreen(
     navController: NavHostController,
     gameId: Long?,
+    userStatsViewModel: UserStatsViewModel,
     modifier: Modifier = Modifier
 ) {
     var game by remember { mutableStateOf<GameDto?>(null) }
     val repository = remember { GameRepository(ApiService()) }
     val uriHandler = LocalUriHandler.current
     var timeRemaining by remember { mutableStateOf<String?>(null) }
+    val claimedGameIds by userStatsViewModel.claimedGameIds.collectAsState()
+    val isClaimed = gameId in claimedGameIds
 
     // Load selected game based on ID
     LaunchedEffect(gameId) {
@@ -196,12 +203,36 @@ fun GameDetailScreen(
                     // Giveaway Button
                     if (!g.open_giveaway_url.isNullOrBlank()) {
                         Button(
-                            onClick = { uriHandler.openUri(g.open_giveaway_url!!) },
+                            onClick = { 
+                                if (!isClaimed) {
+                                    g.id?.let { id ->
+                                        val value = g.worth?.replace("$", "")?.toFloatOrNull() ?: 0f
+                                        if (value > 0f) {
+                                            userStatsViewModel.addToClaimedValue(id, value)
+                                        }
+                                    }
+                                }
+                                uriHandler.openUri(g.open_giveaway_url!!)
+                             },
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = if (isClaimed) MaterialTheme.colorScheme.secondaryContainer else ButtonDefaults.buttonColors().containerColor,
+                            ),
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .height(52.dp)
                         ) {
-                            Text("🎁 Open Giveaway")
+                            if (isClaimed) {
+                                val greenColor = Color(0xFF4CAF50)
+                                Icon(
+                                    Icons.Default.Check, 
+                                    contentDescription = "Claimed",
+                                    tint = greenColor
+                                )
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text("Game Claimed", color = greenColor)
+                            } else {
+                                Text("🎁 Claim Game")
+                            }
                         }
                     }
 

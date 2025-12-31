@@ -14,7 +14,6 @@ import com.example.freegameradar.ui.navigation.Screen
 fun BottomNavBar(navController: NavController) {
     val screens = listOf(Screen.Home, Screen.HotDeals, Screen.Stats, Screen.Settings)
     
-    // Subscribe to back stack to correctly highlight tabs
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
 
@@ -28,12 +27,11 @@ fun BottomNavBar(navController: NavController) {
                 label = { Text(screen.label) },
                 selected = selected,
                 onClick = {
-                    if (!selected) {
-                        navController.navigate(screen.route) {
-                            popUpTo(navController.graph.startDestinationId) { saveState = true }
-                            launchSingleTop = true
-                            restoreState = true
-                        }
+                    navController.navigate(screen.route) {
+                        // Pop up to the start destination of the graph to avoid building up a large back stack
+                        popUpTo(navController.graph.startDestinationId)
+                        // Avoid multiple copies of the same destination when re-selecting the same item
+                        launchSingleTop = true
                     }
                 }
             )
