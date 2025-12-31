@@ -13,6 +13,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import com.example.freegameradar.ui.components.PlatformStatsCard
 import com.example.freegameradar.ui.components.TotalClaimedBar
 import com.example.freegameradar.ui.viewmodel.UserStatsViewModel
 
@@ -20,6 +21,7 @@ import com.example.freegameradar.ui.viewmodel.UserStatsViewModel
 @Composable
 fun StatsScreen(viewModel: UserStatsViewModel, modifier: Modifier = Modifier) {
     val claimedValue by viewModel.claimedValue.collectAsState()
+    val platformStats by viewModel.platformStats.collectAsState()
 
     Scaffold(
         modifier = modifier,
@@ -35,6 +37,7 @@ fun StatsScreen(viewModel: UserStatsViewModel, modifier: Modifier = Modifier) {
             verticalArrangement = Arrangement.Top
         ) {
             TotalClaimedBar(claimedValue = claimedValue)
+            PlatformStatsCard(platformStats = platformStats)
         }
     }
 }

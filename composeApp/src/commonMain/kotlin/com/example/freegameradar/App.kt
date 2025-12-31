@@ -12,6 +12,7 @@ import androidx.navigation.compose.rememberNavController
 import com.example.freegameradar.core.LocalSettings
 import com.example.freegameradar.data.auth.AuthRepositoryImpl
 import com.example.freegameradar.data.auth.AuthState
+import com.example.freegameradar.data.repository.GameRepository
 import com.example.freegameradar.ui.auth.AuthGate
 import com.example.freegameradar.ui.components.BottomNavBar
 import com.example.freegameradar.ui.components.TopBar
@@ -35,9 +36,9 @@ fun App(
 
     val startDestination = startRoute ?: if (LocalSettings.isSetupComplete) Screen.Home.route else Screen.Setup.route
 
-    AppContainer { notificationRepository, userStatsRepository ->
+    AppContainer { gameRepository, notificationRepository, userStatsRepository ->
         val notificationViewModel: NotificationViewModel = viewModel { NotificationViewModel(notificationRepository) }
-        val userStatsViewModel: UserStatsViewModel = viewModel { UserStatsViewModel(userStatsRepository) }
+        val userStatsViewModel: UserStatsViewModel = viewModel { UserStatsViewModel(userStatsRepository, gameRepository) }
 
         AuthGate(authViewModel = authViewModel) {
             LaunchedEffect(authState) { // Observe the authState directly

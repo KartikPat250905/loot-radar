@@ -72,6 +72,10 @@ kotlin {
             implementation(libs.sqldelight.coroutines.extensions)
             implementation(libs.multiplatform.settings)
             implementation(libs.multiplatform.settings.coroutines)
+
+            implementation(libs.vico.compose)
+            implementation(libs.vico.compose.m3)
+            implementation(libs.vico.core)
         }
     }
 }
