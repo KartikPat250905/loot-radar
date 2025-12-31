@@ -10,6 +10,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.text.font.FontWeight
@@ -203,23 +204,32 @@ fun GameDetailScreen(
                     if (!g.open_giveaway_url.isNullOrBlank()) {
                         Button(
                             onClick = { 
-                                g.id?.let { id ->
-                                    g.worth?.let { worth ->
-                                        val value = worth.replace("$", "").toFloatOrNull() ?: 0f
-                                        userStatsViewModel.addToClaimedValue(id, value)
+                                if (!isClaimed) {
+                                    g.id?.let { id ->
+                                        g.worth?.let { worth ->
+                                            val value = worth.replace("$", "").toFloatOrNull() ?: 0f
+                                            userStatsViewModel.addToClaimedValue(id, value)
+                                        }
                                     }
                                 }
                                 uriHandler.openUri(g.open_giveaway_url!!)
                              },
-                            enabled = !isClaimed,
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = if (isClaimed) MaterialTheme.colorScheme.secondaryContainer else ButtonDefaults.buttonColors().containerColor,
+                            ),
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .height(52.dp)
                         ) {
                             if (isClaimed) {
-                                Icon(Icons.Default.Check, contentDescription = "Claimed")
+                                val greenColor = Color(0xFF4CAF50)
+                                Icon(
+                                    Icons.Default.Check, 
+                                    contentDescription = "Claimed",
+                                    tint = greenColor
+                                )
                                 Spacer(modifier = Modifier.width(8.dp))
-                                Text("Game Claimed")
+                                Text("Game Claimed", color = greenColor)
                             } else {
                                 Text("🎁 Claim Game")
                             }
