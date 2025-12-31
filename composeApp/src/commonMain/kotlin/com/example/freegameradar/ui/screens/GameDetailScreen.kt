@@ -206,8 +206,8 @@ fun GameDetailScreen(
                             onClick = { 
                                 if (!isClaimed) {
                                     g.id?.let { id ->
-                                        g.worth?.let { worth ->
-                                            val value = worth.replace("$", "").toFloatOrNull() ?: 0f
+                                        val value = g.worth?.replace("$", "")?.toFloatOrNull() ?: 0f
+                                        if (value > 0f) {
                                             userStatsViewModel.addToClaimedValue(id, value)
                                         }
                                     }
