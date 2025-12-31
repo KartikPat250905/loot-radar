@@ -13,6 +13,8 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import com.example.freegameradar.ui.components.FilteredStatsCard
+import com.example.freegameradar.ui.components.GameTypeFilterTabs
 import com.example.freegameradar.ui.components.PlatformStatsCard
 import com.example.freegameradar.ui.components.TotalClaimedBar
 import com.example.freegameradar.ui.viewmodel.UserStatsViewModel
@@ -22,6 +24,8 @@ import com.example.freegameradar.ui.viewmodel.UserStatsViewModel
 fun StatsScreen(viewModel: UserStatsViewModel, modifier: Modifier = Modifier) {
     val claimedValue by viewModel.claimedValue.collectAsState()
     val platformStats by viewModel.platformStats.collectAsState()
+    val selectedFilter by viewModel.filter.collectAsState()
+    val filteredStats by viewModel.filteredStats.collectAsState()
 
     Scaffold(
         modifier = modifier,

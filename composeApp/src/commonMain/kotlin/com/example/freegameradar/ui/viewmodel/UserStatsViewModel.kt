@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.example.freegameradar.data.model.PlatformStat
 import com.example.freegameradar.data.repository.GameRepository
 import com.example.freegameradar.data.repository.UserStatsRepository
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
@@ -12,10 +13,18 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
+data class FilteredStats(
+    val count: Int,
+    val totalWorth: Double,
+)
+
 class UserStatsViewModel(
     private val userStatsRepository: UserStatsRepository,
     private val gameRepository: GameRepository
 ) : ViewModel() {
+
+    private val _filter = MutableStateFlow(GameTypeFilter.ALL)
+    val filter: StateFlow<GameTypeFilter> = _filter
 
     val claimedValue: StateFlow<Float> = userStatsRepository.getClaimedValue()
         .stateIn(
@@ -31,26 +40,46 @@ class UserStatsViewModel(
             initialValue = emptyList()
         )
 
-    // Platform stats for CURRENTLY AVAILABLE free games (not claimed)
+    val filteredStats: StateFlow<FilteredStats> = combine(gameRepository.getFreeGames(), filter) { allGames, filter ->
+        val filteredGames = when (filter) {
+            GameTypeFilter.ALL -> allGames
+            GameTypeFilter.GAMES -> allGames.filter { it.type?.lowercase() == "game" }
+            GameTypeFilter.DLC -> allGames.filter { it.type?.lowercase() == "dlc" }
+            GameTypeFilter.EARLY_ACCESS -> allGames.filter { it.type?.lowercase() == "early access" }
+        }.distinctBy { it.id }
+
+        var totalWorth = 0.0
+
+        filteredGames.forEach { game ->
+            val worth = game.worth?.replace("$", "")?.replace("N/A", "0")?.toDoubleOrNull() ?: 0.0
+            totalWorth += worth
+        }
+
+        FilteredStats(
+            count = filteredGames.size,
+            totalWorth = totalWorth,
+        )
+    }.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = FilteredStats(0, 0.0)
+    )
+
     val platformStats: StateFlow<List<PlatformStat>> = gameRepository.getFreeGames()
         .map { allGames ->
-            // Filter out DLCs and duplicates by ID to ensure each game is counted only once
             val baseGames = allGames
                 .filter { game -> game.type?.lowercase() != "dlc" }
                 .distinctBy { it.id }
 
-            // Count games per platform - prioritize store platforms
             val platformCounts = mutableMapOf<String, MutableList<Double>>()
 
             baseGames.forEach { game ->
                 val worth = game.worth?.replace("$", "")?.replace("N/A", "0")?.toDoubleOrNull() ?: 0.0
 
-                // Extract the main platform from the platforms string
                 val mainPlatform = extractMainPlatform(game.platforms ?: "Unknown")
                 platformCounts.getOrPut(mainPlatform) { mutableListOf() }.add(worth)
             }
 
-            // Convert to PlatformStat and sort by count
             platformCounts.map { (platform, worths) ->
                 PlatformStat(
                     platform = platform,
@@ -65,8 +94,6 @@ class UserStatsViewModel(
             initialValue = emptyList()
         )
 
-    // Extract the main platform from the platform string
-    // Prioritizes store platforms (Steam, Epic, GOG, Itch.io) over device platforms (PC, Android, iOS)
     private fun extractMainPlatform(platformString: String): String {
         val lower = platformString.lowercase()
 
@@ -90,6 +117,10 @@ class UserStatsViewModel(
 
             else -> "Other"
         }
+    }
+
+    fun updateFilter(filter: GameTypeFilter) {
+        _filter.value = filter
     }
 
     fun syncClaimedValue() {
