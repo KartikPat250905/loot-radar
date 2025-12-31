@@ -9,10 +9,9 @@ import androidx.compose.runtime.getValue
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
-import com.example.freegameradar.core.LocalSettings
 import com.example.freegameradar.data.auth.AuthRepositoryImpl
 import com.example.freegameradar.data.auth.AuthState
-import com.example.freegameradar.data.repository.GameRepository
+import com.example.freegameradar.data.repository.UserSettingsRepositoryImpl
 import com.example.freegameradar.ui.auth.AuthGate
 import com.example.freegameradar.ui.components.BottomNavBar
 import com.example.freegameradar.ui.components.TopBar
@@ -34,8 +33,10 @@ fun App(
     val currentRoute = navBackStackEntry?.destination?.route
     val authRepository = AuthRepositoryImpl()
     val authState by authViewModel.authState.collectAsState()
+    val userSettingsRepository = UserSettingsRepositoryImpl(authRepository)
+    val userSettings by userSettingsRepository.getSettings().collectAsState(initial = null)
 
-    val startDestination = startRoute ?: if (LocalSettings.isSetupComplete) Screen.Home.route else Screen.Setup.route
+    val startDestination = startRoute ?: if (userSettings?.setupComplete == true) Screen.Home.route else Screen.Setup.route
 
     AppContainer { gameRepository, notificationRepository, userStatsRepository ->
         val notificationViewModel: NotificationViewModel = viewModel { NotificationViewModel(notificationRepository) }

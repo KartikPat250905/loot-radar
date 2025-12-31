@@ -72,6 +72,7 @@ fun AppNavigation(
         composable(Screen.Settings.route) {
             SettingsScreen(
                 viewModel = settingsViewModel,
+                navController = navController,
                 modifier = Modifier.padding(innerPadding)
             )
         }

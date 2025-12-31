@@ -23,19 +23,30 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.navigation.NavGraph.Companion.findStartDestination
+import androidx.navigation.NavHostController
 import com.example.freegameradar.ui.components.settings.SettingsItem
 import com.example.freegameradar.ui.components.settings.SettingsSectionHeader
+import com.example.freegameradar.ui.navigation.Screen
 import com.example.freegameradar.ui.viewmodel.SettingsViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(
     viewModel: SettingsViewModel,
+    navController: NavHostController,
     modifier: Modifier = Modifier,
 ) {
     val user by viewModel.user.collectAsState()
     val isGuest by viewModel.isGuest.collectAsState()
     var showDeleteConfirmation by remember { mutableStateOf(false) }
+
+    fun handleSignOut() {
+        navController.navigate(Screen.Home.route) {
+            popUpTo(navController.graph.findStartDestination().id) { inclusive = true }
+        }
+        viewModel.signOut()
+    }
 
     Scaffold(
         modifier = modifier,
@@ -56,7 +67,7 @@ fun SettingsScreen(
                     icon = Icons.Default.ExitToApp,
                     title = "Sign Out",
                     subtitle = "Sign out of your account",
-                    onClick = { viewModel.signOut() }
+                    onClick = { handleSignOut() }
                 )
             } else {
                 SettingsItem(
@@ -84,7 +95,7 @@ fun SettingsScreen(
             confirmButton = {
                 TextButton(
                     onClick = {
-                        viewModel.deleteAccount()
+                        handleSignOut() // Re-use the same sign-out logic
                         showDeleteConfirmation = false
                     }
                 ) {

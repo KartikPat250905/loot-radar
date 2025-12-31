@@ -149,6 +149,7 @@ fun SetupScreen(
                             preferredGameTypes = selectedTypes
                         )
                     )
+                    viewModel.completeSetup()
                     onNavigateToHome()
                 },
                 modifier = Modifier.fillMaxWidth()

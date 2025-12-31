@@ -32,4 +32,11 @@ class SetupViewModel(
             userSettingsRepository.saveSettings(userSettings)
         }
     }
+
+    fun completeSetup() {
+        viewModelScope.launch {
+            val updatedSettings = _userSettings.value.copy(setupComplete = true)
+            userSettingsRepository.saveSettings(updatedSettings)
+        }
+    }
 }
