@@ -17,6 +17,7 @@ import com.example.freegameradar.ui.screens.HomeScreen
 import com.example.freegameradar.ui.screens.NotificationScreen
 import com.example.freegameradar.ui.screens.Settings
 import com.example.freegameradar.ui.screens.SetupScreen
+import com.example.freegameradar.ui.screens.StatsScreen
 import com.example.freegameradar.ui.viewmodel.NotificationViewModel
 import com.example.freegameradar.ui.viewmodel.SetupViewModel
 
@@ -72,6 +73,9 @@ fun AppNavigation(
                 navController = navController,
                 modifier = Modifier.padding(innerPadding)
             )
+        }
+        composable(Screen.Stats.route) {
+            StatsScreen(modifier = Modifier.padding(innerPadding))
         }
         composable(Screen.Details.route) { backStackEntry ->
             val gameId = backStackEntry.arguments?.getString("gameId")?.toLongOrNull()

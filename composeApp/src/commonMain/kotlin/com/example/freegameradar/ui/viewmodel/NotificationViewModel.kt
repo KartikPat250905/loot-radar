@@ -23,6 +23,14 @@ class NotificationViewModel(private val notificationRepository: NotificationRepo
             initialValue = emptyList()
         )
 
+    val unreadNotificationCount: StateFlow<Int> = notificationRepository.getUnreadCount()
+        .map { it.toInt() }
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = 0
+        )
+
     fun markAllAsRead() {
         viewModelScope.launch {
             notificationRepository.markAllAsRead()

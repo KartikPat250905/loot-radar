@@ -4,6 +4,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.example.freegameradar.core.LocalSettings
@@ -14,6 +15,7 @@ import com.example.freegameradar.ui.components.TopBar
 import com.example.freegameradar.ui.navigation.AppNavigation
 import com.example.freegameradar.ui.navigation.Screen
 import com.example.freegameradar.ui.viewmodel.AuthViewModel
+import com.example.freegameradar.ui.viewmodel.NotificationViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -29,11 +31,13 @@ fun App(
     val startDestination = startRoute ?: if (LocalSettings.isSetupComplete) Screen.Home.route else Screen.Setup.route
 
     AppContainer { notificationRepository ->
+        val notificationViewModel: NotificationViewModel = viewModel { NotificationViewModel(notificationRepository) }
+
         AuthGate(authViewModel = authViewModel) {
             Scaffold(
                 topBar = {
                     if (currentRoute != Screen.Setup.route) {
-                        TopBar(navController)
+                        TopBar(navController, notificationViewModel)
                     }
                 },
                 bottomBar = {

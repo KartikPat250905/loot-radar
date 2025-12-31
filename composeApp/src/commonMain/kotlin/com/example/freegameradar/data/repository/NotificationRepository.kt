@@ -2,6 +2,7 @@ package com.example.freegameradar.data.repository
 
 import app.cash.sqldelight.coroutines.asFlow
 import app.cash.sqldelight.coroutines.mapToList
+import app.cash.sqldelight.coroutines.mapToOne
 import com.example.freegameradar.data.model.DealNotification
 import com.example.freegameradar.db.GameDatabase
 import kotlinx.coroutines.Dispatchers
@@ -58,8 +59,8 @@ class NotificationRepository(private val database: GameDatabase) {
         queries.markAllAsRead()
     }
 
-    fun getUnreadCount(): Int {
-        return queries.getUnreadNotificationCount().executeAsOne().toInt()
+    fun getUnreadCount(): Flow<Long> {
+        return queries.getUnreadNotificationCount().asFlow().mapToOne(Dispatchers.IO)
     }
 
     fun deleteNotification(id: Long) {

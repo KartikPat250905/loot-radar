@@ -12,7 +12,7 @@ import com.example.freegameradar.ui.navigation.Screen
 
 @Composable
 fun BottomNavBar(navController: NavController) {
-    val screens = listOf(Screen.Home, Screen.HotDeals, Screen.Notification, Screen.Settings)
+    val screens = listOf(Screen.Home, Screen.HotDeals, Screen.Stats, Screen.Settings)
     
     // Subscribe to back stack to correctly highlight tabs
     val navBackStackEntry by navController.currentBackStackEntryAsState()
