@@ -5,16 +5,38 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.ExitToApp
+import androidx.compose.material.icons.filled.Upgrade
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
+import com.example.freegameradar.ui.components.settings.SettingsItem
+import com.example.freegameradar.ui.components.settings.SettingsSectionHeader
+import com.example.freegameradar.ui.viewmodel.SettingsViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SettingsScreen(modifier: Modifier = Modifier) {
+fun SettingsScreen(
+    viewModel: SettingsViewModel,
+    modifier: Modifier = Modifier,
+) {
+    val user by viewModel.user.collectAsState()
+    val isGuest by viewModel.isGuest.collectAsState()
+    var showDeleteConfirmation by remember { mutableStateOf(false) }
+
     Scaffold(
         modifier = modifier,
         topBar = {
@@ -27,7 +49,53 @@ fun SettingsScreen(modifier: Modifier = Modifier) {
                 .padding(paddingValues)
                 .verticalScroll(rememberScrollState())
         ) {
-            // Settings items will go here
+            SettingsSectionHeader(title = "Account")
+
+            if (user != null && !isGuest) {
+                SettingsItem(
+                    icon = Icons.Default.ExitToApp,
+                    title = "Sign Out",
+                    subtitle = "Sign out of your account",
+                    onClick = { viewModel.signOut() }
+                )
+            } else {
+                SettingsItem(
+                    icon = Icons.Default.Upgrade,
+                    title = "Upgrade Account",
+                    subtitle = "Create an account to save your data",
+                    onClick = { /* TODO: Implement upgrade account */ }
+                )
+            }
+
+            SettingsItem(
+                icon = Icons.Default.Delete,
+                title = "Delete Account",
+                subtitle = "Permanently delete your account",
+                onClick = { showDeleteConfirmation = true }
+            )
         }
+    }
+
+    if (showDeleteConfirmation) {
+        AlertDialog(
+            onDismissRequest = { showDeleteConfirmation = false },
+            title = { Text("Delete Account") },
+            text = { Text("Are you sure you want to permanently delete your account? This action cannot be undone.") },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        viewModel.deleteAccount()
+                        showDeleteConfirmation = false
+                    }
+                ) {
+                    Text("Delete")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDeleteConfirmation = false }) {
+                    Text("Cancel")
+                }
+            }
+        )
     }
 }

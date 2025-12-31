@@ -20,6 +20,7 @@ import com.example.freegameradar.ui.navigation.AppNavigation
 import com.example.freegameradar.ui.navigation.Screen
 import com.example.freegameradar.ui.viewmodel.AuthViewModel
 import com.example.freegameradar.ui.viewmodel.NotificationViewModel
+import com.example.freegameradar.ui.viewmodel.SettingsViewModel
 import com.example.freegameradar.ui.viewmodel.UserStatsViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -39,6 +40,7 @@ fun App(
     AppContainer { gameRepository, notificationRepository, userStatsRepository ->
         val notificationViewModel: NotificationViewModel = viewModel { NotificationViewModel(notificationRepository) }
         val userStatsViewModel: UserStatsViewModel = viewModel { UserStatsViewModel(userStatsRepository, gameRepository) }
+        val settingsViewModel: SettingsViewModel = viewModel { SettingsViewModel(authRepository) }
 
         AuthGate(authViewModel = authViewModel) {
             LaunchedEffect(authState) { // Observe the authState directly
@@ -65,7 +67,8 @@ fun App(
                     authRepository = authRepository,
                     startDestination = startDestination,
                     notificationViewModel = notificationViewModel,
-                    userStatsViewModel = userStatsViewModel
+                    userStatsViewModel = userStatsViewModel,
+                    settingsViewModel = settingsViewModel
                 )
             }
         }

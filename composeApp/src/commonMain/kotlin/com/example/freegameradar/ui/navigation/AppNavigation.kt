@@ -13,10 +13,11 @@ import com.example.freegameradar.ui.screens.HotDealsScreen
 import com.example.freegameradar.ui.screens.GameDetailScreen
 import com.example.freegameradar.ui.screens.HomeScreen
 import com.example.freegameradar.ui.screens.NotificationScreen
-import com.example.freegameradar.ui.screens.Settings
+import com.example.freegameradar.ui.screens.SettingsScreen
 import com.example.freegameradar.ui.screens.SetupScreen
 import com.example.freegameradar.ui.screens.StatsScreen
 import com.example.freegameradar.ui.viewmodel.NotificationViewModel
+import com.example.freegameradar.ui.viewmodel.SettingsViewModel
 import com.example.freegameradar.ui.viewmodel.SetupViewModel
 import com.example.freegameradar.ui.viewmodel.UserStatsViewModel
 
@@ -27,7 +28,8 @@ fun AppNavigation(
     authRepository: AuthRepository,
     startDestination: String,
     notificationViewModel: NotificationViewModel,
-    userStatsViewModel: UserStatsViewModel
+    userStatsViewModel: UserStatsViewModel,
+    settingsViewModel: SettingsViewModel
 ) {
     NavHost(
         navController = navController,
@@ -68,8 +70,8 @@ fun AppNavigation(
             )
         }
         composable(Screen.Settings.route) {
-            Settings(
-                navController = navController,
+            SettingsScreen(
+                viewModel = settingsViewModel,
                 modifier = Modifier.padding(innerPadding)
             )
         }
