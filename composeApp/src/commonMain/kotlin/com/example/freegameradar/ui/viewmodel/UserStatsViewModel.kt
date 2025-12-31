@@ -34,10 +34,10 @@ class UserStatsViewModel(
     // Platform stats for CURRENTLY AVAILABLE free games (not claimed)
     val platformStats: StateFlow<List<PlatformStat>> = gameRepository.getFreeGames()
         .map { allGames ->
-            // Filter out DLCs
-            val baseGames = allGames.filter { game ->
-                game.type?.lowercase() != "dlc"
-            }
+            // Filter out DLCs and duplicates by ID to ensure each game is counted only once
+            val baseGames = allGames
+                .filter { game -> game.type?.lowercase() != "dlc" }
+                .distinctBy { it.id }
 
             // Count games per platform - prioritize store platforms
             val platformCounts = mutableMapOf<String, MutableList<Double>>()
@@ -81,23 +81,12 @@ class UserStatsViewModel(
             lower.contains("battlenet") || lower.contains("battle.net") -> "Battle.net"
 
             // Priority 2: Console platforms
-            lower.contains("ps5") -> "PlayStation 5"
-            lower.contains("ps4") -> "PlayStation 4"
-            lower.contains("xbox series") || lower.contains("xbox-series-xs") -> "Xbox Series X|S"
-            lower.contains("xbox one") || lower.contains("xbox-one") -> "Xbox One"
-            lower.contains("xbox 360") || lower.contains("xbox-360") -> "Xbox 360"
+            lower.contains("ps5") || lower.contains("ps4") -> "PlayStation"
+            lower.contains("xbox") -> "Xbox"
             lower.contains("switch") -> "Nintendo Switch"
 
-            // Priority 3: Mobile platforms (only if no store mentioned)
-            lower.contains("android") && !lower.contains("pc") -> "Android"
-            lower.contains("ios") && !lower.contains("pc") -> "iOS"
-
             // Priority 4: Other platforms
-            lower.contains("vr") -> "VR"
             lower.contains("drm-free") || lower.contains("drm free") -> "DRM-Free"
-
-            // Priority 5: Generic PC (if no specific store)
-            lower.contains("pc") -> "PC"
 
             else -> "Other"
         }
