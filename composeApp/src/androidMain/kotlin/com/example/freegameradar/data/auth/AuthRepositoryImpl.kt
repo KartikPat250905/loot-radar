@@ -2,6 +2,7 @@ package com.example.freegameradar.data.auth
 
 import com.example.freegameradar.data.models.User
 import com.google.firebase.auth.AuthResult
+import com.google.firebase.auth.EmailAuthProvider
 import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
@@ -60,6 +61,16 @@ actual class AuthRepositoryImpl : AuthRepository {
         return try {
             firebaseAuth.currentUser?.delete()?.await()
             Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    actual override suspend fun linkAccount(email: String, password: String): Result<User> {
+        return try {
+            val credential = EmailAuthProvider.getCredential(email, password)
+            val authResult = firebaseAuth.currentUser?.linkWithCredential(credential)?.await()
+            Result.success(User(authResult?.user?.uid ?: "", authResult?.user?.email ?: "", false))
         } catch (e: Exception) {
             Result.failure(e)
         }

@@ -1,16 +1,21 @@
 package com.example.freegameradar.ui.screens
 
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.ExitToApp
 import androidx.compose.material.icons.filled.Upgrade
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -22,6 +27,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
@@ -37,9 +44,9 @@ fun SettingsScreen(
     navController: NavHostController,
     modifier: Modifier = Modifier,
 ) {
-    val user by viewModel.user.collectAsState()
-    val isGuest by viewModel.isGuest.collectAsState()
+    val uiState by viewModel.uiState.collectAsState()
     var showDeleteConfirmation by remember { mutableStateOf(false) }
+    var showUpgradeDialog by remember { mutableStateOf(false) }
 
     fun handleSignOut() {
         navController.navigate(Screen.Home.route) {
@@ -62,7 +69,7 @@ fun SettingsScreen(
         ) {
             SettingsSectionHeader(title = "Account")
 
-            if (user != null && !isGuest) {
+            if (uiState.user != null && !uiState.isGuest) {
                 SettingsItem(
                     icon = Icons.Default.ExitToApp,
                     title = "Sign Out",
@@ -74,7 +81,7 @@ fun SettingsScreen(
                     icon = Icons.Default.Upgrade,
                     title = "Upgrade Account",
                     subtitle = "Create an account to save your data",
-                    onClick = { /* TODO: Implement upgrade account */ }
+                    onClick = { showUpgradeDialog = true }
                 )
             }
 
@@ -85,6 +92,54 @@ fun SettingsScreen(
                 onClick = { showDeleteConfirmation = true }
             )
         }
+    }
+
+    if (showUpgradeDialog) {
+        var email by remember { mutableStateOf("") }
+        var password by remember { mutableStateOf("") }
+
+        AlertDialog(
+            onDismissRequest = { showUpgradeDialog = false },
+            title = { Text("Upgrade Account") },
+            text = {
+                Column {
+                    Text("Enter your email and password to create an account. Your data will be saved.")
+                    Spacer(modifier = Modifier.height(16.dp))
+                    OutlinedTextField(
+                        value = email,
+                        onValueChange = { email = it },
+                        label = { Text("Email") },
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email)
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    OutlinedTextField(
+                        value = password,
+                        onValueChange = { password = it },
+                        label = { Text("Password") },
+                        visualTransformation = PasswordVisualTransformation(),
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password)
+                    )
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        viewModel.upgradeAccount(email, password) { result ->
+                            if (result.isSuccess) {
+                                showUpgradeDialog = false
+                            }
+                        }
+                    }
+                ) {
+                    Text("Upgrade")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showUpgradeDialog = false }) {
+                    Text("Cancel")
+                }
+            }
+        )
     }
 
     if (showDeleteConfirmation) {

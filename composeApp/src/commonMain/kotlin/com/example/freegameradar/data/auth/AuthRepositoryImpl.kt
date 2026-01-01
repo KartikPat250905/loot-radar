@@ -11,4 +11,5 @@ expect class AuthRepositoryImpl() : AuthRepository {
     override fun isUserLoggedIn(): Boolean
     override suspend fun signOut()
     override suspend fun deleteAccount(): Result<Unit>
+    override suspend fun linkAccount(email: String, password: String): Result<User>
 }
