@@ -45,7 +45,7 @@ fun App(
 
         AuthGate(authViewModel = authViewModel) {
             LaunchedEffect(authState) { // Observe the authState directly
-                if (authState is AuthState.LoggedIn) { // Check if the user is in the LoggedIn state
+                if (authState is AuthState.LoggedIn || authState is AuthState.Guest) { // Sync for both logged in and guest users
                     userStatsViewModel.syncClaimedValue()
                 }
             }
