@@ -55,6 +55,13 @@ fun SettingsScreen(
         viewModel.signOut()
     }
 
+    fun handleDeleteAccount() {
+        navController.navigate(Screen.Home.route) {
+            popUpTo(navController.graph.findStartDestination().id) { inclusive = true }
+        }
+        viewModel.deleteAccount()
+    }
+
     Scaffold(
         modifier = modifier,
         topBar = {
@@ -150,7 +157,7 @@ fun SettingsScreen(
             confirmButton = {
                 TextButton(
                     onClick = {
-                        handleSignOut() // Re-use the same sign-out logic
+                        handleDeleteAccount()
                         showDeleteConfirmation = false
                     }
                 ) {
