@@ -22,11 +22,9 @@ actual class UserSettingsRepositoryImpl actual constructor(
     private val authRepository: AuthRepository
 ) : UserSettingsRepository {
 
-    // Forced update to resolve potential IDE state mismatch.
     private val db = GameDatabaseProvider.getDatabase().user_settingsQueries
 
-    // 1. Rewritten getSettings to be fully reactive and Cloud-First.
-    actual override fun getSettings(): Flow<UserSettings> = authRepository.getAuthStateFlow().flatMapLatest { user ->
+    override fun getSettings(): Flow<UserSettings> = authRepository.getAuthStateFlow().flatMapLatest { user ->
         if (user == null) {
             // No user is authenticated. Fallback to local cache to avoid eternal loading.
             flow {
@@ -71,11 +69,11 @@ actual class UserSettingsRepositoryImpl actual constructor(
         }
     }
 
-    actual override suspend fun syncUserSettings() {
+    override suspend fun syncUserSettings() {
         // This function is now redundant as its logic is part of the reactive getSettings flow.
     }
 
-    actual override suspend fun saveSettings(userSettings: UserSettings) {
+    override suspend fun saveSettings(userSettings: UserSettings) {
         withContext(Dispatchers.IO) {
             db.insertSettings(
                 notifications_enabled = if (userSettings.notificationsEnabled) 1L else 0L,
@@ -91,5 +89,14 @@ actual class UserSettingsRepositoryImpl actual constructor(
                 println("Failed to save settings to Firebase: ${e.message}")
             }
         }
+    }
+
+    override suspend fun disableAllNotifications() {
+        val disabledSettings = UserSettings(
+            notificationsEnabled = false,
+            preferredGamePlatforms = emptyList(),
+            preferredGameTypes = emptyList()
+        )
+        saveSettings(disabledSettings)
     }
 }

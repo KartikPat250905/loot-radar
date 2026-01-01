@@ -6,7 +6,6 @@ import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
-import com.example.freegameradar.core.LocalSettings
 import com.example.freegameradar.data.auth.AuthRepository
 import com.example.freegameradar.data.repository.UserSettingsRepositoryImpl
 import com.example.freegameradar.ui.screens.HotDealsScreen
@@ -19,6 +18,7 @@ import com.example.freegameradar.ui.screens.StatsScreen
 import com.example.freegameradar.ui.viewmodel.NotificationViewModel
 import com.example.freegameradar.ui.viewmodel.SettingsViewModel
 import com.example.freegameradar.ui.viewmodel.SetupViewModel
+import com.example.freegameradar.ui.viewmodel.UserPreferencesViewModel
 import com.example.freegameradar.ui.viewmodel.UserStatsViewModel
 
 @Composable
@@ -42,7 +42,6 @@ fun AppNavigation(
                     authRepository = authRepository
                 ),
                 onNavigateToHome = { 
-                    LocalSettings.isSetupComplete = true
                     navController.navigate(Screen.Home.route) { 
                         popUpTo(Screen.Setup.route) { inclusive = true } 
                     }
@@ -72,6 +71,9 @@ fun AppNavigation(
         composable(Screen.Settings.route) {
             SettingsScreen(
                 viewModel = settingsViewModel,
+                userPreferencesViewModel = UserPreferencesViewModel(
+                    userSettingsRepository = UserSettingsRepositoryImpl(authRepository)
+                ),
                 navController = navController,
                 modifier = Modifier.padding(innerPadding)
             )

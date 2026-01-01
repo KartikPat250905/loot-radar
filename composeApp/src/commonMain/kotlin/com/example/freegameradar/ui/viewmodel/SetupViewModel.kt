@@ -8,6 +8,7 @@ import com.example.freegameradar.settings.UserSettings
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
@@ -24,6 +25,13 @@ class SetupViewModel(
         userSettingsRepository.getSettings()
             .onEach { _userSettings.value = it }
             .launchIn(viewModelScope)
+
+        // If there is no authenticated user, sign in as a guest
+        viewModelScope.launch {
+            if (authRepository.getAuthStateFlow().first() == null) {
+                authRepository.signInAsGuest()
+            }
+        }
     }
 
     fun savePreferencesAndCompleteSetup(

@@ -1,8 +1,13 @@
 package com.example.freegameradar.ui.screens
 
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
@@ -10,19 +15,24 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.ExitToApp
 import androidx.compose.material.icons.filled.Upgrade
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
@@ -32,6 +42,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -39,22 +50,31 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
+import com.example.freegameradar.permissions.rememberPermissionHandler
+import com.example.freegameradar.ui.components.FilterChip
 import com.example.freegameradar.ui.components.settings.SettingsItem
 import com.example.freegameradar.ui.components.settings.SettingsSectionHeader
 import com.example.freegameradar.ui.navigation.Screen
 import com.example.freegameradar.ui.viewmodel.SettingsViewModel
+import com.example.freegameradar.ui.viewmodel.UserPreferencesViewModel
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 fun SettingsScreen(
     viewModel: SettingsViewModel,
+    userPreferencesViewModel: UserPreferencesViewModel,
     navController: NavHostController,
     modifier: Modifier = Modifier,
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val preferencesState by userPreferencesViewModel.uiState.collectAsState()
+
     var showDeleteConfirmation by remember { mutableStateOf(false) }
     var showUpgradeDialog by remember { mutableStateOf(false) }
     var showSignOutConfirmation by remember { mutableStateOf(false) }
+    var showNotificationPreferenceDialog by remember { mutableStateOf(false) }
+
+    val permissionHandler = rememberPermissionHandler()
 
     fun handleSignOut() {
         navController.navigate(Screen.Home.route) {
@@ -110,6 +130,39 @@ fun SettingsScreen(
                 title = "Delete Account",
                 subtitle = "Permanently delete your account",
                 onClick = { showDeleteConfirmation = true }
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
+            SettingsSectionHeader(title = "Notifications")
+
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Text("Enable Notifications")
+                Switch(
+                    checked = preferencesState.notificationsEnabled,
+                    onCheckedChange = { wantsToEnable ->
+                        if (wantsToEnable) {
+                            permissionHandler.requestNotificationPermission { isGranted ->
+                                userPreferencesViewModel.setNotificationsEnabled(isGranted)
+                            }
+                        } else {
+                            userPreferencesViewModel.setNotificationsEnabled(false)
+                        }
+                    }
+                )
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            PreferenceSummaryCard(
+                platforms = preferencesState.preferredGamePlatforms,
+                types = preferencesState.preferredGameTypes,
+                onEditClick = { showNotificationPreferenceDialog = true },
             )
         }
     }
@@ -219,6 +272,92 @@ fun SettingsScreen(
         )
     }
 
+    if (showNotificationPreferenceDialog) {
+        val platforms = listOf(
+            "pc", "steam", "epic-games-store", "ubisoft", "gog", "itchio",
+            "ps4", "ps5", "xbox-one", "xbox-series-xs", "switch",
+            "android", "ios", "vr", "battlenet", "origin", "drm-free", "xbox-360"
+        )
+        val types = listOf("game", "dlc", "early access")
+
+        var selectedPlatforms by remember { mutableStateOf(preferencesState.preferredGamePlatforms) }
+        var selectedTypes by remember { mutableStateOf(preferencesState.preferredGameTypes) }
+
+        AlertDialog(
+            onDismissRequest = { showNotificationPreferenceDialog = false },
+            title = { Text("Edit Notification Preferences") },
+            text = {
+                Column(
+                    modifier = Modifier.verticalScroll(rememberScrollState())
+                ) {
+                    Text("Notify me about these platforms:", style = MaterialTheme.typography.titleMedium)
+                    Spacer(modifier = Modifier.height(12.dp))
+                    FlowRow(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        platforms.forEach { platform ->
+                            FilterChip(
+                                text = platform,
+                                selected = selectedPlatforms.contains(platform),
+                                onClick = {
+                                    selectedPlatforms = if (selectedPlatforms.contains(platform)) {
+                                        selectedPlatforms - platform
+                                    } else {
+                                        selectedPlatforms + platform
+                                    }
+                                }
+                            )
+                        }
+                    }
+                    Spacer(modifier = Modifier.height(24.dp))
+
+                    Text("Notify me about these types:", style = MaterialTheme.typography.titleMedium, modifier = Modifier.fillMaxWidth())
+                    Spacer(modifier = Modifier.height(12.dp))
+                    FlowRow(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        types.forEach { type ->
+                            FilterChip(
+                                text = type,
+                                selected = selectedTypes.contains(type),
+                                onClick = {
+                                    selectedTypes = if (selectedTypes.contains(type)) {
+                                        selectedTypes - type
+                                    } else {
+                                        selectedTypes + type
+                                    }
+                                }
+                            )
+                        }
+                    }
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        userPreferencesViewModel.updatePreferences(
+                            preferredGamePlatforms = selectedPlatforms,
+                            preferredGameTypes = selectedTypes
+                        )
+                        showNotificationPreferenceDialog = false
+                    }
+                ) {
+                    Text("Save")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showNotificationPreferenceDialog = false }) {
+                    Text("Cancel")
+                }
+            }
+        )
+    }
+
+
     if (showSignOutConfirmation) {
         AlertDialog(
             onDismissRequest = { showSignOutConfirmation = false },
@@ -263,5 +402,39 @@ fun SettingsScreen(
                 }
             }
         )
+    }
+}
+
+
+@Composable
+fun PreferenceSummaryCard(
+    platforms: List<String>,
+    types: List<String>,
+    onEditClick: () -> Unit
+) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp)
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text("Current Preferences", style = MaterialTheme.typography.titleMedium)
+                IconButton(onClick = onEditClick) {
+                    Icon(Icons.Default.Edit, contentDescription = "Edit Preferences")
+                }
+            }
+            Spacer(modifier = Modifier.height(12.dp))
+            Text("Platforms: ${platforms.joinToString().ifEmpty { "None" }}")
+            Spacer(modifier = Modifier.height(8.dp))
+            Text("Types: ${types.joinToString().ifEmpty { "None" }}")
+        }
     }
 }

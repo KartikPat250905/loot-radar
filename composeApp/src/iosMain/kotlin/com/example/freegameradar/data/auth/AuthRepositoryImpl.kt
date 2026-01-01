@@ -43,6 +43,16 @@ actual class AuthRepositoryImpl : AuthRepository {
         }
     }
 
+    actual override suspend fun signInAsGuest(): Result<User> = suspendCancellableCoroutine { continuation ->
+        firebaseAuth.signInAnonymouslyWithCompletion { authResult, error ->
+            if (authResult != null) {
+                continuation.resume(Result.success(authResult.user.toUser(isGuest = true)))
+            } else {
+                continuation.resume(Result.failure(Exception(error?.localizedDescription() ?: "Unknown error")))
+            }
+        }
+    }
+
     actual override fun getAuthStateFlow(): Flow<User?> = callbackFlow {
         val handle = firebaseAuth.addAuthStateDidChangeListenerWithBlock { _, user ->
             trySend(user?.toUser()).isSuccess
@@ -53,6 +63,24 @@ actual class AuthRepositoryImpl : AuthRepository {
     actual override fun isUserLoggedIn(): Boolean {
         val user = firebaseAuth.currentUser
         return user != null && !user.isAnonymous()
+    }
+
+    actual override suspend fun signOut() {
+        try {
+            firebaseAuth.signOut(null)
+        } catch (e: Exception) {
+            println("Error signing out: ${e.message}")
+        }
+    }
+
+    actual override suspend fun deleteAccount(): Result<Unit> {
+        // Not implemented for iOS
+        return Result.success(Unit)
+    }
+
+    actual override suspend fun linkAccount(email: String, password: String): Result<User> {
+        // Not implemented for iOS
+        return Result.failure(Exception("Not implemented for iOS"))
     }
 
     private fun FIRUser.toUser(isGuest: Boolean = false): User {

@@ -41,4 +41,17 @@ actual class UserSettingsRepositoryImpl actual constructor(
             // TODO: Add Firebase support for iOS
         }
     }
+
+    override suspend fun syncUserSettings() {
+        // Not implemented for iOS
+    }
+
+    override suspend fun disableAllNotifications() {
+        val disabledSettings = UserSettings(
+            notificationsEnabled = false,
+            preferredGamePlatforms = emptyList(),
+            preferredGameTypes = emptyList()
+        )
+        saveSettings(disabledSettings)
+    }
 }

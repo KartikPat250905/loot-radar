@@ -42,6 +42,15 @@ actual class AuthRepositoryImpl : AuthRepository {
         }
     }
 
+    actual override suspend fun signInAsGuest(): Result<User> {
+        return try {
+            val authResult: AuthResult = firebaseAuth.signInAnonymously().await()
+            Result.success(User(authResult.user?.uid ?: "", "Guest", true))
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
     actual override fun getAuthStateFlow(): Flow<User?> = callbackFlow {
         val authStateListener = FirebaseAuth.AuthStateListener { auth ->
             val user = auth.currentUser?.let { User(it.uid, it.email ?: "", it.isAnonymous) }

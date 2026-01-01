@@ -10,4 +10,6 @@ interface UserSettingsRepository {
     suspend fun saveSettings(userSettings: UserSettings)
 
     suspend fun syncUserSettings()
+
+    suspend fun disableAllNotifications()
 }
