@@ -27,7 +27,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.example.freegameradar.permissions.rememberPermissionHandler
-import com.example.freegameradar.settings.UserSettings
 import com.example.freegameradar.ui.components.FilterChip
 import com.example.freegameradar.ui.viewmodel.SetupViewModel
 
@@ -37,7 +36,6 @@ fun SetupScreen(
     viewModel: SetupViewModel,
     onNavigateToHome: () -> Unit
 ) {
-    // Default notifications to OFF to ensure user interaction triggers permission request.
     var notificationsEnabled by remember { mutableStateOf(false) }
     var selectedPlatforms by remember { mutableStateOf(emptyList<String>()) }
     var selectedTypes by remember { mutableStateOf(emptyList<String>()) }
@@ -142,14 +140,11 @@ fun SetupScreen(
 
             Button(
                 onClick = {
-                    viewModel.saveSettings(
-                        UserSettings(
-                            notificationsEnabled = notificationsEnabled,
-                            preferredGamePlatforms = selectedPlatforms,
-                            preferredGameTypes = selectedTypes
-                        )
+                    viewModel.savePreferencesAndCompleteSetup(
+                        notificationsEnabled = notificationsEnabled,
+                        preferredGamePlatforms = selectedPlatforms,
+                        preferredGameTypes = selectedTypes
                     )
-                    viewModel.completeSetup()
                     onNavigateToHome()
                 },
                 modifier = Modifier.fillMaxWidth()

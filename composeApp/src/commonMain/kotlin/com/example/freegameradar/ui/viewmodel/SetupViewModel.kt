@@ -4,7 +4,6 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.freegameradar.data.auth.AuthRepository
 import com.example.freegameradar.data.repository.UserSettingsRepository
-import com.example.freegameradar.data.repository.UserSettingsRepositoryImpl
 import com.example.freegameradar.settings.UserSettings
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -27,16 +26,19 @@ class SetupViewModel(
             .launchIn(viewModelScope)
     }
 
-    fun saveSettings(userSettings: UserSettings) {
+    fun savePreferencesAndCompleteSetup(
+        notificationsEnabled: Boolean,
+        preferredGamePlatforms: List<String>,
+        preferredGameTypes: List<String>
+    ) {
         viewModelScope.launch {
-            userSettingsRepository.saveSettings(userSettings)
-        }
-    }
-
-    fun completeSetup() {
-        viewModelScope.launch {
-            val updatedSettings = _userSettings.value.copy(setupComplete = true)
-            userSettingsRepository.saveSettings(updatedSettings)
+            val newSettings = UserSettings(
+                notificationsEnabled = notificationsEnabled,
+                preferredGamePlatforms = preferredGamePlatforms,
+                preferredGameTypes = preferredGameTypes,
+                setupComplete = true // Set setup as complete
+            )
+            userSettingsRepository.saveSettings(newSettings)
         }
     }
 }
