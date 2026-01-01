@@ -112,6 +112,7 @@ fun SettingsScreen(
     if (showUpgradeDialog) {
         var email by remember { mutableStateOf("") }
         var password by remember { mutableStateOf("") }
+        var confirmPassword by remember { mutableStateOf("") }
         var error by remember { mutableStateOf<String?>(null) }
         var isLoading by remember { mutableStateOf(false) }
 
@@ -141,6 +142,16 @@ fun SettingsScreen(
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
                         readOnly = isLoading
                     )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    OutlinedTextField(
+                        value = confirmPassword,
+                        onValueChange = { confirmPassword = it },
+                        label = { Text("Confirm Password") },
+                        isError = error != null,
+                        visualTransformation = PasswordVisualTransformation(),
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+                        readOnly = isLoading
+                    )
 
                     error?.let {
                         Spacer(modifier = Modifier.height(8.dp))
@@ -151,6 +162,10 @@ fun SettingsScreen(
             confirmButton = {
                 Button(
                     onClick = {
+                        if (password != confirmPassword) {
+                            error = "Passwords do not match."
+                            return@Button
+                        }
                         isLoading = true
                         error = null
                         viewModel.upgradeAccount(email, password) { result ->
@@ -162,7 +177,7 @@ fun SettingsScreen(
                             }
                         }
                     },
-                    enabled = !isLoading && email.isNotBlank() && password.isNotBlank()
+                    enabled = !isLoading && email.isNotBlank() && password.isNotBlank() && confirmPassword.isNotBlank()
                 ) {
                     if (isLoading) {
                         CircularProgressIndicator()
