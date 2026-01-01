@@ -49,6 +49,7 @@ fun SettingsScreen(
     val uiState by viewModel.uiState.collectAsState()
     var showDeleteConfirmation by remember { mutableStateOf(false) }
     var showUpgradeDialog by remember { mutableStateOf(false) }
+    var showSignOutConfirmation by remember { mutableStateOf(false) }
 
     fun handleSignOut() {
         navController.navigate(Screen.Home.route) {
@@ -88,7 +89,7 @@ fun SettingsScreen(
                     icon = Icons.Default.ExitToApp,
                     title = "Sign Out",
                     subtitle = "Sign out of your account",
-                    onClick = { handleSignOut() }
+                    onClick = { showSignOutConfirmation = true }
                 )
             } else {
                 SettingsItem(
@@ -172,6 +173,29 @@ fun SettingsScreen(
             },
             dismissButton = {
                 TextButton(onClick = { if (!isLoading) showUpgradeDialog = false }) {
+                    Text("Cancel")
+                }
+            }
+        )
+    }
+
+    if (showSignOutConfirmation) {
+        AlertDialog(
+            onDismissRequest = { showSignOutConfirmation = false },
+            title = { Text("Sign Out") },
+            text = { Text("Are you sure you want to sign out?") },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        handleSignOut()
+                        showSignOutConfirmation = false
+                    }
+                ) {
+                    Text("Sign Out")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showSignOutConfirmation = false }) {
                     Text("Cancel")
                 }
             }
