@@ -38,9 +38,10 @@ class SettingsViewModel(private val authRepository: AuthRepository) : ViewModel(
         }
     }
 
-    fun deleteAccount() {
+    fun deleteAccount(onResult: (Result<Unit>) -> Unit) {
         viewModelScope.launch {
-            authRepository.deleteAccount()
+            val result = authRepository.deleteAccount()
+            onResult(result)
         }
     }
 

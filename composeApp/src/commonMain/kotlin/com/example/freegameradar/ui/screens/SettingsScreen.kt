@@ -56,10 +56,15 @@ fun SettingsScreen(
     }
 
     fun handleDeleteAccount() {
-        navController.navigate(Screen.Home.route) {
-            popUpTo(navController.graph.findStartDestination().id) { inclusive = true }
+        viewModel.deleteAccount { result ->
+            if (result.isSuccess) {
+                // Only navigate after the account has been successfully deleted.
+                navController.navigate(Screen.Home.route) {
+                    popUpTo(navController.graph.findStartDestination().id) { inclusive = true }
+                }
+            }
+            // Optionally, handle the failure case e.g., show a snackbar
         }
-        viewModel.deleteAccount()
     }
 
     Scaffold(

@@ -4,6 +4,8 @@ import com.example.freegameradar.data.models.User
 import com.google.firebase.auth.AuthResult
 import com.google.firebase.auth.EmailAuthProvider
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.ktx.firestore
+import com.google.firebase.ktx.Firebase
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
@@ -11,6 +13,7 @@ import kotlinx.coroutines.tasks.await
 
 actual class AuthRepositoryImpl : AuthRepository {
     private val firebaseAuth: FirebaseAuth = FirebaseAuth.getInstance()
+    private val firestore = Firebase.firestore
 
     actual override suspend fun login(email: String, password: String): Result<User> {
         return try {
@@ -59,9 +62,18 @@ actual class AuthRepositoryImpl : AuthRepository {
 
     actual override suspend fun deleteAccount(): Result<Unit> {
         return try {
-            firebaseAuth.currentUser?.delete()?.await()
+            val user = firebaseAuth.currentUser ?: return Result.failure(IllegalStateException("User not logged in."))
+            val userId = user.uid
+
+            // First, delete the user's document from Firestore to ensure data is removed.
+            firestore.collection("users").document(userId).delete().await()
+
+            // Then, and only then, delete the user from Firebase Authentication.
+            user.delete().await()
+
             Result.success(Unit)
         } catch (e: Exception) {
+            println("Error deleting account: ${e.message}")
             Result.failure(e)
         }
     }
