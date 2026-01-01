@@ -24,11 +24,11 @@ actual class UserSettingsRepositoryImpl actual constructor(
 
     private val db = GameDatabaseProvider.getDatabase().user_settingsQueries
 
-    // 1. Rewritten getSettings to be CLOUD-FIRST.
     actual override fun getSettings(): Flow<UserSettings> = flow {
         val userId = authRepository.getAuthStateFlow().first()?.uid
         if (userId == null) {
-            emit(UserSettings()) // No user logged in, emit default settings and end the flow.
+            // THE FIX: Do not emit anything if there is no user.
+            // This forces the UI to wait in its loading state.
             return@flow
         }
 
@@ -39,8 +39,7 @@ actual class UserSettingsRepositoryImpl actual constructor(
             val remoteSettings = userDocRef.get().await().toObject(UserSettings::class.java)
 
             if (remoteSettings != null) {
-                // Cloud data exists. This is our source of truth.
-                // Cache it locally for offline use.
+                // Cloud data exists. Cache it locally.
                 db.insertSettings(
                     notifications_enabled = if (remoteSettings.notificationsEnabled) 1L else 0L,
                     preferred_game_platforms = remoteSettings.preferredGamePlatforms.joinToString(","),
@@ -49,7 +48,7 @@ actual class UserSettingsRepositoryImpl actual constructor(
                 // Emit the fresh cloud data.
                 emit(remoteSettings)
             } else {
-                // No settings in the cloud (e.g., a new user). Emit default settings.
+                // No settings in the cloud (new user). Emit default settings.
                 emit(UserSettings())
             }
         } catch (e: Exception) {
@@ -64,23 +63,19 @@ actual class UserSettingsRepositoryImpl actual constructor(
         }
     }.flowOn(Dispatchers.IO)
 
-    // This function's logic is now integrated into the new getSettings() flow.
-    // It's kept to satisfy the interface and avoid breaking App.kt, but can be removed in a future refactor.
     actual override suspend fun syncUserSettings() {
-       // Intentionally left blank.
+       // This function's logic is now handled by the getSettings flow.
+       // It is kept only to satisfy the interface and can be removed in a future refactor.
     }
 
-    // 3. saveSettings remains correct: it saves locally and then pushes to remote.
     actual override suspend fun saveSettings(userSettings: UserSettings) {
         withContext(Dispatchers.IO) {
-            // Update local DB first.
             db.insertSettings(
                 notifications_enabled = if (userSettings.notificationsEnabled) 1L else 0L,
                 preferred_game_platforms = userSettings.preferredGamePlatforms.joinToString(","),
                 preferred_game_types = userSettings.preferredGameTypes.joinToString(",")
             )
 
-            // Then, push changes to remote for any authenticated user.
             val userId = authRepository.getAuthStateFlow().first()?.uid ?: return@withContext
             try {
                 val remoteDb = Firebase.firestore
