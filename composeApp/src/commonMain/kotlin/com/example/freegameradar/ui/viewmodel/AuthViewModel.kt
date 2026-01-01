@@ -1,61 +1,61 @@
 package com.example.freegameradar.ui.viewmodel
 
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.example.freegameradar.data.auth.AuthRepository
 import com.example.freegameradar.data.auth.AuthState
-import com.example.freegameradar.data.auth.getCoroutineContext
-import kotlinx.coroutines.CoroutineScope
+import com.example.freegameradar.data.models.User
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.launchIn
-import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
-class AuthViewModel(
-    private val authRepository: AuthRepository
-) {
+class AuthViewModel(private val authRepository: AuthRepository) : ViewModel() {
+
     private val _authState = MutableStateFlow<AuthState>(AuthState.Loading)
-    val authState: StateFlow<AuthState> = _authState
+    val authState: StateFlow<AuthState> = _authState.asStateFlow()
+
+    val currentUser: StateFlow<User?> = authRepository.getAuthStateFlow()
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
 
     init {
-        authRepository.getAuthStateFlow()
-            .onEach { user ->
+        viewModelScope.launch {
+            authRepository.getAuthStateFlow().collect { user ->
                 _authState.value = when {
-                    user == null -> AuthState.Error("Not logged in")
-                    user.isAnonymous -> AuthState.Guest
-                    else -> AuthState.LoggedIn
+                    user != null -> if (user.isAnonymous) AuthState.Guest else AuthState.LoggedIn
+                    else -> AuthState.Error("Not Logged In")
                 }
             }
-            .launchIn(CoroutineScope(getCoroutineContext()))
+        }
     }
 
     fun login(email: String, password: String) {
-        CoroutineScope(getCoroutineContext()).launch {
-            authRepository.login(email, password)
-                .onFailure {
-                    _authState.value = AuthState.Error(it.message ?: "Login failed")
-                }
+        viewModelScope.launch {
+            _authState.value = AuthState.Loading
+            val result = authRepository.login(email, password)
+            result.onFailure {
+                _authState.value = AuthState.Error(it.message ?: "Unknown login error")
+            }
         }
     }
-    
+
     fun register(email: String, password: String) {
-        CoroutineScope(getCoroutineContext()).launch {
-             authRepository.register(email, password)
-                .onFailure {
-                    _authState.value = AuthState.Error(it.message ?: "Registration failed")
-                }
+        viewModelScope.launch {
+            _authState.value = AuthState.Loading
+            val result = authRepository.register(email, password)
+            result.onFailure {
+                _authState.value = AuthState.Error(it.message ?: "Unknown registration error")
+            }
         }
     }
 
     fun continueAsGuest() {
-        CoroutineScope(getCoroutineContext()).launch {
+        viewModelScope.launch {
+            _authState.value = AuthState.Loading
             authRepository.continueAsGuest()
-                .onFailure {
-                    _authState.value = AuthState.Error(it.message ?: "Guest sign-in failed")
-                }
         }
-    }
-
-    fun showNotImplementedError() {
-        _authState.value = AuthState.Error("This feature is not yet implemented.")
     }
 }

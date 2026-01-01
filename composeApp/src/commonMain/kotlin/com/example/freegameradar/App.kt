@@ -10,7 +10,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.example.freegameradar.data.auth.AuthRepositoryImpl
-import com.example.freegameradar.data.auth.AuthState
+import com.example.freegameradar.data.repository.UserSettingsRepository
 import com.example.freegameradar.data.repository.UserSettingsRepositoryImpl
 import com.example.freegameradar.ui.auth.AuthGate
 import com.example.freegameradar.ui.components.BottomNavBar
@@ -32,8 +32,8 @@ fun App(
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
     val authRepository = AuthRepositoryImpl()
-    val authState by authViewModel.authState.collectAsState()
-    val userSettingsRepository = UserSettingsRepositoryImpl(authRepository)
+    val currentUser by authViewModel.currentUser.collectAsState()
+    val userSettingsRepository: UserSettingsRepository = UserSettingsRepositoryImpl(authRepository)
     val userSettings by userSettingsRepository.getSettings().collectAsState(initial = null)
 
     val startDestination = startRoute ?: if (userSettings?.setupComplete == true) Screen.Home.route else Screen.Setup.route
@@ -44,9 +44,10 @@ fun App(
         val settingsViewModel: SettingsViewModel = viewModel { SettingsViewModel(authRepository) }
 
         AuthGate(authViewModel = authViewModel) {
-            LaunchedEffect(authState) { // Observe the authState directly
-                if (authState is AuthState.LoggedIn || authState is AuthState.Guest) { // Sync for both logged in and guest users
+            LaunchedEffect(currentUser) { // Observe the user object directly
+                if (currentUser != null) { // Sync for any authenticated user (guest or registered)
                     userStatsViewModel.syncClaimedValue()
+                    userSettingsRepository.syncUserSettings()
                 }
             }
 
