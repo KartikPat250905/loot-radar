@@ -14,7 +14,9 @@ import androidx.compose.material.icons.filled.ExitToApp
 import androidx.compose.material.icons.filled.Upgrade
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -109,9 +111,12 @@ fun SettingsScreen(
     if (showUpgradeDialog) {
         var email by remember { mutableStateOf("") }
         var password by remember { mutableStateOf("") }
+        var error by remember { mutableStateOf<String?>(null) }
+        var isLoading by remember { mutableStateOf(false) }
+
 
         AlertDialog(
-            onDismissRequest = { showUpgradeDialog = false },
+            onDismissRequest = { if (!isLoading) showUpgradeDialog = false },
             title = { Text("Upgrade Account") },
             text = {
                 Column {
@@ -121,33 +126,52 @@ fun SettingsScreen(
                         value = email,
                         onValueChange = { email = it },
                         label = { Text("Email") },
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email)
+                        isError = error != null,
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
+                        readOnly = isLoading
                     )
                     Spacer(modifier = Modifier.height(8.dp))
                     OutlinedTextField(
                         value = password,
                         onValueChange = { password = it },
                         label = { Text("Password") },
+                        isError = error != null,
                         visualTransformation = PasswordVisualTransformation(),
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password)
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+                        readOnly = isLoading
                     )
+
+                    error?.let {
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(it, color = MaterialTheme.colorScheme.error)
+                    }
                 }
             },
             confirmButton = {
                 Button(
                     onClick = {
+                        isLoading = true
+                        error = null
                         viewModel.upgradeAccount(email, password) { result ->
+                            isLoading = false
                             if (result.isSuccess) {
                                 showUpgradeDialog = false
+                            } else {
+                                error = result.exceptionOrNull()?.message ?: "An unknown error occurred."
                             }
                         }
-                    }
+                    },
+                    enabled = !isLoading && email.isNotBlank() && password.isNotBlank()
                 ) {
-                    Text("Upgrade")
+                    if (isLoading) {
+                        CircularProgressIndicator()
+                    } else {
+                        Text("Upgrade")
+                    }
                 }
             },
             dismissButton = {
-                TextButton(onClick = { showUpgradeDialog = false }) {
+                TextButton(onClick = { if (!isLoading) showUpgradeDialog = false }) {
                     Text("Cancel")
                 }
             }
