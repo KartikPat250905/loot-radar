@@ -33,6 +33,17 @@ actual class AuthRepositoryImpl : AuthRepository {
         }
     }
 
+    actual override suspend fun sendPasswordResetEmail(email: String): Result<Unit> = suspendCancellableCoroutine { continuation ->
+        firebaseAuth.sendPasswordResetWithEmail(email) { error ->
+            if (error == null) {
+                continuation.resume(Result.success(Unit))
+            } else {
+                continuation.resume(Result.failure(Exception(error.localizedDescription() ?: "Unknown error")))
+            }
+        }
+    }
+
+
     actual override suspend fun continueAsGuest(): Result<User> = suspendCancellableCoroutine { continuation ->
         firebaseAuth.signInAnonymouslyWithCompletion { authResult, error ->
             if (authResult != null) {

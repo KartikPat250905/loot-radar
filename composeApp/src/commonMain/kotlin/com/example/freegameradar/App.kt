@@ -94,7 +94,6 @@ fun App(
                         AppNavigation(
                             navController = navController,
                             innerPadding = innerPadding,
-                            authRepository = authRepository,
                             startDestination = startDestination,
                             notificationViewModel = notificationViewModel,
                             userStatsViewModel = userStatsViewModel,

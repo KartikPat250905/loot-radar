@@ -13,6 +13,7 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.example.freegameradar.data.auth.AuthState
 import com.example.freegameradar.ui.viewmodel.AuthViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -20,22 +21,53 @@ import com.example.freegameradar.ui.viewmodel.AuthViewModel
 fun LoginScreen(
     authViewModel: AuthViewModel,
     onSignUpClicked: () -> Unit,
-    error: String? = null
 ) {
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var passwordVisibility by remember { mutableStateOf(false) }
-    var localError by remember { mutableStateOf<String?>(null) }
+    var showForgotPasswordDialog by remember { mutableStateOf(false) }
+    var forgotPasswordEmail by remember { mutableStateOf("") }
 
-    LaunchedEffect(error) {
-        localError = error
+    val authState by authViewModel.authState.collectAsState()
+
+    if (showForgotPasswordDialog) {
+        AlertDialog(
+            onDismissRequest = { showForgotPasswordDialog = false },
+            title = { Text("Reset Password") },
+            text = {
+                Column {
+                    Text("Enter your email to receive a password reset link.")
+                    Spacer(modifier = Modifier.height(16.dp))
+                    OutlinedTextField(
+                        value = forgotPasswordEmail,
+                        onValueChange = { forgotPasswordEmail = it },
+                        label = { Text("Email") },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+            },
+            confirmButton = {
+                Button(onClick = {
+                    authViewModel.sendPasswordResetEmail(forgotPasswordEmail)
+                    showForgotPasswordDialog = false
+                }) {
+                    Text("Send")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showForgotPasswordDialog = false }) {
+                    Text("Cancel")
+                }
+            }
+        )
     }
 
-    Scaffold { paddingValues ->
+    Scaffold {
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(paddingValues),
+                .padding(it),
             contentAlignment = Alignment.Center
         ) {
             Column(
@@ -73,10 +105,7 @@ fun LoginScreen(
 
                 OutlinedTextField(
                     value = email,
-                    onValueChange = {
-                        email = it
-                        localError = null
-                    },
+                    onValueChange = { email = it },
                     label = { Text("Email / Username") },
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth(),
@@ -90,10 +119,7 @@ fun LoginScreen(
 
                 OutlinedTextField(
                     value = password,
-                    onValueChange = {
-                        password = it
-                        localError = null
-                    },
+                    onValueChange = { password = it },
                     label = { Text("Password") },
                     visualTransformation = if (passwordVisibility) VisualTransformation.None else PasswordVisualTransformation(),
                     singleLine = true,
@@ -113,25 +139,56 @@ fun LoginScreen(
                     }
                 )
 
-                Spacer(modifier = Modifier.height(24.dp))
+                Spacer(modifier = Modifier.height(8.dp))
 
-                val currentError = localError
-                if (currentError != null && !currentError.contains("not logged in", ignoreCase = true)) {
-                    Card(
-                        modifier = Modifier.fillMaxWidth(),
-                        colors = CardDefaults.cardColors(
-                            containerColor = MaterialTheme.colorScheme.errorContainer
-                        )
-                    ) {
-                        Text(
-                            text = currentError,
-                            color = MaterialTheme.colorScheme.onErrorContainer,
-                            modifier = Modifier.padding(12.dp),
-                            textAlign = TextAlign.Center,
-                            style = MaterialTheme.typography.bodyMedium
-                        )
+                TextButton(
+                    onClick = { showForgotPasswordDialog = true },
+                    modifier = Modifier.align(Alignment.End)
+                ) {
+                    Text("Forgot Password?")
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+
+                when (val state = authState) {
+                    is AuthState.Error -> {
+                        if (!state.message.contains("not logged in", ignoreCase = true)) {
+                            Card(
+                                modifier = Modifier.fillMaxWidth(),
+                                colors = CardDefaults.cardColors(
+                                    containerColor = MaterialTheme.colorScheme.errorContainer
+                                )
+                            ) {
+                                Text(
+                                    text = state.message,
+                                    color = MaterialTheme.colorScheme.onErrorContainer,
+                                    modifier = Modifier.padding(12.dp),
+                                    textAlign = TextAlign.Center,
+                                    style = MaterialTheme.typography.bodyMedium
+                                )
+                            }
+                            Spacer(modifier = Modifier.height(16.dp))
+                        }
                     }
-                    Spacer(modifier = Modifier.height(16.dp))
+                    is AuthState.Success -> {
+                        Card(
+                            modifier = Modifier.fillMaxWidth(),
+                            colors = CardDefaults.cardColors(
+                                containerColor = MaterialTheme.colorScheme.primaryContainer
+                            )
+                        ) {
+                            Text(
+                                text = state.message,
+                                color = MaterialTheme.colorScheme.onPrimaryContainer,
+                                modifier = Modifier.padding(12.dp),
+                                textAlign = TextAlign.Center,
+                                style = MaterialTheme.typography.bodyMedium
+                            )
+                        }
+                        Spacer(modifier = Modifier.height(16.dp))
+                    }
+                    else -> {}
                 }
 
                 Button(

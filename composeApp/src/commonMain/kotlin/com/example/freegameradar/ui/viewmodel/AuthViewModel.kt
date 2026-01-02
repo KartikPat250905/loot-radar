@@ -52,6 +52,21 @@ class AuthViewModel(private val authRepository: AuthRepository) : ViewModel() {
         }
     }
 
+    fun sendPasswordResetEmail(email: String) {
+        viewModelScope.launch {
+            _authState.value = AuthState.Loading
+            val result = authRepository.sendPasswordResetEmail(email)
+            result.onSuccess {
+                _authState.value = AuthState.Success(
+                    "If your email is registered, you will receive a password reset link. " +
+                            "If you don\'t have an account, please sign up."
+                )
+            }.onFailure {
+                _authState.value = AuthState.Error(it.message ?: "Unknown error")
+            }
+        }
+    }
+
     fun continueAsGuest() {
         viewModelScope.launch {
             _authState.value = AuthState.Loading

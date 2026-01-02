@@ -13,6 +13,7 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.example.freegameradar.data.auth.AuthState
 import com.example.freegameradar.ui.viewmodel.AuthViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -20,7 +21,6 @@ import com.example.freegameradar.ui.viewmodel.AuthViewModel
 fun SignUpScreen(
     authViewModel: AuthViewModel,
     onLoginClicked: () -> Unit,
-    error: String? = null
 ) {
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
@@ -29,9 +29,7 @@ fun SignUpScreen(
     var confirmPasswordVisibility by remember { mutableStateOf(false) }
     var localError by remember { mutableStateOf<String?>(null) }
 
-    LaunchedEffect(error) {
-        localError = error
-    }
+    val authState by authViewModel.authState.collectAsState()
 
     Scaffold { paddingValues ->
         Box(
@@ -145,8 +143,30 @@ fun SignUpScreen(
 
                 Spacer(modifier = Modifier.height(24.dp))
 
-                val currentError = localError
-                if (currentError != null && !currentError.contains("not logged in", ignoreCase = true)) {
+                when (val state = authState) {
+                    is AuthState.Error -> {
+                        if (!state.message.contains("not logged in", ignoreCase = true)) {
+                            Card(
+                                modifier = Modifier.fillMaxWidth(),
+                                colors = CardDefaults.cardColors(
+                                    containerColor = MaterialTheme.colorScheme.errorContainer
+                                )
+                            ) {
+                                Text(
+                                    text = state.message,
+                                    color = MaterialTheme.colorScheme.onErrorContainer,
+                                    modifier = Modifier.padding(12.dp),
+                                    textAlign = TextAlign.Center,
+                                    style = MaterialTheme.typography.bodyMedium
+                                )
+                            }
+                            Spacer(modifier = Modifier.height(16.dp))
+                        }
+                    }
+
+                    else -> {}
+                }
+                if (localError != null) {
                     Card(
                         modifier = Modifier.fillMaxWidth(),
                         colors = CardDefaults.cardColors(
@@ -154,7 +174,7 @@ fun SignUpScreen(
                         )
                     ) {
                         Text(
-                            text = currentError,
+                            text = localError ?: "",
                             color = MaterialTheme.colorScheme.onErrorContainer,
                             modifier = Modifier.padding(12.dp),
                             textAlign = TextAlign.Center,

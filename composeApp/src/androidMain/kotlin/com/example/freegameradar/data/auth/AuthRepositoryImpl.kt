@@ -33,6 +33,16 @@ actual class AuthRepositoryImpl : AuthRepository {
         }
     }
 
+    actual override suspend fun sendPasswordResetEmail(email: String): Result<Unit> {
+        return try {
+            firebaseAuth.sendPasswordResetEmail(email).await()
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+
     actual override suspend fun continueAsGuest(): Result<User> {
         return try {
             val authResult: AuthResult = firebaseAuth.signInAnonymously().await()
