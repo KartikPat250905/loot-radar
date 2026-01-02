@@ -10,9 +10,11 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -60,6 +62,7 @@ fun AboutScreen(navController: NavController) {
 
 @Composable
 fun AboutSection() {
+    val uriHandler = LocalUriHandler.current
     Column {
         Text("About FreeGameRadar", style = MaterialTheme.typography.titleLarge)
         Spacer(modifier = Modifier.height(8.dp))
@@ -68,9 +71,24 @@ fun AboutSection() {
             style = MaterialTheme.typography.bodyMedium
         )
         Spacer(modifier = Modifier.height(8.dp))
-        Text(
-            text = "The app aggregates publicly available giveaway data from trusted third-party sources, including the GamerPower API (https://www.gamerpower.com), and notifies users when new free games become available — so you never miss a deal.",
-            style = MaterialTheme.typography.bodyMedium
+        val annotatedText = buildAnnotatedString {
+            append("The app aggregates publicly available giveaway data from trusted third-party sources, including the GamerPower API (")
+            pushStringAnnotation(tag = "URL", annotation = "https://www.gamerpower.com")
+            withStyle(style = SpanStyle(color = MaterialTheme.colorScheme.primary, textDecoration = TextDecoration.Underline)) {
+                append("https://www.gamerpower.com")
+            }
+            pop()
+            append("), and notifies users when new free games become available — so you never miss a deal.")
+        }
+        ClickableText(
+            text = annotatedText,
+            style = MaterialTheme.typography.bodyMedium,
+            onClick = { offset ->
+                annotatedText.getStringAnnotations(tag = "URL", start = offset, end = offset)
+                    .firstOrNull()?.let { annotation ->
+                        uriHandler.openUri(annotation.item)
+                    }
+            }
         )
         Spacer(modifier = Modifier.height(8.dp))
         Text(
@@ -92,6 +110,7 @@ fun AppVersionSection() {
 
 @Composable
 fun PrivacyPolicySection() {
+    val uriHandler = LocalUriHandler.current
     Column {
         Text("Privacy Policy", style = MaterialTheme.typography.titleMedium)
         Spacer(modifier = Modifier.height(8.dp))
@@ -113,9 +132,24 @@ fun PrivacyPolicySection() {
 
         Spacer(modifier = Modifier.height(8.dp))
         Text("Third-Party Services", style = MaterialTheme.typography.titleSmall)
-        Text(
-            "• Game giveaway data is provided by the GamerPower API (https://www.gamerpower.com)",
-            style = MaterialTheme.typography.bodyMedium
+        val annotatedServiceText = buildAnnotatedString {
+            append("• Game giveaway data is provided by the GamerPower API (")
+            pushStringAnnotation(tag = "URL", annotation = "https://www.gamerpower.com")
+            withStyle(style = SpanStyle(color = MaterialTheme.colorScheme.primary, textDecoration = TextDecoration.Underline)) {
+                append("https://www.gamerpower.com")
+            }
+            pop()
+            append(")")
+        }
+        ClickableText(
+            text = annotatedServiceText,
+            style = MaterialTheme.typography.bodyMedium,
+            onClick = { offset ->
+                annotatedServiceText.getStringAnnotations(tag = "URL", start = offset, end = offset)
+                    .firstOrNull()?.let { annotation ->
+                        uriHandler.openUri(annotation.item)
+                    }
+            }
         )
         Text(
             "• FreeGameRadar only displays publicly available information and does not own or control third-party content",
@@ -130,12 +164,30 @@ fun PrivacyPolicySection() {
         Spacer(modifier = Modifier.height(8.dp))
         Text("Contact", style = MaterialTheme.typography.titleSmall)
         Text("For privacy-related questions, contact:", style = MaterialTheme.typography.bodyMedium)
-        Text("📧 freegameradar.app@gmail.com", style = MaterialTheme.typography.bodyMedium)
+        val annotatedEmailText = buildAnnotatedString {
+            append("📧 ")
+            pushStringAnnotation(tag = "EMAIL", annotation = "mailto:freegameradar.app@gmail.com")
+            withStyle(style = SpanStyle(color = MaterialTheme.colorScheme.primary, textDecoration = TextDecoration.Underline)) {
+                append("freegameradar.app@gmail.com")
+            }
+            pop()
+        }
+        ClickableText(
+            text = annotatedEmailText,
+            style = MaterialTheme.typography.bodyMedium,
+            onClick = { offset ->
+                annotatedEmailText.getStringAnnotations(tag = "EMAIL", start = offset, end = offset)
+                    .firstOrNull()?.let { annotation ->
+                        uriHandler.openUri(annotation.item)
+                    }
+            }
+        )
     }
 }
 
 @Composable
 fun TermsOfServiceSection() {
+    val uriHandler = LocalUriHandler.current
     Column {
         Text("Terms of Service", style = MaterialTheme.typography.titleMedium)
         Spacer(modifier = Modifier.height(8.dp))
@@ -149,9 +201,24 @@ fun TermsOfServiceSection() {
 
         Spacer(modifier = Modifier.height(8.dp))
         Text("Third-Party Content", style = MaterialTheme.typography.titleSmall)
-        Text(
-            "• Game data is sourced from third-party services such as the GamerPower API (https://www.gamerpower.com)",
-            style = MaterialTheme.typography.bodyMedium
+        val annotatedServiceText = buildAnnotatedString {
+            append("• Game data is sourced from third-party services such as the GamerPower API (")
+            pushStringAnnotation(tag = "URL", annotation = "https://www.gamerpower.com")
+            withStyle(style = SpanStyle(color = MaterialTheme.colorScheme.primary, textDecoration = TextDecoration.Underline)) {
+                append("https://www.gamerpower.com")
+            }
+            pop()
+            append(")")
+        }
+        ClickableText(
+            text = annotatedServiceText,
+            style = MaterialTheme.typography.bodyMedium,
+            onClick = { offset ->
+                annotatedServiceText.getStringAnnotations(tag = "URL", start = offset, end = offset)
+                    .firstOrNull()?.let { annotation ->
+                        uriHandler.openUri(annotation.item)
+                    }
+            }
         )
         Text("• All game titles, images, and trademarks belong to their respective owners", style = MaterialTheme.typography.bodyMedium)
         Text("• FreeGameRadar is not affiliated with or endorsed by Epic Games, Steam, GOG, or any publisher", style = MaterialTheme.typography.bodyMedium)
@@ -173,18 +240,37 @@ fun TermsOfServiceSection() {
 
 @Composable
 fun ContactSection() {
+    val uriHandler = LocalUriHandler.current
     Column {
         Text("Contact & Feedback", style = MaterialTheme.typography.titleMedium)
         Spacer(modifier = Modifier.height(8.dp))
         Text("We’d love to hear from you!", style = MaterialTheme.typography.bodyMedium)
         Spacer(modifier = Modifier.height(8.dp))
-        Text("📧 Email: freegameradar.app@gmail.com", style = MaterialTheme.typography.bodyMedium)
+        val annotatedEmailText = buildAnnotatedString {
+            append("📧 Email: ")
+            pushStringAnnotation(tag = "EMAIL", annotation = "mailto:freegameradar.app@gmail.com")
+            withStyle(style = SpanStyle(color = MaterialTheme.colorScheme.primary, textDecoration = TextDecoration.Underline)) {
+                append("freegameradar.app@gmail.com")
+            }
+            pop()
+        }
+        ClickableText(
+            text = annotatedEmailText,
+            style = MaterialTheme.typography.bodyMedium,
+            onClick = { offset ->
+                annotatedEmailText.getStringAnnotations(tag = "EMAIL", start = offset, end = offset)
+                    .firstOrNull()?.let { annotation ->
+                        uriHandler.openUri(annotation.item)
+                    }
+            }
+        )
         Text("📝 Feedback: Bug reports, feature requests, and suggestions are welcome", style = MaterialTheme.typography.bodyMedium)
     }
 }
 
 @Composable
 fun AppInfoFooter() {
+    val uriHandler = LocalUriHandler.current
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = Modifier.fillMaxWidth()
@@ -193,7 +279,23 @@ fun AppInfoFooter() {
         Text("Made with ❤️ using Kotlin Multiplatform", fontSize = 12.sp)
         Spacer(modifier = Modifier.height(8.dp))
         Text("Game giveaway data powered by GamerPower API", fontSize = 12.sp)
-        Text("https://www.gamerpower.com", fontSize = 12.sp)
+        val annotatedLinkText = buildAnnotatedString {
+            pushStringAnnotation(tag = "URL", annotation = "https://www.gamerpower.com")
+            withStyle(style = SpanStyle(color = MaterialTheme.colorScheme.primary, textDecoration = TextDecoration.Underline)) {
+                append("https://www.gamerpower.com")
+            }
+            pop()
+        }
+        ClickableText(
+            text = annotatedLinkText,
+            style = LocalTextStyle.current.copy(fontSize = 12.sp),
+            onClick = { offset ->
+                annotatedLinkText.getStringAnnotations(tag = "URL", start = offset, end = offset)
+                    .firstOrNull()?.let { annotation ->
+                        uriHandler.openUri(annotation.item)
+                    }
+            }
+        )
         Spacer(modifier = Modifier.height(8.dp))
         Text(
             text = "FreeGameRadar is an independent project and is not affiliated with or endorsed by Epic Games, Steam, GOG, or any game publisher.",
@@ -202,4 +304,3 @@ fun AppInfoFooter() {
         )
     }
 }
-
