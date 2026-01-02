@@ -18,6 +18,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -44,6 +45,10 @@ fun SetupScreen(
 
     val permissionHandler = rememberPermissionHandler()
     val scope = rememberCoroutineScope()
+
+    LaunchedEffect(Unit) {
+        notificationsEnabled = permissionHandler.isNotificationPermissionGranted()
+    }
 
     val platforms = listOf(
         "pc", "steam", "epic-games-store", "ubisoft", "gog", "itchio",
