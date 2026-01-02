@@ -100,7 +100,6 @@ class PushNotificationService : FirebaseMessagingService() {
     override fun onNewToken(token: String) {
         super.onNewToken(token)
         Log.d("FCM", "🔑 New FCM token generated: $token")
-        // If you have a token manager, you should re-initialize it here.
-        // TokenManager.initializeFCMToken()
+        TokenManager.updateFCMToken(token)
     }
 }

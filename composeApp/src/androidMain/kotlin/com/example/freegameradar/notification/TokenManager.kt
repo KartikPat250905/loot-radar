@@ -2,7 +2,6 @@ package com.example.freegameradar.notification
 
 import android.util.Log
 import com.google.firebase.auth.ktx.auth
-import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
 import com.google.firebase.messaging.FirebaseMessaging
@@ -25,6 +24,12 @@ object TokenManager {
         }
     }
 
+    fun updateFCMToken(token: String) {
+        CoroutineScope(Dispatchers.IO).launch {
+            saveTokenToFirestore(token)
+        }
+    }
+
     private suspend fun saveTokenToFirestore(token: String) {
         val uid = Firebase.auth.currentUser?.uid
 
@@ -33,25 +38,21 @@ object TokenManager {
             return
         }
 
+        val firestore = Firebase.firestore
+
         try {
-            val firestore = Firebase.firestore
             val userDocRef = firestore.collection("users").document(uid)
 
-            // Try to update existing document
-            userDocRef.update("notificationTokens", FieldValue.arrayUnion(token)).await()
-            Log.d("TokenManager", "✅ Token saved to Firestore for user: $uid")
-
-            // Verify it was saved
-            val doc = userDocRef.get().await()
-            val tokens = doc.get("notificationTokens") as? List<*>
-            Log.d("TokenManager", "📋 Current tokens in Firestore: $tokens")
+            // This will fail if the document does not exist, and the catch block will execute.
+            userDocRef.update("notificationTokens", listOf(token)).await()
+            Log.d("TokenManager", "✅ Token updated in Firestore for user: $uid")
 
         } catch (e: Exception) {
-            Log.w("TokenManager", "⚠️ Document doesn't exist, creating new one", e)
+            Log.w("TokenManager", "⚠️ Document doesn't exist, creating new one with token.", e)
 
             // Document doesn't exist, create it
             try {
-                val userDocRef = Firebase.firestore.collection("users").document(uid)
+                val userDocRef = firestore.collection("users").document(uid)
                 val data = mapOf(
                     "notificationTokens" to listOf(token),
                     "notificationsEnabled" to true,
