@@ -17,7 +17,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -35,6 +37,7 @@ import com.example.freegameradar.ui.components.GameSearchBar
 import com.example.freegameradar.ui.components.GameTypeFilterTabs
 import com.example.freegameradar.ui.components.TotalWorthBar
 import com.example.freegameradar.ui.viewmodel.GameViewModel
+import kotlin.math.abs
 
 @Composable
 fun HomeScreen(navController: NavHostController, modifier: Modifier = Modifier) {
@@ -45,19 +48,51 @@ fun HomeScreen(navController: NavHostController, modifier: Modifier = Modifier) 
     val dataSource by gameViewModel.dataSource.collectAsState()
     val selectedFilter by gameViewModel.gameTypeFilter.collectAsState()
     val gridState = rememberLazyGridState()
-    var isVisible by remember { mutableStateOf(true) }
+
+    // Track scroll position more reliably
+    var scrollOffset by remember { mutableFloatStateOf(0f) }
+
+    val isVisible by remember {
+        derivedStateOf {
+            // Always show at the top
+            if (gridState.firstVisibleItemIndex == 0 && gridState.firstVisibleItemScrollOffset < 50) {
+                true
+            } else {
+                // Show when scrolling up
+                scrollOffset < 0
+            }
+        }
+    }
 
     LaunchedEffect(gridState) {
-        var previousOffset = gridState.firstVisibleItemScrollOffset
-        snapshotFlow { gridState.firstVisibleItemScrollOffset }
-            .collect { currentOffset ->
-                if (currentOffset > previousOffset) {
-                    isVisible = false
-                } else if (currentOffset < previousOffset) {
-                    isVisible = true
+        var lastIndex = gridState.firstVisibleItemIndex
+        var lastOffset = gridState.firstVisibleItemScrollOffset
+
+        snapshotFlow {
+            gridState.firstVisibleItemIndex to gridState.firstVisibleItemScrollOffset
+        }.collect { (index, offset) ->
+            // Calculate total scroll delta
+            val indexDelta = index - lastIndex
+            val offsetDelta = offset - lastOffset
+
+            // Calculate approximate total scroll distance
+            val totalDelta = when {
+                indexDelta != 0 -> {
+                    // Item changed - estimate based on average item height
+                    indexDelta * 200 + offsetDelta
                 }
-                previousOffset = currentOffset
+                else -> offsetDelta
             }
+
+            // Update scroll offset with smoothing
+            scrollOffset = when {
+                abs(totalDelta) > 5 -> totalDelta.toFloat() // Only update for significant scrolls
+                else -> scrollOffset * 0.8f // Decay towards 0 for small movements
+            }
+
+            lastIndex = index
+            lastOffset = offset
+        }
     }
 
     Column(
