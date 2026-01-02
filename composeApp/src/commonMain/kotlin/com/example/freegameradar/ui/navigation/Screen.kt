@@ -11,6 +11,7 @@ sealed class Screen(val route: String, val label: String, val icon: ImageVector)
     object Notification : Screen("notification", "Notifications", Icons.Default.Notifications)
     object Settings : Screen("settings", "Settings", Icons.Default.Settings)
     object Stats : Screen("stats", "Stats", Icons.Default.Equalizer)
+    object About : Screen("about", "About", Icons.Default.Info)
     object Details : Screen("details/{gameId}", "Game Details", Icons.Default.Info) {
         fun createRoute(id: Long?) = "details/$id"
     }

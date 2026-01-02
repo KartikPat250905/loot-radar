@@ -17,6 +17,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.ExitToApp
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Upgrade
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
@@ -164,6 +165,15 @@ fun SettingsScreen(
                 platforms = preferencesState.preferredGamePlatforms,
                 types = preferencesState.preferredGameTypes,
                 onEditClick = { showNotificationPreferenceDialog = true },
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
+            SettingsSectionHeader(title = "About")
+            SettingsItem(
+                icon = Icons.Default.Info,
+                title = "About App",
+                subtitle = "View app information and credits",
+                onClick = { navController.navigate(Screen.About.route) }
             )
         }
     }
