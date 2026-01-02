@@ -146,12 +146,13 @@ fun SettingsScreen(
                 Switch(
                     checked = preferencesState.notificationsEnabled,
                     onCheckedChange = { wantsToEnable ->
+                        userPreferencesViewModel.setNotificationsEnabled(wantsToEnable)
                         if (wantsToEnable) {
                             permissionHandler.requestNotificationPermission { isGranted ->
-                                userPreferencesViewModel.setNotificationsEnabled(isGranted)
+                                if(!isGranted) {
+                                    userPreferencesViewModel.setNotificationsEnabled(false)
+                                }
                             }
-                        } else {
-                            userPreferencesViewModel.setNotificationsEnabled(false)
                         }
                     }
                 )

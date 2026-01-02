@@ -8,13 +8,17 @@ import com.example.freegameradar.db.User_settings
 import com.example.freegameradar.settings.UserSettings
 import com.google.firebase.firestore.SetOptions
 import com.google.firebase.firestore.ktx.firestore
+import com.google.firebase.firestore.ktx.toObject
 import com.google.firebase.ktx.Firebase
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.withContext
 
@@ -26,65 +30,63 @@ actual class UserSettingsRepositoryImpl actual constructor(
 
     override fun getSettings(): Flow<UserSettings> = authRepository.getAuthStateFlow().flatMapLatest { user ->
         if (user == null) {
-            // No user is authenticated. Fallback to local cache to avoid eternal loading.
-            flow {
-                println("No authenticated user, falling back to local cache.")
-                val localSettings = db.getSettings().asFlow().mapToOneOrDefault(User_settings(0, 1L, "", ""), Dispatchers.IO).first()
-                emit(UserSettings(
-                    notificationsEnabled = localSettings.notifications_enabled == 1L,
-                    preferredGamePlatforms = localSettings.preferred_game_platforms.split(",").filter { it.isNotEmpty() },
-                    preferredGameTypes = localSettings.preferred_game_types.split(",").filter { it.isNotEmpty() }
-                ))
-            }.flowOn(Dispatchers.IO)
+            // Unauthenticated: Provide settings from the local cache.
+            db.getSettings().asFlow().mapToOneOrDefault(User_settings(0, 1L, "", ""), Dispatchers.IO).map { local ->
+                UserSettings(
+                    notificationsEnabled = local.notifications_enabled == 1L,
+                    preferredGamePlatforms = local.preferred_game_platforms.split(',').filter { it.isNotEmpty() },
+                    preferredGameTypes = local.preferred_game_types.split(',').filter { it.isNotEmpty() }
+                )
+            }
         } else {
-            // User is authenticated. Fetch their settings from the cloud.
-            flow {
-                try {
-                    val remoteDb = Firebase.firestore
-                    val userDocRef = remoteDb.collection("users").document(user.uid)
-                    val remoteSettings = userDocRef.get().await().toObject(UserSettings::class.java)
+            // Authenticated: The source of truth is Firestore. We listen to it for real-time updates.
+            callbackFlow<UserSettings> {
+                val docRef = Firebase.firestore.collection("users").document(user.uid)
 
-                    if (remoteSettings != null) {
+                val subscription = docRef.addSnapshotListener { snapshot, error ->
+                    if (error != null) {
+                        println("Firestore listen failed: $error")
+                        close(error)
+                        return@addSnapshotListener
+                    }
+
+                    val remoteSettings = if (snapshot != null && snapshot.exists()) {
+                        snapshot.toObject<UserSettings>() ?: UserSettings()
+                    } else {
+                        UserSettings() // For a new user or if the document doesn't exist.
+                    }
+
+                    // Sync the latest settings from Firestore to our local cache.
+                    launch(Dispatchers.IO) {
                         db.insertSettings(
                             notifications_enabled = if (remoteSettings.notificationsEnabled) 1L else 0L,
                             preferred_game_platforms = remoteSettings.preferredGamePlatforms.joinToString(","),
                             preferred_game_types = remoteSettings.preferredGameTypes.joinToString(",")
                         )
-                        emit(remoteSettings)
-                    } else {
-                        // New user, no settings in the cloud yet.
-                        emit(UserSettings())
                     }
-                } catch (e: Exception) {
-                    // Firestore failed. Fallback to the local cache.
-                    println("Cloud-First: Failed to fetch remote settings, falling back to local cache. Reason: ${e.message}")
-                    val localSettings = db.getSettings().asFlow().mapToOneOrDefault(User_settings(0, 1L, "", ""), Dispatchers.IO).first()
-                    emit(UserSettings(
-                        notificationsEnabled = localSettings.notifications_enabled == 1L,
-                        preferredGamePlatforms = localSettings.preferred_game_platforms.split(",").filter { it.isNotEmpty() },
-                        preferredGameTypes = localSettings.preferred_game_types.split(",").filter { it.isNotEmpty() }
-                    ))
+
+                    // Emit the latest settings to the UI.
+                    trySend(remoteSettings)
                 }
-            }.flowOn(Dispatchers.IO)
+
+                // Remove the listener when the flow is cancelled.
+                awaitClose { subscription.remove() }
+            }
         }
-    }
+    }.flowOn(Dispatchers.IO)
+
 
     override suspend fun syncUserSettings() {
-        // This function is now redundant as its logic is part of the reactive getSettings flow.
+        // This function is redundant due to the new reactive implementation of getSettings.
     }
 
     override suspend fun saveSettings(userSettings: UserSettings) {
+        val userId = authRepository.getAuthStateFlow().first()?.uid ?: return
         withContext(Dispatchers.IO) {
-            db.insertSettings(
-                notifications_enabled = if (userSettings.notificationsEnabled) 1L else 0L,
-                preferred_game_platforms = userSettings.preferredGamePlatforms.joinToString(","),
-                preferred_game_types = userSettings.preferredGameTypes.joinToString(",")
-            )
-
-            val userId = authRepository.getAuthStateFlow().first()?.uid ?: return@withContext
             try {
-                val remoteDb = Firebase.firestore
-                remoteDb.collection("users").document(userId).set(userSettings, SetOptions.merge()).await()
+                // The source of truth is Firestore. We only need to save it here.
+                // The listener in getSettings() will handle updating the cache and UI.
+                Firebase.firestore.collection("users").document(userId).set(userSettings, SetOptions.merge()).await()
             } catch (e: Exception) {
                 println("Failed to save settings to Firebase: ${e.message}")
             }

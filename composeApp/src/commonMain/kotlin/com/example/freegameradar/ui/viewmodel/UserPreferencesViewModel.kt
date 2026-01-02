@@ -7,7 +7,6 @@ import com.example.freegameradar.settings.UserSettings
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
@@ -15,7 +14,8 @@ import kotlinx.coroutines.launch
 data class UserPreferencesUiState(
     val notificationsEnabled: Boolean = false,
     val preferredGamePlatforms: List<String> = emptyList(),
-    val preferredGameTypes: List<String> = emptyList()
+    val preferredGameTypes: List<String> = emptyList(),
+    val setupComplete: Boolean = false
 )
 
 class UserPreferencesViewModel(
@@ -31,7 +31,8 @@ class UserPreferencesViewModel(
                 _uiState.value = UserPreferencesUiState(
                     notificationsEnabled = settings.notificationsEnabled,
                     preferredGamePlatforms = settings.preferredGamePlatforms,
-                    preferredGameTypes = settings.preferredGameTypes
+                    preferredGameTypes = settings.preferredGameTypes,
+                    setupComplete = settings.setupComplete
                 )
             }
             .launchIn(viewModelScope)
@@ -39,8 +40,13 @@ class UserPreferencesViewModel(
 
     fun setNotificationsEnabled(enabled: Boolean) {
         viewModelScope.launch {
-            val currentSettings = userSettingsRepository.getSettings().first()
-            val newSettings = currentSettings.copy(notificationsEnabled = enabled)
+            val currentUiState = _uiState.value
+            val newSettings = UserSettings(
+                notificationsEnabled = enabled,
+                preferredGamePlatforms = currentUiState.preferredGamePlatforms,
+                preferredGameTypes = currentUiState.preferredGameTypes,
+                setupComplete = currentUiState.setupComplete
+            )
             userSettingsRepository.saveSettings(newSettings)
         }
     }
@@ -50,10 +56,12 @@ class UserPreferencesViewModel(
         preferredGameTypes: List<String>
     ) {
         viewModelScope.launch {
-            val currentSettings = userSettingsRepository.getSettings().first()
-            val newSettings = currentSettings.copy(
+            val currentUiState = _uiState.value
+            val newSettings = UserSettings(
+                notificationsEnabled = currentUiState.notificationsEnabled,
                 preferredGamePlatforms = preferredGamePlatforms,
-                preferredGameTypes = preferredGameTypes
+                preferredGameTypes = preferredGameTypes,
+                setupComplete = currentUiState.setupComplete
             )
             userSettingsRepository.saveSettings(newSettings)
         }

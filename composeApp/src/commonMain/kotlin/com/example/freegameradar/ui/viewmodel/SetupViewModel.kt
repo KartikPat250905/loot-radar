@@ -34,19 +34,17 @@ class SetupViewModel(
         }
     }
 
-    fun savePreferencesAndCompleteSetup(
+    suspend fun savePreferencesAndCompleteSetup(
         notificationsEnabled: Boolean,
         preferredGamePlatforms: List<String>,
         preferredGameTypes: List<String>
     ) {
-        viewModelScope.launch {
-            val newSettings = UserSettings(
-                notificationsEnabled = notificationsEnabled,
-                preferredGamePlatforms = preferredGamePlatforms,
-                preferredGameTypes = preferredGameTypes,
-                setupComplete = true // Set setup as complete
-            )
-            userSettingsRepository.saveSettings(newSettings)
-        }
+        val newSettings = UserSettings(
+            notificationsEnabled = notificationsEnabled,
+            preferredGamePlatforms = preferredGamePlatforms,
+            preferredGameTypes = preferredGameTypes,
+            setupComplete = true // Set setup as complete
+        )
+        userSettingsRepository.saveSettings(newSettings)
     }
 }
