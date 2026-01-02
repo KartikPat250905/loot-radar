@@ -3,6 +3,7 @@ package com.example.freegameradar.data.remote
 import com.example.freegameradar.data.models.GameDto
 import io.ktor.client.call.body
 import io.ktor.client.request.get
+import io.ktor.client.request.parameter
 import io.ktor.http.ContentType
 import io.ktor.http.contentType
 import kotlinx.coroutines.flow.Flow
@@ -23,5 +24,12 @@ class ApiService {
             println("API Error: ${e.message}")
             throw e
         }
+    }
+
+    suspend fun getGameById(id: String): GameDto {
+        return client.get("https://www.gamerpower.com/api/giveaway") {
+            parameter("id", id)
+            contentType(ContentType.Application.Json)
+        }.body()
     }
 }

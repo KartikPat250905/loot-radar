@@ -3,28 +3,19 @@ package com.example.freegameradar.notification
 import android.util.Log
 import com.example.freegameradar.FreeGameRadarApp
 import com.example.freegameradar.data.model.DealNotification
+import com.example.freegameradar.data.remote.ApiService
 import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
-import kotlinx.serialization.Serializable
-import kotlinx.serialization.builtins.ListSerializer
-import kotlinx.serialization.json.Json
-
-@Serializable
-data class FcmDeal(
-    val id: Long,
-    val title: String,
-    val description: String,
-    val open_giveaway_url: String,
-    val image: String,
-    val worth: String? = null
-)
 
 class PushNotificationService : FirebaseMessagingService() {
 
-    private val json by lazy { Json { ignoreUnknownKeys = true } }
+    private val apiService by lazy { ApiService() }
 
     override fun onMessageReceived(remoteMessage: RemoteMessage) {
         super.onMessageReceived(remoteMessage)
@@ -34,53 +25,65 @@ class PushNotificationService : FirebaseMessagingService() {
         Log.d("FCM", "Data payload: ${remoteMessage.data}")
         Log.d("FCM", "=================================")
 
-        // Backend sends "deals" as JSON string of deal objects
-        remoteMessage.data["deals"]?.let { dealsJson ->
-            Log.d("FCM", "Received deals JSON (length: ${dealsJson.length})")
-            Log.d("FCM", "First 300 chars: ${dealsJson.take(300)}")
+        remoteMessage.data["deal_ids"]?.let { dealIds ->
+            Log.d("FCM", "Received deal IDs: $dealIds")
 
             CoroutineScope(Dispatchers.IO).launch {
                 try {
-                    parseAndSaveDeals(dealsJson)
+                    fetchAndShowDeals(dealIds)
                 } catch (e: Exception) {
-                    Log.e("FCM", "Error processing deals", e)
+                    Log.e("FCM", "Error processing deal IDs", e)
                     e.printStackTrace()
                 }
             }
         } ?: run {
-            Log.w("FCM", "No 'deals' field in data payload!")
+            Log.w("FCM", "No 'deal_ids' field in data payload!")
         }
     }
 
-    private suspend fun parseAndSaveDeals(dealsJson: String) {
-        try {
-            // Parse the JSON array of deals
-            val fcmDeals = json.decodeFromString(
-                ListSerializer(FcmDeal.serializer()),
-                dealsJson
-            )
+    private suspend fun fetchAndShowDeals(dealIds: String) {
+        val ids = dealIds.split(",").mapNotNull { it.trim().toLongOrNull() }
+        if (ids.isEmpty()) {
+            Log.w("FCM", "Deal IDs list is empty or invalid")
+            return
+        }
 
-            Log.d("FCM", "Successfully parsed ${fcmDeals.size} deals")
+        // Fetch deals concurrently to avoid overwhelming the API
+        val deals = coroutineScope {
+            ids.map { id ->
+                async {
+                    try {
+                        apiService.getGameById(id.toString())
+                    } catch (e: Exception) {
+                        Log.e("FCM", "Failed to fetch deal with ID: $id", e)
+                        null
+                    }
+                }
+            }.awaitAll().filterNotNull()
+        }
 
-            if (fcmDeals.isEmpty()) {
-                Log.w("FCM", "Parsed deals list is empty")
-                return
-            }
 
-            // Convert to DealNotification objects
-            val notifications = fcmDeals.map { deal ->
+        if (deals.isEmpty()) {
+            Log.w("FCM", "Failed to fetch any deals from the API")
+            return
+        }
+
+        val notifications = deals.mapNotNull { deal ->
+            deal.id?.let {
                 DealNotification(
-                    id = deal.id,
-                    title = deal.title,
-                    description = deal.description,
-                    url = deal.open_giveaway_url,
-                    imageUrl = deal.image,
+                    id = it,
+                    title = deal.title ?: "No Title",
+                    description = deal.description ?: "",
+                    url = deal.open_giveaway_url ?: "",
+                    imageUrl = deal.image ?: "",
                     worth = deal.worth ?: "N/A",
                     timestamp = System.currentTimeMillis(),
                     isRead = false
                 )
             }
+        }
 
+        if (notifications.isNotEmpty()) {
             // Save to local database
             val repository = FreeGameRadarApp.instance.notificationRepository
             repository.saveNotifications(notifications)
@@ -91,16 +94,13 @@ class PushNotificationService : FirebaseMessagingService() {
             notificationService.createNotificationChannel()
             notificationService.showNewDealsNotification(notifications)
             Log.d("FCM", "✅ Displayed system notification for ${notifications.size} deals")
-
-        } catch (e: Exception) {
-            Log.e("FCM", "❌ Failed to parse or save deals", e)
-            e.printStackTrace()
         }
     }
 
     override fun onNewToken(token: String) {
         super.onNewToken(token)
         Log.d("FCM", "🔑 New FCM token generated: $token")
-        TokenManager.initializeFCMToken()
+        // If you have a token manager, you should re-initialize it here.
+        // TokenManager.initializeFCMToken()
     }
 }
