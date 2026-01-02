@@ -28,7 +28,9 @@ import com.example.freegameradar.ui.theme.ModernDarkTheme
 import com.example.freegameradar.ui.viewmodel.AuthViewModel
 import com.example.freegameradar.ui.viewmodel.NotificationViewModel
 import com.example.freegameradar.ui.viewmodel.SettingsViewModel
+import com.example.freegameradar.ui.viewmodel.UserPreferencesViewModel
 import com.example.freegameradar.ui.viewmodel.UserStatsViewModel
+import com.example.freegameradar.ui.viewmodel.SetupViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -66,6 +68,8 @@ fun App(
                 val notificationViewModel: NotificationViewModel = viewModel { NotificationViewModel(notificationRepository) }
                 val userStatsViewModel: UserStatsViewModel = viewModel { UserStatsViewModel(userStatsRepository, gameRepository) }
                 val settingsViewModel: SettingsViewModel = viewModel { SettingsViewModel(authRepository) }
+                val userPreferencesViewModel: UserPreferencesViewModel = viewModel { UserPreferencesViewModel(userSettingsRepository) }
+                val setupViewModel: SetupViewModel = viewModel { SetupViewModel(userSettingsRepository, authRepository) }
 
                 AuthGate(authViewModel = authViewModel) {
                     LaunchedEffect(currentUser) {
@@ -94,7 +98,9 @@ fun App(
                             startDestination = startDestination,
                             notificationViewModel = notificationViewModel,
                             userStatsViewModel = userStatsViewModel,
-                            settingsViewModel = settingsViewModel
+                            settingsViewModel = settingsViewModel,
+                            userPreferencesViewModel = userPreferencesViewModel,
+                            setupViewModel = setupViewModel
                         )
                     }
                 }
