@@ -31,7 +31,7 @@ async function importDeals() {
   const dealsCollection = db.collection('deals');
   const apiDealIds = dealsFromApi.map(deal => String(deal.id));
 
-  const CHUNK_SIZE = 30; 
+  const CHUNK_SIZE = 30;
   const idChunks = [];
   for (let i = 0; i < apiDealIds.length; i += CHUNK_SIZE) {
     idChunks.push(apiDealIds.slice(i, i + CHUNK_SIZE));
@@ -72,7 +72,7 @@ async function importDeals() {
 }
 
 /**
- * Efficiently finds all users who should be notified about new deals and sends them a 
+ * Efficiently finds all users who should be notified about new deals and sends them a
  * single notification containing only the relevant deal IDs.
  * @param {Array} newDeals - A list of the new deals that were just imported.
  */

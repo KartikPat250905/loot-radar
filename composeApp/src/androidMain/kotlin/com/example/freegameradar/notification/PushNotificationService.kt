@@ -3,91 +3,104 @@ package com.example.freegameradar.notification
 import android.util.Log
 import com.example.freegameradar.FreeGameRadarApp
 import com.example.freegameradar.data.model.DealNotification
-import com.google.firebase.firestore.ktx.firestore
-import com.google.firebase.ktx.Firebase
 import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage
-import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.builtins.ListSerializer
+import kotlinx.serialization.json.Json
+
+@Serializable
+data class FcmDeal(
+    val id: Long,
+    val title: String,
+    val description: String,
+    val open_giveaway_url: String,
+    val image: String,
+    val worth: String? = null
+)
 
 class PushNotificationService : FirebaseMessagingService() {
+
+    private val json by lazy { Json { ignoreUnknownKeys = true } }
 
     override fun onMessageReceived(remoteMessage: RemoteMessage) {
         super.onMessageReceived(remoteMessage)
 
-        Log.d("PushNotificationService", "From: ${remoteMessage.from}")
+        Log.d("FCM", "=================================")
+        Log.d("FCM", "Message received from: ${remoteMessage.from}")
+        Log.d("FCM", "Data payload: ${remoteMessage.data}")
+        Log.d("FCM", "=================================")
 
-        remoteMessage.data["deal_ids"]?.let { dealIdsStr ->
-            Log.d("PushNotificationService", "Received deal IDs: $dealIdsStr")
+        // Backend sends "deals" as JSON string of deal objects
+        remoteMessage.data["deals"]?.let { dealsJson ->
+            Log.d("FCM", "Received deals JSON (length: ${dealsJson.length})")
+            Log.d("FCM", "First 300 chars: ${dealsJson.take(300)}")
 
-            val dealIds = dealIdsStr.split(",").mapNotNull { it.toLongOrNull() }
-            if (dealIds.isEmpty()) {
-                Log.d("PushNotificationService", "No valid deal IDs received.")
-                return
-            }
-
-            // Fetch the full deals from Firestore in a background coroutine
             CoroutineScope(Dispatchers.IO).launch {
-                fetchDealsAndNotify(dealIds)
+                try {
+                    parseAndSaveDeals(dealsJson)
+                } catch (e: Exception) {
+                    Log.e("FCM", "Error processing deals", e)
+                    e.printStackTrace()
+                }
             }
+        } ?: run {
+            Log.w("FCM", "No 'deals' field in data payload!")
         }
     }
 
-    private suspend fun fetchDealsAndNotify(dealIds: List<Long>) {
+    private suspend fun parseAndSaveDeals(dealsJson: String) {
         try {
-            val firestore = Firebase.firestore
-            val chunkedDealIds = dealIds.chunked(30)
-            val fetchedDeals = mutableListOf<DealNotification>()
+            // Parse the JSON array of deals
+            val fcmDeals = json.decodeFromString(
+                ListSerializer(FcmDeal.serializer()),
+                dealsJson
+            )
 
-            for (chunk in chunkedDealIds) {
-                val documents = firestore.collection("deals")
-                    .whereIn("id", chunk)
-                    .get()
-                    .await()
+            Log.d("FCM", "Successfully parsed ${fcmDeals.size} deals")
 
-                val dealsFromChunk = documents.mapNotNull { doc ->
-                    try {
-                        DealNotification(
-                            id = doc.getLong("id")!!,
-                            title = doc.getString("title") ?: "",
-                            worth = doc.getString("worth") ?: "N/A", // Fetch the new worth field
-                            description = doc.getString("description") ?: "",
-                            url = doc.getString("open_giveaway_url") ?: "",
-                            imageUrl = doc.getString("image") ?: "",
-                            timestamp = System.currentTimeMillis(),
-                            isRead = false
-                        )
-                    } catch (e: Exception) {
-                        Log.e("PushNotificationService", "Failed to parse deal document: ${doc.id}", e)
-                        null
-                    }
-                }
-                fetchedDeals.addAll(dealsFromChunk)
+            if (fcmDeals.isEmpty()) {
+                Log.w("FCM", "Parsed deals list is empty")
+                return
             }
 
-            if (fetchedDeals.isNotEmpty()) {
-                Log.d("PushNotificationService", "Successfully fetched ${fetchedDeals.size} deals from Firestore.")
-
-                val repository = FreeGameRadarApp.instance.notificationRepository
-                repository.saveNotifications(fetchedDeals)
-                Log.d("PushNotificationService", "Saved ${fetchedDeals.size} deals to local DB.")
-
-                val notificationService = NotificationService(applicationContext)
-                notificationService.showNewDealsNotification(fetchedDeals)
-                Log.d("PushNotificationService", "Displayed system notification.")
-
-            } else {
-                Log.d("PushNotificationService", "Could not find matching deals in Firestore for given IDs.")
+            // Convert to DealNotification objects
+            val notifications = fcmDeals.map { deal ->
+                DealNotification(
+                    id = deal.id,
+                    title = deal.title,
+                    description = deal.description,
+                    url = deal.open_giveaway_url,
+                    imageUrl = deal.image,
+                    worth = deal.worth ?: "N/A",
+                    timestamp = System.currentTimeMillis(),
+                    isRead = false
+                )
             }
+
+            // Save to local database
+            val repository = FreeGameRadarApp.instance.notificationRepository
+            repository.saveNotifications(notifications)
+            Log.d("FCM", "✅ Saved ${notifications.size} notifications to local DB")
+
+            // Show system notification
+            val notificationService = NotificationService(applicationContext)
+            notificationService.createNotificationChannel()
+            notificationService.showNewDealsNotification(notifications)
+            Log.d("FCM", "✅ Displayed system notification for ${notifications.size} deals")
+
         } catch (e: Exception) {
-            Log.e("PushNotificationService", "Error fetching deals from Firestore", e)
+            Log.e("FCM", "❌ Failed to parse or save deals", e)
+            e.printStackTrace()
         }
     }
 
     override fun onNewToken(token: String) {
         super.onNewToken(token)
-        // TODO: Update server with new token
+        Log.d("FCM", "🔑 New FCM token generated: $token")
+        TokenManager.initializeFCMToken()
     }
 }
