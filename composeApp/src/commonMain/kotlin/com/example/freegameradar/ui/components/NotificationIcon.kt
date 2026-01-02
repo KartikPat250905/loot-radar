@@ -17,6 +17,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.scale
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -42,7 +43,8 @@ fun NotificationIcon(unreadCount: Int, onClick: () -> Unit) {
             Icon(
                 imageVector = Icons.Default.Notifications,
                 contentDescription = "Notifications",
-                modifier = Modifier.size(24.dp).scale(scale)
+                modifier = Modifier.size(24.dp).scale(scale),
+                tint = Color(0xFF9CA3AF)
             )
         }
     }
