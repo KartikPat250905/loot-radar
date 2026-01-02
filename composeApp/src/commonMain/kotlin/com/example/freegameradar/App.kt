@@ -1,5 +1,10 @@
 package com.example.freegameradar
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.shrinkVertically
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -10,7 +15,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -42,6 +49,7 @@ fun App(
         val navController = rememberNavController()
         val navBackStackEntry by navController.currentBackStackEntryAsState()
         val currentRoute = navBackStackEntry?.destination?.route
+        var isBottomBarVisible by remember { mutableStateOf(true) }
 
         // Remember repositories to prevent re-initialization on recomposition
         val authRepository = remember { AuthRepositoryImpl() }
@@ -86,8 +94,14 @@ fun App(
                             }
                         },
                         bottomBar = {
-                            if (currentRoute != Screen.Setup.route) {
-                                BottomNavBar(navController)
+                            AnimatedVisibility(
+                                visible = isBottomBarVisible,
+                                enter = slideInVertically(initialOffsetY = { it }) + expandVertically(expandFrom = Alignment.Bottom),
+                                exit = slideOutVertically(targetOffsetY = { it }) + shrinkVertically(shrinkTowards = Alignment.Bottom)
+                            ) {
+                                if (currentRoute != Screen.Setup.route) {
+                                    BottomNavBar(navController)
+                                }
                             }
                         }
                     ) { innerPadding ->
@@ -99,7 +113,8 @@ fun App(
                             userStatsViewModel = userStatsViewModel,
                             settingsViewModel = settingsViewModel,
                             userPreferencesViewModel = userPreferencesViewModel,
-                            setupViewModel = setupViewModel
+                            setupViewModel = setupViewModel,
+                            onBottomBarVisibilityChange = { isBottomBarVisible = it }
                         )
                     }
                 }

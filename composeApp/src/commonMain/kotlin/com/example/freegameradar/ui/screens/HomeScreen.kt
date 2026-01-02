@@ -40,7 +40,11 @@ import com.example.freegameradar.ui.viewmodel.GameViewModel
 import kotlin.math.abs
 
 @Composable
-fun HomeScreen(navController: NavHostController, modifier: Modifier = Modifier) {
+fun HomeScreen(
+    navController: NavHostController,
+    modifier: Modifier = Modifier,
+    onBottomBarVisibilityChange: (Boolean) -> Unit
+) {
     val gameViewModel = remember { GameViewModel() }
     var isLoading by remember { mutableStateOf(true) }
     val games by gameViewModel.games.collectAsState()
@@ -62,6 +66,10 @@ fun HomeScreen(navController: NavHostController, modifier: Modifier = Modifier) 
                 scrollOffset < 0
             }
         }
+    }
+
+    LaunchedEffect(isVisible) {
+        onBottomBarVisibilityChange(isVisible)
     }
 
     LaunchedEffect(gridState) {
@@ -113,7 +121,7 @@ fun HomeScreen(navController: NavHostController, modifier: Modifier = Modifier) 
                         gameViewModel.updateSearch(it)
                     }
                 )
-                FilterBar(gameViewModel)
+                //FilterBar(gameViewModel)
                 GameTypeFilterTabs(
                     selectedFilter = selectedFilter,
                     onFilterSelected = { gameViewModel.updateFilter(it) }
@@ -129,7 +137,7 @@ fun HomeScreen(navController: NavHostController, modifier: Modifier = Modifier) 
                 CircularProgressIndicator()
             } else if (games.isEmpty() && dataSource == DataSource.CACHE) {
                 Text(
-                    text = "\uD83D\uDE3F No freebies found!\nCache is empty and new data couldn't load.\nCheck your internet connection and try again.",
+                    text = "\uD83D\uDE3F No freebies found!\nCache is empty and new data couldn\'t load.\nCheck your internet connection and try again.",
                     textAlign = TextAlign.Center,
                     modifier = Modifier.padding(16.dp),
                     fontSize = 18.sp

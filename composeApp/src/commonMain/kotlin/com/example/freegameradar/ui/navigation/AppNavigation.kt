@@ -29,7 +29,8 @@ fun AppNavigation(
     userStatsViewModel: UserStatsViewModel,
     settingsViewModel: SettingsViewModel,
     userPreferencesViewModel: UserPreferencesViewModel,
-    setupViewModel: SetupViewModel
+    setupViewModel: SetupViewModel,
+    onBottomBarVisibilityChange: (Boolean) -> Unit
 ) {
     NavHost(
         navController = navController,
@@ -48,7 +49,8 @@ fun AppNavigation(
         composable(Screen.Home.route) {
             HomeScreen(
                 navController = navController,
-                modifier = Modifier.padding(innerPadding)
+                modifier = Modifier.padding(innerPadding),
+                onBottomBarVisibilityChange = onBottomBarVisibilityChange
 
             )
         }
