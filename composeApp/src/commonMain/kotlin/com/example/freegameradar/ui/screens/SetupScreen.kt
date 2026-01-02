@@ -18,18 +18,20 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.example.freegameradar.permissions.rememberPermissionHandler
-import com.example.freegameradar.settings.UserSettings
 import com.example.freegameradar.ui.components.FilterChip
 import com.example.freegameradar.ui.viewmodel.SetupViewModel
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
@@ -37,12 +39,16 @@ fun SetupScreen(
     viewModel: SetupViewModel,
     onNavigateToHome: () -> Unit
 ) {
-    // Default notifications to OFF to ensure user interaction triggers permission request.
     var notificationsEnabled by remember { mutableStateOf(false) }
     var selectedPlatforms by remember { mutableStateOf(emptyList<String>()) }
     var selectedTypes by remember { mutableStateOf(emptyList<String>()) }
 
     val permissionHandler = rememberPermissionHandler()
+    val scope = rememberCoroutineScope()
+
+    LaunchedEffect(Unit) {
+        notificationsEnabled = permissionHandler.isNotificationPermissionGranted()
+    }
 
     val platforms = listOf(
         "pc", "steam", "epic-games-store", "ubisoft", "gog", "itchio",
@@ -142,14 +148,14 @@ fun SetupScreen(
 
             Button(
                 onClick = {
-                    viewModel.saveSettings(
-                        UserSettings(
+                    scope.launch {
+                        viewModel.savePreferencesAndCompleteSetup(
                             notificationsEnabled = notificationsEnabled,
                             preferredGamePlatforms = selectedPlatforms,
                             preferredGameTypes = selectedTypes
                         )
-                    )
-                    onNavigateToHome()
+                        onNavigateToHome()
+                    }
                 },
                 modifier = Modifier.fillMaxWidth()
             ) {

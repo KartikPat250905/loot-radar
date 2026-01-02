@@ -7,8 +7,8 @@ import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
 import com.russhwolf.settings.ObservableSettings
 import com.russhwolf.settings.coroutines.FlowSettings
-import com.russhwolf.settings.coroutines.getStringFlow
 import com.russhwolf.settings.coroutines.getFloatFlow
+import com.russhwolf.settings.coroutines.getStringFlow
 import com.russhwolf.settings.coroutines.toFlowSettings
 import com.russhwolf.settings.set
 import kotlinx.coroutines.Dispatchers

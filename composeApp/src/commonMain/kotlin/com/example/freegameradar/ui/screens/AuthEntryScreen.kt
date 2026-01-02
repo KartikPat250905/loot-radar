@@ -32,11 +32,9 @@ fun AuthEntryScreen(
             }
         }
 
-        is AuthState.Guest -> {
-            AuthScreen(authViewModel)
-        }
-
-        is AuthState.Error -> {
+        is AuthState.Guest,
+        is AuthState.Error,
+        is AuthState.Success -> {
             AuthScreen(authViewModel)
         }
     }

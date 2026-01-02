@@ -6,28 +6,30 @@ import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
-import com.example.freegameradar.core.LocalSettings
-import com.example.freegameradar.data.auth.AuthRepository
-import com.example.freegameradar.data.repository.UserSettingsRepositoryImpl
+import com.example.freegameradar.ui.screens.AboutScreen
 import com.example.freegameradar.ui.screens.HotDealsScreen
 import com.example.freegameradar.ui.screens.GameDetailScreen
 import com.example.freegameradar.ui.screens.HomeScreen
 import com.example.freegameradar.ui.screens.NotificationScreen
-import com.example.freegameradar.ui.screens.Settings
+import com.example.freegameradar.ui.screens.SettingsScreen
 import com.example.freegameradar.ui.screens.SetupScreen
 import com.example.freegameradar.ui.screens.StatsScreen
 import com.example.freegameradar.ui.viewmodel.NotificationViewModel
+import com.example.freegameradar.ui.viewmodel.SettingsViewModel
 import com.example.freegameradar.ui.viewmodel.SetupViewModel
+import com.example.freegameradar.ui.viewmodel.UserPreferencesViewModel
 import com.example.freegameradar.ui.viewmodel.UserStatsViewModel
 
 @Composable
 fun AppNavigation(
-    navController: NavHostController, 
-    innerPadding: PaddingValues, 
-    authRepository: AuthRepository,
+    navController: NavHostController,
+    innerPadding: PaddingValues,
     startDestination: String,
     notificationViewModel: NotificationViewModel,
-    userStatsViewModel: UserStatsViewModel
+    userStatsViewModel: UserStatsViewModel,
+    settingsViewModel: SettingsViewModel,
+    userPreferencesViewModel: UserPreferencesViewModel,
+    setupViewModel: SetupViewModel
 ) {
     NavHost(
         navController = navController,
@@ -35,12 +37,8 @@ fun AppNavigation(
     ) {
         composable(Screen.Setup.route) {
             SetupScreen(
-                viewModel = SetupViewModel(
-                    userSettingsRepository = UserSettingsRepositoryImpl(authRepository),
-                    authRepository = authRepository
-                ),
+                viewModel = setupViewModel,
                 onNavigateToHome = { 
-                    LocalSettings.isSetupComplete = true
                     navController.navigate(Screen.Home.route) { 
                         popUpTo(Screen.Setup.route) { inclusive = true } 
                     }
@@ -68,9 +66,16 @@ fun AppNavigation(
             )
         }
         composable(Screen.Settings.route) {
-            Settings(
+            SettingsScreen(
+                viewModel = settingsViewModel,
+                userPreferencesViewModel = userPreferencesViewModel,
                 navController = navController,
                 modifier = Modifier.padding(innerPadding)
+            )
+        }
+        composable(Screen.About.route) {
+            AboutScreen(
+                navController = navController
             )
         }
         composable(Screen.Stats.route) {

@@ -1,14 +1,19 @@
 package com.example.freegameradar.ui.screens
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.example.freegameradar.data.auth.AuthState
 import com.example.freegameradar.ui.viewmodel.AuthViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -16,16 +21,15 @@ import com.example.freegameradar.ui.viewmodel.AuthViewModel
 fun SignUpScreen(
     authViewModel: AuthViewModel,
     onLoginClicked: () -> Unit,
-    error: String? = null
 ) {
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var confirmPassword by remember { mutableStateOf("") }
+    var passwordVisibility by remember { mutableStateOf(false) }
+    var confirmPasswordVisibility by remember { mutableStateOf(false) }
     var localError by remember { mutableStateOf<String?>(null) }
 
-    LaunchedEffect(error) {
-        localError = error
-    }
+    val authState by authViewModel.authState.collectAsState()
 
     Scaffold { paddingValues ->
         Box(
@@ -91,13 +95,22 @@ fun SignUpScreen(
                         localError = null
                     },
                     label = { Text("Password") },
-                    visualTransformation = PasswordVisualTransformation(),
+                    visualTransformation = if (passwordVisibility) VisualTransformation.None else PasswordVisualTransformation(),
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth(),
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedBorderColor = MaterialTheme.colorScheme.primary,
                         focusedLabelColor = MaterialTheme.colorScheme.primary
-                    )
+                    ),
+                    trailingIcon = {
+                        val image = if (passwordVisibility)
+                            Icons.Filled.Visibility
+                        else Icons.Filled.VisibilityOff
+
+                        IconButton(onClick = { passwordVisibility = !passwordVisibility }) {
+                            Icon(imageVector = image, "toggle password visibility")
+                        }
+                    }
                 )
 
                 Spacer(modifier = Modifier.height(16.dp))
@@ -109,20 +122,51 @@ fun SignUpScreen(
                         localError = null
                     },
                     label = { Text("Confirm Password") },
-                    visualTransformation = PasswordVisualTransformation(),
+                    visualTransformation = if (confirmPasswordVisibility) VisualTransformation.None else PasswordVisualTransformation(),
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth(),
                     isError = localError == "Passwords do not match",
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedBorderColor = MaterialTheme.colorScheme.primary,
                         focusedLabelColor = MaterialTheme.colorScheme.primary
-                    )
+                    ),
+                    trailingIcon = {
+                        val image = if (confirmPasswordVisibility)
+                            Icons.Filled.Visibility
+                        else Icons.Filled.VisibilityOff
+
+                        IconButton(onClick = { confirmPasswordVisibility = !confirmPasswordVisibility }) {
+                            Icon(imageVector = image, "toggle password visibility")
+                        }
+                    }
                 )
 
                 Spacer(modifier = Modifier.height(24.dp))
 
-                val currentError = localError
-                if (currentError != null && !currentError.contains("not logged in", ignoreCase = true)) {
+                when (val state = authState) {
+                    is AuthState.Error -> {
+                        if (!state.message.contains("not logged in", ignoreCase = true)) {
+                            Card(
+                                modifier = Modifier.fillMaxWidth(),
+                                colors = CardDefaults.cardColors(
+                                    containerColor = MaterialTheme.colorScheme.errorContainer
+                                )
+                            ) {
+                                Text(
+                                    text = state.message,
+                                    color = MaterialTheme.colorScheme.onErrorContainer,
+                                    modifier = Modifier.padding(12.dp),
+                                    textAlign = TextAlign.Center,
+                                    style = MaterialTheme.typography.bodyMedium
+                                )
+                            }
+                            Spacer(modifier = Modifier.height(16.dp))
+                        }
+                    }
+
+                    else -> {}
+                }
+                if (localError != null) {
                     Card(
                         modifier = Modifier.fillMaxWidth(),
                         colors = CardDefaults.cardColors(
@@ -130,7 +174,7 @@ fun SignUpScreen(
                         )
                     ) {
                         Text(
-                            text = currentError,
+                            text = localError ?: "",
                             color = MaterialTheme.colorScheme.onErrorContainer,
                             modifier = Modifier.padding(12.dp),
                             textAlign = TextAlign.Center,
