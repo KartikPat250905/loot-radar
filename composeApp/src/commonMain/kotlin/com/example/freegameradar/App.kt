@@ -10,6 +10,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -39,9 +40,12 @@ fun App(
         val navController = rememberNavController()
         val navBackStackEntry by navController.currentBackStackEntryAsState()
         val currentRoute = navBackStackEntry?.destination?.route
-        val authRepository = AuthRepositoryImpl()
+
+        // Remember repositories to prevent re-initialization on recomposition
+        val authRepository = remember { AuthRepositoryImpl() }
+        val userSettingsRepository: UserSettingsRepository = remember(authRepository) { UserSettingsRepositoryImpl(authRepository) }
+
         val currentUser by authViewModel.currentUser.collectAsState()
-        val userSettingsRepository: UserSettingsRepository = UserSettingsRepositoryImpl(authRepository)
         val userSettings by userSettingsRepository.getSettings().collectAsState(initial = null)
 
         if (userSettings == null) {
@@ -54,7 +58,9 @@ fun App(
                 }
             }
         } else {
-            val startDestination = startRoute ?: if (userSettings?.setupComplete == true) Screen.Home.route else Screen.Setup.route
+            val startDestination = remember(userSettings?.setupComplete) {
+                startRoute ?: if (userSettings?.setupComplete == true) Screen.Home.route else Screen.Setup.route
+            }
 
             AppContainer { gameRepository, notificationRepository, userStatsRepository ->
                 val notificationViewModel: NotificationViewModel = viewModel { NotificationViewModel(notificationRepository) }
