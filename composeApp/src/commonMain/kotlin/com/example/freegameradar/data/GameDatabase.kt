@@ -1,6 +1,9 @@
 package com.example.freegameradar.data
 
 import com.example.freegameradar.db.GameDatabase
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.IO
+import kotlinx.coroutines.withContext
 
 object GameDatabaseProvider {
     private var database: GameDatabase? = null
@@ -12,9 +15,11 @@ object GameDatabaseProvider {
         return database!!
     }
 
-    fun clearAllData() {
-        database?.gameQueries?.deleteAll()
-        database?.notificationsQueries?.clearAllNotifications()
-        database?.user_settingsQueries?.deleteSettings()
+    suspend fun clearAllData() {
+        withContext(Dispatchers.IO) {
+            database?.gameQueries?.deleteAll()
+            database?.notificationsQueries?.clearAllNotifications()
+            database?.user_settingsQueries?.deleteSettings()
+        }
     }
 }
