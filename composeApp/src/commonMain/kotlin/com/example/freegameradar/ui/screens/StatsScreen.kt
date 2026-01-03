@@ -1,25 +1,24 @@
 package com.example.freegameradar.ui.screens
 
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Scaffold
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import com.example.freegameradar.ui.components.FilteredStatsCard
-import com.example.freegameradar.ui.components.GameTypeFilterTabs
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.example.freegameradar.ui.components.PlatformStatsCard
 import com.example.freegameradar.ui.components.TotalClaimedBar
 import com.example.freegameradar.ui.viewmodel.UserStatsViewModel
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun StatsScreen(viewModel: UserStatsViewModel, modifier: Modifier = Modifier) {
     val claimedValue by viewModel.claimedValue.collectAsState()
@@ -27,21 +26,40 @@ fun StatsScreen(viewModel: UserStatsViewModel, modifier: Modifier = Modifier) {
     val selectedFilter by viewModel.filter.collectAsState()
     val filteredStats by viewModel.filteredStats.collectAsState()
 
-    Scaffold(
-        modifier = modifier,
-        topBar = {
-            TopAppBar(title = { Text("Game Stats") })
-        }
-    ) { paddingValues ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Top
-        ) {
-            TotalClaimedBar(claimedValue = claimedValue)
-            PlatformStatsCard(platformStats = platformStats)
-        }
+    Column(
+        modifier = modifier
+            .fillMaxSize()
+            .background(
+                brush = Brush.verticalGradient(
+                    colors = listOf(
+                        Color(0xFF0D1B2A),
+                        Color(0xFF1B263B),
+                        Color(0xFF0D1B2A)
+                    )
+                )
+            )
+            .verticalScroll(rememberScrollState())
+            .padding(vertical = 16.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Top
+    ) {
+        // Header
+        Text(
+            text = "Your Game Statistics",
+            fontSize = 24.sp,
+            fontWeight = FontWeight.ExtraBold,
+            color = Color(0xFFE5E7EB),
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+        )
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        TotalClaimedBar(claimedValue = claimedValue)
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        PlatformStatsCard(platformStats = platformStats)
+
+        Spacer(modifier = Modifier.height(80.dp))
     }
 }
