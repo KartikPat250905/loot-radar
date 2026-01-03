@@ -30,8 +30,8 @@ actual class UserSettingsRepositoryImpl actual constructor(
 
     override fun getSettings(): Flow<UserSettings> = authRepository.getAuthStateFlow().flatMapLatest { user ->
         if (user == null) {
-            // Unauthenticated: Provide settings from the local cache.
-            db.getSettings().asFlow().mapToOneOrDefault(User_settings(0, 1L, "", ""), Dispatchers.IO).map { local ->
+            // Unauthenticated: Provide settings from the local cache with notifications off by default.
+            db.getSettings().asFlow().mapToOneOrDefault(User_settings(0, 0L, "", ""), Dispatchers.IO).map { local ->
                 UserSettings(
                     notificationsEnabled = local.notifications_enabled == 1L,
                     preferredGamePlatforms = local.preferred_game_platforms.split(',').filter { it.isNotEmpty() },
@@ -50,10 +50,16 @@ actual class UserSettingsRepositoryImpl actual constructor(
                         return@addSnapshotListener
                     }
 
+                    val emptySettings = UserSettings(
+                        notificationsEnabled = false,
+                        preferredGamePlatforms = emptyList(),
+                        preferredGameTypes = emptyList()
+                    )
+
                     val remoteSettings = if (snapshot != null && snapshot.exists()) {
-                        snapshot.toObject<UserSettings>() ?: UserSettings()
+                        snapshot.toObject<UserSettings>() ?: emptySettings
                     } else {
-                        UserSettings() // For a new user or if the document doesn't exist.
+                        emptySettings // For a new user or if the document doesn't exist.
                     }
 
                     // Sync the latest settings from Firestore to our local cache.

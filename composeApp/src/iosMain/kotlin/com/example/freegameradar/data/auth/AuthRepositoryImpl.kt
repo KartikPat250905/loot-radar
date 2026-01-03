@@ -84,9 +84,14 @@ actual class AuthRepositoryImpl : AuthRepository {
         }
     }
 
-    actual override suspend fun deleteAccount(): Result<Unit> {
-        // Not implemented for iOS
-        return Result.success(Unit)
+    actual override suspend fun deleteAccount(): Result<Unit> = suspendCancellableCoroutine { continuation ->
+        firebaseAuth.currentUser?.deleteWithCompletion { error ->
+            if (error == null) {
+                continuation.resume(Result.success(Unit))
+            } else {
+                continuation.resume(Result.failure(Exception(error.localizedDescription() ?: "Unknown error")))
+            }
+        }
     }
 
     actual override suspend fun linkAccount(email: String, password: String): Result<User> {

@@ -11,4 +11,10 @@ object GameDatabaseProvider {
         }
         return database!!
     }
+
+    fun clearAllData() {
+        database?.gameQueries?.deleteAll()
+        database?.notificationsQueries?.clearAllNotifications()
+        database?.user_settingsQueries?.deleteSettings()
+    }
 }

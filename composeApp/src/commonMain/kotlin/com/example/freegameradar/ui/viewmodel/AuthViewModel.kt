@@ -2,6 +2,7 @@ package com.example.freegameradar.ui.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.freegameradar.data.GameDatabaseProvider
 import com.example.freegameradar.data.auth.AuthRepository
 import com.example.freegameradar.data.auth.AuthState
 import com.example.freegameradar.data.models.User
@@ -9,7 +10,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
@@ -71,6 +71,25 @@ class AuthViewModel(private val authRepository: AuthRepository) : ViewModel() {
         viewModelScope.launch {
             _authState.value = AuthState.Loading
             authRepository.continueAsGuest()
+        }
+    }
+
+    fun signOut() {
+        viewModelScope.launch {
+            authRepository.signOut()
+            GameDatabaseProvider.clearAllData()
+        }
+    }
+
+    fun deleteAccount() {
+        viewModelScope.launch {
+            _authState.value = AuthState.Loading
+            val result = authRepository.deleteAccount()
+            result.onSuccess {
+                GameDatabaseProvider.clearAllData()
+            }.onFailure {
+                _authState.value = AuthState.Error(it.message ?: "Unknown error during account deletion")
+            }
         }
     }
 }

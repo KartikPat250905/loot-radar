@@ -25,13 +25,6 @@ class SetupViewModel(
         userSettingsRepository.getSettings()
             .onEach { _userSettings.value = it }
             .launchIn(viewModelScope)
-
-        // If there is no authenticated user, sign in as a guest
-        viewModelScope.launch {
-            if (authRepository.getAuthStateFlow().first() == null) {
-                authRepository.signInAsGuest()
-            }
-        }
     }
 
     suspend fun savePreferencesAndCompleteSetup(

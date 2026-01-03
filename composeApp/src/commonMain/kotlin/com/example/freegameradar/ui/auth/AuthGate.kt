@@ -38,10 +38,9 @@ fun AuthGate(
                 }
             }
 
-            AuthState.LoggedIn -> {
+            AuthState.LoggedIn, AuthState.Guest -> {
                 content()
             }
-            AuthState.Guest,
             is AuthState.Success,
             is AuthState.Error -> {
                 AuthScreen(
