@@ -14,14 +14,12 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -35,12 +33,12 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import com.example.freegameradar.data.state.DataSource
+import com.example.freegameradar.ui.components.AppLoadingScreen
 import com.example.freegameradar.ui.components.GameGrid
 import com.example.freegameradar.ui.components.GameSearchBar
 import com.example.freegameradar.ui.components.GameTypeFilterTabs
 import com.example.freegameradar.ui.components.TotalWorthBar
 import com.example.freegameradar.ui.viewmodel.GameViewModel
-import kotlinx.coroutines.delay
 
 @Composable
 fun HomeScreen(
@@ -154,7 +152,7 @@ fun HomeScreen(
         }
         Box(contentAlignment = Alignment.Center, modifier = Modifier.weight(1f)) {
             if (isLoading) {
-                CircularProgressIndicator(color = Color(0xFF10B981))
+                AppLoadingScreen(fullScreen = false)
             } else if (games.isEmpty() && dataSource == DataSource.CACHE) {
                 Text(
                     text = "😿 No freebies found!\nCache is empty and new data couldn't load.\nCheck your internet connection and try again.",

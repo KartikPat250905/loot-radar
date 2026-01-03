@@ -5,10 +5,7 @@ import androidx.compose.animation.expandVertically
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
@@ -27,6 +24,7 @@ import com.example.freegameradar.data.auth.AuthRepositoryImpl
 import com.example.freegameradar.data.repository.UserSettingsRepository
 import com.example.freegameradar.data.repository.UserSettingsRepositoryImpl
 import com.example.freegameradar.ui.auth.AuthGate
+import com.example.freegameradar.ui.components.AppLoadingScreen
 import com.example.freegameradar.ui.components.BottomNavBar
 import com.example.freegameradar.ui.components.TopBar
 import com.example.freegameradar.ui.navigation.AppNavigation
@@ -59,14 +57,7 @@ fun App(
         val userSettings by userSettingsRepository.getSettings().collectAsState(initial = null)
 
         if (userSettings == null) {
-            Scaffold { // This will now inherit the dark theme's background
-                Box(
-                    modifier = Modifier.fillMaxSize().padding(it),
-                    contentAlignment = Alignment.Center
-                ) {
-                    CircularProgressIndicator()
-                }
-            }
+            AppLoadingScreen()
         } else {
             val startDestination = remember(userSettings?.setupComplete) {
                 startRoute ?: if (userSettings?.setupComplete == true) Screen.Home.route else Screen.Setup.route
