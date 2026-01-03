@@ -39,6 +39,16 @@ kotlin {
             implementation(libs.ktor.client.okhttp)
             implementation(kotlin("reflect"))
             implementation(libs.sqldelight.android.driver)
+            
+            // Move Coil to androidMain ONLY (for now)
+            implementation(libs.coil.compose)
+            implementation(libs.coil.network.ktor)
+            
+            // Move Vico to androidMain ONLY (for now)
+            implementation(libs.vico.compose)
+            implementation(libs.vico.compose.m3)
+            implementation(libs.vico.core)
+            
             // Import the Firebase BoM
             implementation(platform("com.google.firebase:firebase-bom:33.1.0"))
             implementation(platform("io.opentelemetry:opentelemetry-bom:1.18.0"))
@@ -47,6 +57,7 @@ kotlin {
             implementation(libs.firebase.firestore.ktx)
             implementation(libs.firebase.messaging.ktx)
             implementation(libs.kotlinx.coroutines.play.services)
+            implementation("androidx.compose.ui:ui-tooling-preview")
         }
 
         commonMain.dependencies {
@@ -58,24 +69,21 @@ kotlin {
             implementation(compose.components.uiToolingPreview)
             implementation(compose.materialIconsExtended)
 
-            // Add Navigation Compose for Multiplatform
+            // Multiplatform Lifecycle and Navigation
+            implementation("org.jetbrains.androidx.lifecycle:lifecycle-viewmodel-compose:2.8.0")
             implementation("org.jetbrains.androidx.navigation:navigation-compose:2.8.0-alpha10")
 
             implementation(libs.ktor.client.core)
             implementation(libs.ktor.client.content.negotiation)
             implementation(libs.ktor.serialization.kotlinx.json)
 
-            implementation(libs.coil.compose)
-            implementation(libs.coil.network.ktor)
+            // REMOVED: coil, vico - moved to androidMain
+            
             implementation(libs.kotlinx.datetime)
             implementation(libs.sqldelight.runtime)
             implementation(libs.sqldelight.coroutines.extensions)
             implementation(libs.multiplatform.settings)
             implementation(libs.multiplatform.settings.coroutines)
-
-            implementation(libs.vico.compose)
-            implementation(libs.vico.compose.m3)
-            implementation(libs.vico.core)
         }
 
         val desktopMain by getting {
@@ -84,6 +92,10 @@ kotlin {
                 implementation(libs.ktor.client.okhttp)
                 implementation(libs.sqldelight.sqlite.driver)
                 implementation("org.jetbrains.kotlinx:kotlinx-coroutines-swing:1.8.0")
+                
+                // For Desktop image loading, use Coil3 multiplatform
+                implementation("io.coil-kt.coil3:coil-compose:3.0.0-rc01")
+                implementation("io.coil-kt.coil3:coil-network-ktor3:3.0.0-rc01")
             }
         }
     }

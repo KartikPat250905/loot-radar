@@ -13,17 +13,14 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import com.example.freegameradar.ui.screens.HomeScreen
-import com.example.freegameradar.ui.viewmodel.NotificationViewModel
-import com.example.freegameradar.ui.viewmodel.SettingsViewModel
-import com.example.freegameradar.ui.viewmodel.SetupViewModel
-import com.example.freegameradar.ui.viewmodel.UserPreferencesViewModel
-import com.example.freegameradar.ui.viewmodel.UserStatsViewModel
+import com.example.freegameradar.ui.viewmodel.*
 
 @Composable
 fun AppNavigation(
     navController: NavHostController,
     innerPadding: PaddingValues,
     startDestination: String,
+    homeViewModel: HomeViewModel,
     notificationViewModel: NotificationViewModel,
     userStatsViewModel: UserStatsViewModel,
     settingsViewModel: SettingsViewModel,
@@ -47,7 +44,7 @@ fun AppNavigation(
         // Home Screen
         composable(Screen.Home.route) {
             onBottomBarVisibilityChange(true)
-            HomeScreen()
+            HomeScreen(homeViewModel)
         }
 
         // Hot Deals Screen

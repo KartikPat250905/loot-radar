@@ -6,6 +6,7 @@ import androidx.compose.ui.window.rememberWindowState
 import com.example.freegameradar.App
 import com.example.freegameradar.data.auth.AuthRepositoryImpl
 import com.example.freegameradar.initializeDatabase
+import com.example.freegameradar.ui.navigation.Screen
 import com.example.freegameradar.ui.viewmodel.AuthViewModel
 import java.lang.Thread
 
@@ -34,7 +35,7 @@ fun main() {
         ) {
             val authRepository = remember { AuthRepositoryImpl() }
             val authViewModel = remember { AuthViewModel(authRepository) }
-            App(authViewModel = authViewModel)
+            App(authViewModel = authViewModel, startRoute = Screen.Home.route)
         }
     }
 }
