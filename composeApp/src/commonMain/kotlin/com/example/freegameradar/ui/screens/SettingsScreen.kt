@@ -1,54 +1,25 @@
 package com.example.freegameradar.ui.screens
 
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.FlowRow
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material.icons.filled.ExitToApp
-import androidx.compose.material.icons.filled.Info
-import androidx.compose.material.icons.filled.Upgrade
-import androidx.compose.material.icons.filled.Visibility
-import androidx.compose.material.icons.filled.VisibilityOff
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Switch
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
-import androidx.compose.material3.TopAppBar
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.material.icons.filled.*
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
 import com.example.freegameradar.permissions.rememberPermissionHandler
@@ -87,63 +58,89 @@ fun SettingsScreen(
     fun handleDeleteAccount() {
         viewModel.deleteAccount { result ->
             if (result.isSuccess) {
-                // Only navigate after the account has been successfully deleted.
                 navController.navigate(Screen.Home.route) {
                     popUpTo(navController.graph.findStartDestination().id) { inclusive = true }
                 }
             }
-            // Optionally, handle the failure case e.g., show a snackbar
         }
     }
 
-    Scaffold(
-        modifier = modifier,
-        topBar = {
-            TopAppBar(title = { Text("Settings") })
-        }
-    ) { paddingValues ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
-                .verticalScroll(rememberScrollState())
-        ) {
-            SettingsSectionHeader(title = "Account")
-
-            if (uiState.user != null && !uiState.isGuest) {
-                SettingsItem(
-                    icon = Icons.Default.ExitToApp,
-                    title = "Sign Out",
-                    subtitle = "Sign out of your account",
-                    onClick = { showSignOutConfirmation = true }
+    Column(
+        modifier = modifier
+            .fillMaxSize()
+            .background(
+                brush = Brush.verticalGradient(
+                    colors = listOf(
+                        Color(0xFF0D1B2A),
+                        Color(0xFF1B263B),
+                        Color(0xFF0D1B2A)
+                    )
                 )
-            } else {
-                SettingsItem(
-                    icon = Icons.Default.Upgrade,
-                    title = "Upgrade Account",
-                    subtitle = "Create an account to save your data",
-                    onClick = { showUpgradeDialog = true }
-                )
-            }
-
-            SettingsItem(
-                icon = Icons.Default.Delete,
-                title = "Delete Account",
-                subtitle = "Permanently delete your account",
-                onClick = { showDeleteConfirmation = true }
             )
+            .verticalScroll(rememberScrollState())
+            .padding(vertical = 16.dp)
+    ) {
+        // Header
+        Text(
+            text = "Settings",
+            fontSize = 24.sp,
+            fontWeight = FontWeight.ExtraBold,
+            color = Color(0xFFE5E7EB),
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+        )
 
-            Spacer(modifier = Modifier.height(16.dp))
-            SettingsSectionHeader(title = "Notifications")
+        Spacer(modifier = Modifier.height(16.dp))
 
+        SettingsSectionHeader(title = "Account")
+
+        if (uiState.user != null && !uiState.isGuest) {
+            SettingsItem(
+                icon = Icons.Default.ExitToApp,
+                title = "Sign Out",
+                subtitle = "Sign out of your account",
+                onClick = { showSignOutConfirmation = true }
+            )
+        } else {
+            SettingsItem(
+                icon = Icons.Default.Upgrade,
+                title = "Upgrade Account",
+                subtitle = "Create an account to save your data",
+                onClick = { showUpgradeDialog = true }
+            )
+        }
+
+        SettingsItem(
+            icon = Icons.Default.Delete,
+            title = "Delete Account",
+            subtitle = "Permanently delete your account",
+            onClick = { showDeleteConfirmation = true }
+        )
+
+        Spacer(modifier = Modifier.height(16.dp))
+        SettingsSectionHeader(title = "Notifications")
+
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 8.dp),
+            shape = RoundedCornerShape(16.dp),
+            colors = CardDefaults.cardColors(
+                containerColor = Color(0xFF1B263B)
+            )
+        ) {
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 16.dp),
+                    .padding(16.dp),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                Text("Enable Notifications")
+                Text(
+                    "Enable Notifications",
+                    color = Color(0xFFE5E7EB),
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Medium
+                )
                 Switch(
                     checked = preferencesState.notificationsEnabled,
                     onCheckedChange = { wantsToEnable ->
@@ -155,29 +152,40 @@ fun SettingsScreen(
                                 }
                             }
                         }
-                    }
+                    },
+                    colors = SwitchDefaults.colors(
+                        checkedThumbColor = Color.White,
+                        checkedTrackColor = Color(0xFF10B981),
+                        checkedBorderColor = Color(0xFF10B981),
+                        uncheckedThumbColor = Color.White,
+                        uncheckedTrackColor = Color(0xFF374151),
+                        uncheckedBorderColor = Color(0xFF4B5563)
+                    )
                 )
             }
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            PreferenceSummaryCard(
-                platforms = preferencesState.preferredGamePlatforms,
-                types = preferencesState.preferredGameTypes,
-                onEditClick = { showNotificationPreferenceDialog = true },
-            )
-
-            Spacer(modifier = Modifier.height(16.dp))
-            SettingsSectionHeader(title = "About")
-            SettingsItem(
-                icon = Icons.Default.Info,
-                title = "About App",
-                subtitle = "View app information and credits",
-                onClick = { navController.navigate(Screen.About.route) }
-            )
         }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        PreferenceSummaryCard(
+            platforms = preferencesState.preferredGamePlatforms,
+            types = preferencesState.preferredGameTypes,
+            onEditClick = { showNotificationPreferenceDialog = true },
+        )
+
+        Spacer(modifier = Modifier.height(16.dp))
+        SettingsSectionHeader(title = "About")
+        SettingsItem(
+            icon = Icons.Default.Info,
+            title = "About App",
+            subtitle = "View app information and credits",
+            onClick = { navController.navigate(Screen.About.route) }
+        )
+
+        Spacer(modifier = Modifier.height(80.dp))
     }
 
+    // Dialogs remain the same but with themed colors
     if (showUpgradeDialog) {
         var email by remember { mutableStateOf("") }
         var password by remember { mutableStateOf("") }
@@ -187,13 +195,16 @@ fun SettingsScreen(
         var error by remember { mutableStateOf<String?>(null) }
         var isLoading by remember { mutableStateOf(false) }
 
-
         AlertDialog(
             onDismissRequest = { if (!isLoading) showUpgradeDialog = false },
-            title = { Text("Upgrade Account") },
+            containerColor = Color(0xFF1B263B),
+            title = { Text("Upgrade Account", color = Color(0xFFE5E7EB)) },
             text = {
                 Column {
-                    Text("Enter your email and password to create an account. Your data will be saved.")
+                    Text(
+                        "Enter your email and password to create an account. Your data will be saved.",
+                        color = Color(0xFF9CA3AF)
+                    )
                     Spacer(modifier = Modifier.height(16.dp))
                     OutlinedTextField(
                         value = email,
@@ -201,7 +212,16 @@ fun SettingsScreen(
                         label = { Text("Email") },
                         isError = error != null,
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
-                        readOnly = isLoading
+                        readOnly = isLoading,
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = Color(0xFF10B981),
+                            unfocusedBorderColor = Color(0xFF374151),
+                            focusedTextColor = Color(0xFFE5E7EB),
+                            unfocusedTextColor = Color(0xFFE5E7EB),
+                            cursorColor = Color(0xFF10B981),
+                            focusedLabelColor = Color(0xFF10B981),
+                            unfocusedLabelColor = Color(0xFF9CA3AF)
+                        )
                     )
                     Spacer(modifier = Modifier.height(8.dp))
                     OutlinedTextField(
@@ -212,13 +232,22 @@ fun SettingsScreen(
                         visualTransformation = if (passwordVisibility) VisualTransformation.None else PasswordVisualTransformation(),
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
                         readOnly = isLoading,
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = Color(0xFF10B981),
+                            unfocusedBorderColor = Color(0xFF374151),
+                            focusedTextColor = Color(0xFFE5E7EB),
+                            unfocusedTextColor = Color(0xFFE5E7EB),
+                            cursorColor = Color(0xFF10B981),
+                            focusedLabelColor = Color(0xFF10B981),
+                            unfocusedLabelColor = Color(0xFF9CA3AF)
+                        ),
                         trailingIcon = {
-                            val image = if (passwordVisibility)
-                                Icons.Filled.Visibility
-                            else Icons.Filled.VisibilityOff
-
                             IconButton(onClick = { passwordVisibility = !passwordVisibility }) {
-                                Icon(imageVector = image, "toggle password visibility")
+                                Icon(
+                                    imageVector = if (passwordVisibility) Icons.Filled.Visibility else Icons.Filled.VisibilityOff,
+                                    contentDescription = "toggle password visibility",
+                                    tint = Color(0xFF9CA3AF)
+                                )
                             }
                         }
                     )
@@ -231,20 +260,29 @@ fun SettingsScreen(
                         visualTransformation = if (confirmPasswordVisibility) VisualTransformation.None else PasswordVisualTransformation(),
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
                         readOnly = isLoading,
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = Color(0xFF10B981),
+                            unfocusedBorderColor = Color(0xFF374151),
+                            focusedTextColor = Color(0xFFE5E7EB),
+                            unfocusedTextColor = Color(0xFFE5E7EB),
+                            cursorColor = Color(0xFF10B981),
+                            focusedLabelColor = Color(0xFF10B981),
+                            unfocusedLabelColor = Color(0xFF9CA3AF)
+                        ),
                         trailingIcon = {
-                            val image = if (confirmPasswordVisibility)
-                                Icons.Filled.Visibility
-                            else Icons.Filled.VisibilityOff
-
                             IconButton(onClick = { confirmPasswordVisibility = !confirmPasswordVisibility }) {
-                                Icon(imageVector = image, "toggle password visibility")
+                                Icon(
+                                    imageVector = if (confirmPasswordVisibility) Icons.Filled.Visibility else Icons.Filled.VisibilityOff,
+                                    contentDescription = "toggle password visibility",
+                                    tint = Color(0xFF9CA3AF)
+                                )
                             }
                         }
                     )
 
                     error?.let {
                         Spacer(modifier = Modifier.height(8.dp))
-                        Text(it, color = MaterialTheme.colorScheme.error)
+                        Text(it, color = Color(0xFFEF4444))
                     }
                 }
             },
@@ -266,17 +304,24 @@ fun SettingsScreen(
                             }
                         }
                     },
-                    enabled = !isLoading && email.isNotBlank() && password.isNotBlank() && confirmPassword.isNotBlank()
+                    enabled = !isLoading && email.isNotBlank() && password.isNotBlank() && confirmPassword.isNotBlank(),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color(0xFF10B981),
+                        contentColor = Color.White
+                    )
                 ) {
                     if (isLoading) {
-                        CircularProgressIndicator()
+                        CircularProgressIndicator(color = Color.White, modifier = Modifier.size(20.dp))
                     } else {
                         Text("Upgrade")
                     }
                 }
             },
             dismissButton = {
-                TextButton(onClick = { if (!isLoading) showUpgradeDialog = false }) {
+                TextButton(
+                    onClick = { if (!isLoading) showUpgradeDialog = false },
+                    colors = ButtonDefaults.textButtonColors(contentColor = Color(0xFF9CA3AF))
+                ) {
                     Text("Cancel")
                 }
             }
@@ -296,12 +341,18 @@ fun SettingsScreen(
 
         AlertDialog(
             onDismissRequest = { showNotificationPreferenceDialog = false },
-            title = { Text("Edit Notification Preferences") },
+            containerColor = Color(0xFF1B263B),
+            title = { Text("Edit Notification Preferences", color = Color(0xFFE5E7EB)) },
             text = {
                 Column(
                     modifier = Modifier.verticalScroll(rememberScrollState())
                 ) {
-                    Text("Notify me about these platforms:", style = MaterialTheme.typography.titleMedium)
+                    Text(
+                        "Notify me about these platforms:",
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = Color(0xFFE5E7EB)
+                    )
                     Spacer(modifier = Modifier.height(12.dp))
                     FlowRow(
                         modifier = Modifier.fillMaxWidth(),
@@ -324,7 +375,12 @@ fun SettingsScreen(
                     }
                     Spacer(modifier = Modifier.height(24.dp))
 
-                    Text("Notify me about these types:", style = MaterialTheme.typography.titleMedium, modifier = Modifier.fillMaxWidth())
+                    Text(
+                        "Notify me about these types:",
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = Color(0xFFE5E7EB)
+                    )
                     Spacer(modifier = Modifier.height(12.dp))
                     FlowRow(
                         modifier = Modifier.fillMaxWidth(),
@@ -355,37 +411,48 @@ fun SettingsScreen(
                             preferredGameTypes = selectedTypes
                         )
                         showNotificationPreferenceDialog = false
-                    }
+                    },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color(0xFF10B981),
+                        contentColor = Color.White
+                    )
                 ) {
                     Text("Save")
                 }
             },
             dismissButton = {
-                TextButton(onClick = { showNotificationPreferenceDialog = false }) {
+                TextButton(
+                    onClick = { showNotificationPreferenceDialog = false },
+                    colors = ButtonDefaults.textButtonColors(contentColor = Color(0xFF9CA3AF))
+                ) {
                     Text("Cancel")
                 }
             }
         )
     }
 
-
     if (showSignOutConfirmation) {
         AlertDialog(
             onDismissRequest = { showSignOutConfirmation = false },
-            title = { Text("Sign Out") },
-            text = { Text("Are you sure you want to sign out?") },
+            containerColor = Color(0xFF1B263B),
+            title = { Text("Sign Out", color = Color(0xFFE5E7EB)) },
+            text = { Text("Are you sure you want to sign out?", color = Color(0xFF9CA3AF)) },
             confirmButton = {
                 TextButton(
                     onClick = {
                         handleSignOut()
                         showSignOutConfirmation = false
-                    }
+                    },
+                    colors = ButtonDefaults.textButtonColors(contentColor = Color(0xFFEF4444))
                 ) {
                     Text("Sign Out")
                 }
             },
             dismissButton = {
-                TextButton(onClick = { showSignOutConfirmation = false }) {
+                TextButton(
+                    onClick = { showSignOutConfirmation = false },
+                    colors = ButtonDefaults.textButtonColors(contentColor = Color(0xFF9CA3AF))
+                ) {
                     Text("Cancel")
                 }
             }
@@ -395,27 +462,36 @@ fun SettingsScreen(
     if (showDeleteConfirmation) {
         AlertDialog(
             onDismissRequest = { showDeleteConfirmation = false },
-            title = { Text("Delete Account") },
-            text = { Text("Are you sure you want to permanently delete your account? This action cannot be undone.") },
+            containerColor = Color(0xFF1B263B),
+            title = { Text("Delete Account", color = Color(0xFFE5E7EB)) },
+            text = {
+                Text(
+                    "Are you sure you want to permanently delete your account? This action cannot be undone.",
+                    color = Color(0xFF9CA3AF)
+                )
+            },
             confirmButton = {
                 TextButton(
                     onClick = {
                         handleDeleteAccount()
                         showDeleteConfirmation = false
-                    }
+                    },
+                    colors = ButtonDefaults.textButtonColors(contentColor = Color(0xFFEF4444))
                 ) {
                     Text("Delete")
                 }
             },
             dismissButton = {
-                TextButton(onClick = { showDeleteConfirmation = false }) {
+                TextButton(
+                    onClick = { showDeleteConfirmation = false },
+                    colors = ButtonDefaults.textButtonColors(contentColor = Color(0xFF9CA3AF))
+                ) {
                     Text("Cancel")
                 }
             }
         )
     }
 }
-
 
 @Composable
 fun PreferenceSummaryCard(
@@ -427,7 +503,11 @@ fun PreferenceSummaryCard(
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = Color(0xFF1B263B)
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
     ) {
         Column(
             modifier = Modifier.padding(16.dp)
@@ -437,15 +517,32 @@ fun PreferenceSummaryCard(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text("Current Preferences", style = MaterialTheme.typography.titleMedium)
+                Text(
+                    "Current Preferences",
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = Color(0xFFE5E7EB)
+                )
                 IconButton(onClick = onEditClick) {
-                    Icon(Icons.Default.Edit, contentDescription = "Edit Preferences")
+                    Icon(
+                        Icons.Default.Edit,
+                        contentDescription = "Edit Preferences",
+                        tint = Color(0xFF10B981)
+                    )
                 }
             }
             Spacer(modifier = Modifier.height(12.dp))
-            Text("Platforms: ${platforms.joinToString().ifEmpty { "None" }}")
+            Text(
+                "Platforms: ${platforms.joinToString().ifEmpty { "None" }}",
+                color = Color(0xFF9CA3AF),
+                fontSize = 14.sp
+            )
             Spacer(modifier = Modifier.height(8.dp))
-            Text("Types: ${types.joinToString().ifEmpty { "None" }}")
+            Text(
+                "Types: ${types.joinToString().ifEmpty { "None" }}",
+                color = Color(0xFF9CA3AF),
+                fontSize = 14.sp
+            )
         }
     }
 }
