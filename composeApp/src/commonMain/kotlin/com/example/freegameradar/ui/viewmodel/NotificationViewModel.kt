@@ -4,19 +4,22 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.freegameradar.data.model.DealNotification
 import com.example.freegameradar.data.repository.NotificationRepository
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
 class NotificationViewModel(private val notificationRepository: NotificationRepository) : ViewModel() {
 
+    private val _isLoading = MutableStateFlow(true)
+    val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
+
     val notifications: StateFlow<List<DealNotification>> = notificationRepository.getAllNotifications()
-        .map { list -> 
-            println("NotificationViewModel: Loaded ${list.size} notifications from repository.")
-            list.sortedByDescending { it.timestamp } 
-        }
+        .onEach { _isLoading.value = false }
         .stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5000),
@@ -40,7 +43,6 @@ class NotificationViewModel(private val notificationRepository: NotificationRepo
     fun markAllAsRead() {
         viewModelScope.launch {
             notificationRepository.markAllAsRead()
-            println("NotificationViewModel: Marked all notifications as read.")
         }
     }
 
@@ -50,11 +52,9 @@ class NotificationViewModel(private val notificationRepository: NotificationRepo
         }
     }
 
-    // Added this function to fix the build error.
-    // Since the UI is reactive, no action is needed here to refresh from the local DB.
-    // This can be used later for server-side fetching.
     fun refreshNotifications() {
-        // Currently empty as the notifications Flow is always up-to-date.
-        println("NotificationViewModel: Refresh requested (currently a no-op).")
+        _isLoading.value = true
+        // In a real app, you might trigger a network fetch here.
+        // For now, we just rely on the database flow to update.
     }
 }

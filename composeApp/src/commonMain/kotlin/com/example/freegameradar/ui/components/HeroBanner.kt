@@ -8,17 +8,20 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
-import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImage
 import com.example.freegameradar.data.models.GameDto
 
@@ -29,18 +32,26 @@ fun HeroBanner(game: GameDto?, onClick: () -> Unit) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .height(200.dp)
-            .clickable { onClick() }
+            .height(220.dp)
+            .padding(horizontal = 16.dp, vertical = 8.dp)
+            .clickable { onClick() },
+        shape = RoundedCornerShape(20.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = Color(0xFF1B263B)
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 6.dp)
     ) {
         Box(modifier = Modifier.fillMaxSize()) {
             AsyncImage(
                 model = game.image,
                 contentDescription = game.title,
                 contentScale = ContentScale.Crop,
-                modifier = Modifier.fillMaxSize()
+                modifier = Modifier
+                    .fillMaxSize()
+                    .clip(RoundedCornerShape(20.dp))
             )
-            
-            // Gradient Overlay
+
+            // Enhanced gradient overlay
             Box(
                 modifier = Modifier
                     .fillMaxSize()
@@ -48,9 +59,30 @@ fun HeroBanner(game: GameDto?, onClick: () -> Unit) {
                         Brush.verticalGradient(
                             colors = listOf(
                                 Color.Transparent,
-                                Color.Black.copy(alpha = 0.8f)
+                                Color(0x40000000),
+                                Color(0xCC0D1B2A)
                             ),
-                            startY = 100f
+                            startY = 0f,
+                            endY = 800f
+                        )
+                    )
+            )
+
+            // Emerald glow at bottom
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(2.dp)
+                    .align(Alignment.BottomCenter)
+                    .background(
+                        brush = Brush.horizontalGradient(
+                            colors = listOf(
+                                Color.Transparent,
+                                Color(0xFF10B981),
+                                Color(0xFF34D399),
+                                Color(0xFF10B981),
+                                Color.Transparent
+                            )
                         )
                     )
             )
@@ -58,13 +90,13 @@ fun HeroBanner(game: GameDto?, onClick: () -> Unit) {
             Column(
                 modifier = Modifier
                     .align(Alignment.BottomStart)
-                    .padding(12.dp)
+                    .padding(16.dp)
             ) {
                 Text(
                     text = game.title ?: "",
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Bold,
-                    color = Color.White
+                    fontSize = 22.sp,
+                    fontWeight = FontWeight.ExtraBold,
+                    color = Color(0xFFE5E7EB)
                 )
                 GameWorth(game.worth)
             }

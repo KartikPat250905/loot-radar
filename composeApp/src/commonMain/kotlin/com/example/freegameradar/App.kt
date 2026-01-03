@@ -1,16 +1,20 @@
 package com.example.freegameradar
 
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.shrinkVertically
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -20,6 +24,7 @@ import com.example.freegameradar.data.auth.AuthRepositoryImpl
 import com.example.freegameradar.data.repository.UserSettingsRepository
 import com.example.freegameradar.data.repository.UserSettingsRepositoryImpl
 import com.example.freegameradar.ui.auth.AuthGate
+import com.example.freegameradar.ui.components.AppLoadingScreen
 import com.example.freegameradar.ui.components.BottomNavBar
 import com.example.freegameradar.ui.components.TopBar
 import com.example.freegameradar.ui.navigation.AppNavigation
@@ -42,6 +47,7 @@ fun App(
         val navController = rememberNavController()
         val navBackStackEntry by navController.currentBackStackEntryAsState()
         val currentRoute = navBackStackEntry?.destination?.route
+        var isBottomBarVisible by remember { mutableStateOf(true) }
 
         // Remember repositories to prevent re-initialization on recomposition
         val authRepository = remember { AuthRepositoryImpl() }
@@ -51,14 +57,7 @@ fun App(
         val userSettings by userSettingsRepository.getSettings().collectAsState(initial = null)
 
         if (userSettings == null) {
-            Scaffold { // This will now inherit the dark theme's background
-                Box(
-                    modifier = Modifier.fillMaxSize().padding(it),
-                    contentAlignment = Alignment.Center
-                ) {
-                    CircularProgressIndicator()
-                }
-            }
+            AppLoadingScreen()
         } else {
             val startDestination = remember(userSettings?.setupComplete) {
                 startRoute ?: if (userSettings?.setupComplete == true) Screen.Home.route else Screen.Setup.route
@@ -86,8 +85,14 @@ fun App(
                             }
                         },
                         bottomBar = {
-                            if (currentRoute != Screen.Setup.route) {
-                                BottomNavBar(navController)
+                            AnimatedVisibility(
+                                visible = isBottomBarVisible,
+                                enter = slideInVertically(initialOffsetY = { it }) + expandVertically(expandFrom = Alignment.Bottom),
+                                exit = slideOutVertically(targetOffsetY = { it }) + shrinkVertically(shrinkTowards = Alignment.Bottom)
+                            ) {
+                                if (currentRoute != Screen.Setup.route) {
+                                    BottomNavBar(navController)
+                                }
                             }
                         }
                     ) { innerPadding ->
@@ -99,7 +104,8 @@ fun App(
                             userStatsViewModel = userStatsViewModel,
                             settingsViewModel = settingsViewModel,
                             userPreferencesViewModel = userPreferencesViewModel,
-                            setupViewModel = setupViewModel
+                            setupViewModel = setupViewModel,
+                            onBottomBarVisibilityChange = { isBottomBarVisible = it }
                         )
                     }
                 }
