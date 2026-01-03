@@ -101,7 +101,8 @@ fun HomeScreen(
                         Color(0xFF0D1B2A)
                     )
                 )
-            )
+            ),
+        horizontalAlignment = Alignment.CenterHorizontally
     ) {
         AnimatedVisibility(
             visible = isVisible,
