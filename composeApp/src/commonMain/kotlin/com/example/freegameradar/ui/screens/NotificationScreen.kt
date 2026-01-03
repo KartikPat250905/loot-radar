@@ -18,7 +18,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -40,8 +39,8 @@ fun NotificationScreen(
         modifier = modifier
             .fillMaxSize()
             .background(
-                brush = Brush.verticalGradient(
-                    colors = listOf(
+                Brush.verticalGradient(
+                    listOf(
                         Color(0xFF0D1B2A),
                         Color(0xFF1B263B),
                         Color(0xFF0D1B2A)
@@ -49,160 +48,145 @@ fun NotificationScreen(
                 )
             )
     ) {
-        // Header
         Text(
             text = "Notifications",
             fontSize = 24.sp,
             fontWeight = FontWeight.ExtraBold,
             color = Color(0xFFE5E7EB),
-            modifier = Modifier.padding(horizontal = 16.dp, vertical = 16.dp)
+            modifier = Modifier.padding(16.dp)
         )
 
         if (notifications.isEmpty()) {
-            Box(
-                modifier = Modifier.fillMaxSize(),
-                contentAlignment = Alignment.Center
-            ) {
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    modifier = Modifier.padding(32.dp)
-                ) {
-                    Text(
-                        text = "🎮",
-                        fontSize = 64.sp
-                    )
-                    Spacer(modifier = Modifier.height(16.dp))
-                    Text(
-                        text = "Your loot is safe here!",
-                        fontSize = 20.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = Color(0xFFE5E7EB),
-                        textAlign = TextAlign.Center
-                    )
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Text(
-                        text = "No new deals right now.",
-                        fontSize = 16.sp,
-                        color = Color(0xFF9CA3AF),
-                        textAlign = TextAlign.Center
-                    )
-                }
-            }
+            EmptyNotifications()
         } else {
             LazyColumn(
-                modifier = Modifier.fillMaxSize(),
-                contentPadding = PaddingValues(16.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
+                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 items(notifications) { notification ->
-                    Card(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable {
-                                viewModel.markAsRead(notification.id)
-                                navController.navigate(Screen.Details.createRoute(notification.id))
-                            },
-                        shape = RoundedCornerShape(16.dp),
-                        colors = CardDefaults.cardColors(
-                            containerColor = Color(0xFF1B263B)
-                        ),
-                        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
-                    ) {
-                        Row(
-                            modifier = Modifier.padding(16.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            // Image with gradient overlay
-                            Box(
-                                modifier = Modifier
-                                    .size(80.dp)
-                                    .clip(RoundedCornerShape(12.dp))
-                            ) {
-                                AsyncImage(
-                                    model = notification.imageUrl,
-                                    contentDescription = notification.title,
-                                    modifier = Modifier.fillMaxSize()
-                                )
-                                // Subtle overlay
-                                Box(
-                                    modifier = Modifier
-                                        .fillMaxSize()
-                                        .background(
-                                            brush = Brush.verticalGradient(
-                                                colors = listOf(
-                                                    Color.Transparent,
-                                                    Color(0x401B263B)
-                                                )
-                                            )
-                                        )
-                                )
-                            }
-
-                            Spacer(modifier = Modifier.width(16.dp))
-
-                            Column(
-                                modifier = Modifier.weight(1f)
-                            ) {
-                                Text(
-                                    text = notification.title,
-                                    fontSize = 16.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = Color(0xFFE5E7EB),
-                                    maxLines = 2,
-                                    overflow = TextOverflow.Ellipsis
-                                )
-                                Spacer(modifier = Modifier.height(8.dp))
-
-                                // Worth with styled background
-                                Row(
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    Box(
-                                        modifier = Modifier
-                                            .background(
-                                                brush = Brush.horizontalGradient(
-                                                    colors = listOf(
-                                                        Color(0xFF10B981),
-                                                        Color(0xFF34D399)
-                                                    )
-                                                ),
-                                                shape = RoundedCornerShape(8.dp)
-                                            )
-                                            .padding(horizontal = 10.dp, vertical = 4.dp)
-                                    ) {
-                                        GameWorth(price = notification.worth)
-                                    }
-                                }
-                            }
-
-                            Spacer(modifier = Modifier.width(8.dp))
-
-                            // Delete button with background
-                            Box(
-                                modifier = Modifier
-                                    .size(40.dp)
-                                    .background(
-                                        color = Color(0x33EF4444),
-                                        shape = RoundedCornerShape(10.dp)
-                                    ),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                IconButton(
-                                    onClick = { viewModel.deleteNotification(notification.id) },
-                                    modifier = Modifier.size(40.dp)
-                                ) {
-                                    Icon(
-                                        Icons.Default.Delete,
-                                        contentDescription = "Delete notification",
-                                        tint = Color(0xFFEF4444),
-                                        modifier = Modifier.size(20.dp)
-                                    )
-                                }
-                            }
+                    NotificationCard(
+                        title = notification.title,
+                        imageUrl = notification.imageUrl,
+                        worth = notification.worth,
+                        onClick = {
+                            viewModel.markAsRead(notification.id)
+                            navController.navigate(
+                                Screen.Details.createRoute(notification.id)
+                            )
+                        },
+                        onDelete = {
+                            viewModel.deleteNotification(notification.id)
                         }
-                    }
+                    )
                 }
             }
+        }
+    }
+}
+
+@Composable
+private fun NotificationCard(
+    title: String,
+    imageUrl: String,
+    worth: String,
+    onClick: () -> Unit,
+    onDelete: () -> Unit
+) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick),
+        shape = RoundedCornerShape(14.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = Color(0xFF1B263B)
+        ),
+        elevation = CardDefaults.cardElevation(1.dp)
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            // Image defines height (true density control)
+            Box(
+                modifier = Modifier
+                    .width(72.dp)
+                    .aspectRatio(3f / 4f) // ~96dp height
+            ) {
+                AsyncImage(
+                    model = imageUrl,
+                    contentDescription = title,
+                    modifier = Modifier.fillMaxSize()
+                )
+
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(
+                            Brush.verticalGradient(
+                                listOf(
+                                    Color.Transparent,
+                                    Color(0x660D1B2A)
+                                )
+                            )
+                        )
+                )
+            }
+
+            // Text content — NO vertical padding
+            Column(
+                modifier = Modifier
+                    .padding(start = 10.dp, end = 6.dp)
+                    .weight(1f)
+            ) {
+                Text(
+                    text = title,
+                    fontSize = 15.sp,
+                    fontWeight = FontWeight.Medium,
+                    color = Color(0xFFE5E7EB),
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis
+                )
+
+                Spacer(modifier = Modifier.height(4.dp))
+
+                GameWorth(price = worth)
+            }
+
+            // Compact delete (no 48dp inflation)
+            Icon(
+                imageVector = Icons.Default.Delete,
+                contentDescription = "Delete",
+                tint = Color(0xFFEF4444),
+                modifier = Modifier
+                    .padding(horizontal = 8.dp)
+                    .size(18.dp)
+                    .clickable { onDelete() }
+            )
+        }
+    }
+}
+
+@Composable
+private fun EmptyNotifications() {
+    Box(
+        modifier = Modifier.fillMaxSize(),
+        contentAlignment = Alignment.Center
+    ) {
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            Text("🎮", fontSize = 64.sp)
+            Spacer(modifier = Modifier.height(12.dp))
+            Text(
+                text = "Your loot is safe here!",
+                fontSize = 20.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color(0xFFE5E7EB)
+            )
+            Spacer(modifier = Modifier.height(6.dp))
+            Text(
+                text = "No new deals right now.",
+                fontSize = 16.sp,
+                color = Color(0xFF9CA3AF)
+            )
         }
     }
 }
