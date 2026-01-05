@@ -18,17 +18,6 @@ kotlin {
         }
     }
     
-    listOf(
-        iosX64(),
-        iosArm64(),
-        iosSimulatorArm64()
-    ).forEach { iosTarget ->
-        iosTarget.binaries.framework {
-            baseName = "ComposeApp"
-            isStatic = true
-        }
-    }
-    
     sourceSets {
         androidMain.dependencies {
             implementation(compose.preview)
@@ -44,10 +33,6 @@ kotlin {
             implementation(libs.firebase.firestore.ktx)
             implementation(libs.firebase.messaging.ktx)
             implementation(libs.kotlinx.coroutines.play.services)
-        }
-        iosMain.dependencies {
-            implementation(libs.ktor.client.darwin)
-            implementation(libs.sqldelight.native.driver)
         }
         commonMain.dependencies {
             implementation(compose.runtime)
@@ -115,6 +100,7 @@ sqldelight {
     databases {
         create("GameDatabase") {
             packageName.set("com.example.freegameradar.db")
+            verifyMigrations.set(false)
         }
     }
 }
