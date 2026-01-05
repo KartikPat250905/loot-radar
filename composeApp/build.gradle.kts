@@ -127,3 +127,20 @@ sqldelight {
         }
     }
 }
+
+compose.desktop {
+    application {
+        mainClass = "MainKt"
+
+        nativeDistributions {
+            targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Deb)
+            packageName = "com.example.freegameradar"
+            packageVersion = "1.0.0"
+
+            windows {
+                menuGroup = "Free Game Radar"
+                upgradeUuid = "2a72b4b0-fee2-4b2a-a92d-959c9b1c7d23"
+            }
+        }
+    }
+}
