@@ -8,28 +8,33 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 
 @Composable
 fun GameWorth(price: String?) {
     Row {
         // Original price crossed out
         Text(
-            text = price ?: "Unknown",
+            text = price ?: "N/A",
             style = MaterialTheme.typography.bodyMedium.copy(
                 textDecoration = TextDecoration.LineThrough,
-                color = Color.Gray
+                color = Color(0xFF6B7280),
+                fontSize = 13.sp
             )
         )
 
         Spacer(modifier = Modifier.width(8.dp))
 
-        // "$0.00" in green
+        // "FREE" in green
         Text(
-            text = "$0.00",
+            text = "FREE",
             style = MaterialTheme.typography.bodyMedium.copy(
-                color = Color(0xFF4CAF50) // nice green
+                color = Color(0xFF10B981),
+                fontWeight = FontWeight.SemiBold,
+                fontSize = 13.sp
             )
         )
     }

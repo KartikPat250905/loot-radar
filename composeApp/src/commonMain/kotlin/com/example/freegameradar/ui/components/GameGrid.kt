@@ -22,16 +22,28 @@ fun GameGrid(
 ) {
     LazyVerticalGrid(
         state = gridState,
-        columns = GridCells.Fixed(2), // 2 items per row
+        columns = GridCells.Adaptive(minSize = 280.dp), // Adaptive for desktop
         modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(8.dp)
+        contentPadding = PaddingValues(16.dp),
+        horizontalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(12.dp),
+        verticalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(12.dp)
     ) {
-        items(gameList) { game ->
-            GameItemCard(gameDto = game) {
-                navController.navigate(
-                    Screen.Details.createRoute(game.id)
-                )
-            }
+        items(
+            items = gameList,
+            key = { game -> game.id ?: game.hashCode() }
+        ) { game ->
+            GameItemCard(
+                gameDto = game,
+                onClick = {
+                    game.id?.let { id ->
+                        navController.navigate(
+                            Screen.Details.createRoute(id)
+                        )
+                    } ?: run {
+                        println("Game ${game.title} has no ID")
+                    }
+                }
+            )
         }
     }
 }
