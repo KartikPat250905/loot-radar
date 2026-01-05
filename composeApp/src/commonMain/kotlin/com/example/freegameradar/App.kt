@@ -17,7 +17,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.example.freegameradar.data.auth.AuthRepositoryImpl
@@ -36,6 +35,7 @@ import com.example.freegameradar.ui.viewmodel.SettingsViewModel
 import com.example.freegameradar.ui.viewmodel.UserPreferencesViewModel
 import com.example.freegameradar.ui.viewmodel.UserStatsViewModel
 import com.example.freegameradar.ui.viewmodel.SetupViewModel
+import com.example.freegameradar.ui.viewmodel.rememberKmpViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -64,11 +64,11 @@ fun App(
             }
 
             AppContainer { gameRepository, notificationRepository, userStatsRepository ->
-                val notificationViewModel: NotificationViewModel = viewModel { NotificationViewModel(notificationRepository) }
-                val userStatsViewModel: UserStatsViewModel = viewModel { UserStatsViewModel(userStatsRepository, gameRepository) }
-                val settingsViewModel: SettingsViewModel = viewModel { SettingsViewModel(authRepository) }
-                val userPreferencesViewModel: UserPreferencesViewModel = viewModel { UserPreferencesViewModel(userSettingsRepository) }
-                val setupViewModel: SetupViewModel = viewModel { SetupViewModel(userSettingsRepository, authRepository) }
+                val notificationViewModel: NotificationViewModel = rememberKmpViewModel { NotificationViewModel(notificationRepository) }
+                val userStatsViewModel: UserStatsViewModel = rememberKmpViewModel { UserStatsViewModel(userStatsRepository, gameRepository) }
+                val settingsViewModel: SettingsViewModel = rememberKmpViewModel { SettingsViewModel(authRepository) }
+                val userPreferencesViewModel: UserPreferencesViewModel = rememberKmpViewModel { UserPreferencesViewModel(userSettingsRepository) }
+                val setupViewModel: SetupViewModel = rememberKmpViewModel { SetupViewModel(userSettingsRepository, authRepository) }
 
                 AuthGate(authViewModel = authViewModel) {
                     LaunchedEffect(currentUser) {
@@ -85,15 +85,16 @@ fun App(
                             }
                         },
                         bottomBar = {
-                            AnimatedVisibility(
-                                visible = isBottomBarVisible,
-                                enter = slideInVertically(initialOffsetY = { it }) + expandVertically(expandFrom = Alignment.Bottom),
-                                exit = slideOutVertically(targetOffsetY = { it }) + shrinkVertically(shrinkTowards = Alignment.Bottom)
-                            ) {
-                                if (currentRoute != Screen.Setup.route) {
-                                    BottomNavBar(navController)
-                                }
-                            }
+                            // TEMPORARILY COMMENTED OUT
+                            // AnimatedVisibility(
+                            //     visible = isBottomBarVisible,
+                            //     enter = slideInVertically(initialOffsetY = { it }) + expandVertically(expandFrom = Alignment.Bottom),
+                            //     exit = slideOutVertically(targetOffsetY = { it }) + shrinkVertically(shrinkTowards = Alignment.Bottom)
+                            // ) {
+                            //     if (currentRoute != Screen.Setup.route) {
+                            //         BottomNavBar(navController)
+                            //     }
+                            // }
                         }
                     ) { innerPadding ->
                         AppNavigation(

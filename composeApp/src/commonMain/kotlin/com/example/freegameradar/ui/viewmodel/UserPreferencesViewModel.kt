@@ -1,7 +1,5 @@
 package com.example.freegameradar.ui.viewmodel
 
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
 import com.example.freegameradar.data.repository.UserSettingsRepository
 import com.example.freegameradar.settings.UserSettings
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -20,7 +18,7 @@ data class UserPreferencesUiState(
 
 class UserPreferencesViewModel(
     private val userSettingsRepository: UserSettingsRepository
-) : ViewModel() {
+) : KmpViewModel() {
 
     private val _uiState = MutableStateFlow(UserPreferencesUiState())
     val uiState: StateFlow<UserPreferencesUiState> = _uiState.asStateFlow()

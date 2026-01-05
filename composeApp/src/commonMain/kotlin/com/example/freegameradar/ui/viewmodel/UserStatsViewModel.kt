@@ -1,7 +1,5 @@
 package com.example.freegameradar.ui.viewmodel
 
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
 import com.example.freegameradar.data.model.PlatformStat
 import com.example.freegameradar.data.repository.GameRepository
 import com.example.freegameradar.data.repository.UserStatsRepository
@@ -21,7 +19,7 @@ data class FilteredStats(
 class UserStatsViewModel(
     private val userStatsRepository: UserStatsRepository,
     private val gameRepository: GameRepository
-) : ViewModel() {
+) : KmpViewModel() {
 
     private val _filter = MutableStateFlow(GameTypeFilter.ALL)
     val filter: StateFlow<GameTypeFilter> = _filter
@@ -133,7 +131,8 @@ class UserStatsViewModel(
         viewModelScope.launch {
             try {
                 userStatsRepository.addToClaimedValue(gameId, worth)
-            } catch (e: Exception) {
+            }
+            catch (e: Exception) {
                 println("Error adding to claimed value: ${e.message}")
             }
         }

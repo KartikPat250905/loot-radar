@@ -1,7 +1,5 @@
 package com.example.freegameradar.ui.viewmodel
 
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
 import com.example.freegameradar.data.auth.AuthRepository
 import com.example.freegameradar.data.models.User
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -16,7 +14,7 @@ data class SettingsUiState(
     val isGuest: Boolean = true
 )
 
-class SettingsViewModel(private val authRepository: AuthRepository) : ViewModel() {
+class SettingsViewModel(private val authRepository: AuthRepository) : KmpViewModel() {
 
     private val _uiState = MutableStateFlow(SettingsUiState())
     val uiState: StateFlow<SettingsUiState> = _uiState.asStateFlow()

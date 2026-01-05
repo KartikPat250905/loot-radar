@@ -1,5 +1,6 @@
 package com.example.freegameradar.data
 
+import app.cash.sqldelight.db.SqlDriver
 import com.example.freegameradar.db.GameDatabase
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
@@ -8,11 +9,14 @@ import kotlinx.coroutines.withContext
 object GameDatabaseProvider {
     private var database: GameDatabase? = null
 
-    fun getDatabase(): GameDatabase {
+    fun init(driver: SqlDriver) {
         if (database == null) {
-            database = GameDatabase(DatabaseDriverFactory.createDriver())
+            database = GameDatabase(driver)
         }
-        return database!!
+    }
+
+    fun getDatabase(): GameDatabase {
+        return database ?: throw IllegalStateException("GameDatabaseProvider must be initialized before use.")
     }
 
     suspend fun clearAllData() {

@@ -1,7 +1,8 @@
 package com.example.freegameradar.settings
 
-import com.google.firebase.firestore.Exclude
+// Remove: import com.google.firebase.firestore.Exclude
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.Transient
 
 @Serializable
 data class UserSettings(
@@ -10,6 +11,6 @@ data class UserSettings(
     val preferredGameTypes: List<String> = emptyList(),
     val setupComplete: Boolean = false
 ) {
-    @get:Exclude
+    @Transient  // Changed from @get:Exclude
     var notificationTokens: List<String> = emptyList()
 }

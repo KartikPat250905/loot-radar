@@ -15,7 +15,7 @@ actual class AuthRepositoryImpl : AuthRepository {
     private val firebaseAuth: FirebaseAuth = FirebaseAuth.getInstance()
     private val firestore = Firebase.firestore
 
-    actual override suspend fun login(email: String, password: String): Result<User> {
+    override suspend fun login(email: String, password: String): Result<User> {
         return try {
             val authResult: AuthResult = firebaseAuth.signInWithEmailAndPassword(email, password).await()
             Result.success(User(authResult.user?.uid ?: "", authResult.user?.email ?: "", false))
@@ -24,7 +24,7 @@ actual class AuthRepositoryImpl : AuthRepository {
         }
     }
 
-    actual override suspend fun register(email: String, password: String): Result<User> {
+    override suspend fun register(email: String, password: String): Result<User> {
         return try {
             val authResult: AuthResult = firebaseAuth.createUserWithEmailAndPassword(email, password).await()
             Result.success(User(authResult.user?.uid ?: "", authResult.user?.email ?: "", false))
@@ -33,7 +33,7 @@ actual class AuthRepositoryImpl : AuthRepository {
         }
     }
 
-    actual override suspend fun sendPasswordResetEmail(email: String): Result<Unit> {
+    override suspend fun sendPasswordResetEmail(email: String): Result<Unit> {
         return try {
             firebaseAuth.sendPasswordResetEmail(email).await()
             Result.success(Unit)
@@ -43,7 +43,7 @@ actual class AuthRepositoryImpl : AuthRepository {
     }
 
 
-    actual override suspend fun continueAsGuest(): Result<User> {
+    override suspend fun continueAsGuest(): Result<User> {
         return try {
             val authResult: AuthResult = firebaseAuth.signInAnonymously().await()
             Result.success(User(authResult.user?.uid ?: "", "Guest", true))
@@ -52,7 +52,7 @@ actual class AuthRepositoryImpl : AuthRepository {
         }
     }
 
-    actual override suspend fun signInAsGuest(): Result<User> {
+    override suspend fun signInAsGuest(): Result<User> {
         return try {
             val authResult: AuthResult = firebaseAuth.signInAnonymously().await()
             Result.success(User(authResult.user?.uid ?: "", "Guest", true))
@@ -61,7 +61,7 @@ actual class AuthRepositoryImpl : AuthRepository {
         }
     }
 
-    actual override fun getAuthStateFlow(): Flow<User?> = callbackFlow {
+    override fun getAuthStateFlow(): Flow<User?> = callbackFlow {
         val authStateListener = FirebaseAuth.AuthStateListener { auth ->
             val user = auth.currentUser?.let { User(it.uid, it.email ?: "", it.isAnonymous) }
             trySend(user)
@@ -70,16 +70,16 @@ actual class AuthRepositoryImpl : AuthRepository {
         awaitClose { firebaseAuth.removeAuthStateListener(authStateListener) }
     }
 
-    actual override fun isUserLoggedIn(): Boolean {
+    override fun isUserLoggedIn(): Boolean {
         val user = firebaseAuth.currentUser
         return user != null && !user.isAnonymous
     }
 
-    actual override suspend fun signOut() {
+    override suspend fun signOut() {
         firebaseAuth.signOut()
     }
 
-    actual override suspend fun deleteAccount(): Result<Unit> {
+    override suspend fun deleteAccount(): Result<Unit> {
         return try {
             val user = firebaseAuth.currentUser ?: return Result.failure(IllegalStateException("User not logged in."))
             val userId = user.uid
@@ -97,7 +97,7 @@ actual class AuthRepositoryImpl : AuthRepository {
         }
     }
 
-    actual override suspend fun linkAccount(email: String, password: String): Result<User> {
+    override suspend fun linkAccount(email: String, password: String): Result<User> {
         return try {
             val credential = EmailAuthProvider.getCredential(email, password)
             val authResult = firebaseAuth.currentUser?.linkWithCredential(credential)?.await()

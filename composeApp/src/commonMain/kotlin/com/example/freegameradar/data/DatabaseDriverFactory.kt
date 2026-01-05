@@ -2,6 +2,6 @@ package com.example.freegameradar.data
 
 import app.cash.sqldelight.db.SqlDriver
 
-expect object DatabaseDriverFactory {
+expect class DatabaseDriverFactory {
     fun createDriver(): SqlDriver
 }
