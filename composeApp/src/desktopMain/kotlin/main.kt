@@ -3,6 +3,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.application
 import androidx.compose.ui.window.rememberWindowState
+import coil3.ImageLoader
+import coil3.compose.setSingletonImageLoaderFactory
+import coil3.network.ktor3.KtorNetworkFetcherFactory
 import com.example.freegameradar.App
 import com.example.freegameradar.data.auth.AuthRepositoryImpl
 import com.example.freegameradar.initializeDatabase
@@ -33,6 +36,15 @@ fun main() {
             title = "Free Game Radar",
             state = rememberWindowState(width = 1200.dp, height = 800.dp)
         ) {
+            // Initialize Coil ImageLoader for Desktop
+            setSingletonImageLoaderFactory { context ->
+                ImageLoader.Builder(context)
+                    .components {
+                        add(KtorNetworkFetcherFactory())
+                    }
+                    .build()
+            }
+
             val authRepository = remember { AuthRepositoryImpl() }
             val authViewModel = remember { AuthViewModel(authRepository) }
             App(authViewModel = authViewModel, startRoute = Screen.Home.route)
