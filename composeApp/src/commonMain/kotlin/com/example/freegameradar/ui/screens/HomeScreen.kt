@@ -20,6 +20,7 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -29,8 +30,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.freegameradar.data.models.GameDto
 import com.example.freegameradar.ui.components.GameItemCard
+import com.example.freegameradar.ui.components.GameSearchBar
 import com.example.freegameradar.ui.viewmodel.HomeViewModel
 
 @Composable
@@ -38,13 +39,14 @@ fun HomeScreen(homeViewModel: HomeViewModel) {
     val games by homeViewModel.games.collectAsState()
     val isLoading by homeViewModel.isLoading.collectAsState()
     val error by homeViewModel.error.collectAsState()
+    val searchQuery by homeViewModel.searchQuery.collectAsState()
 
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(0xFF0D1B2A)) // Dark background
+            .background(Color(0xFF0D1B2A))
     ) {
-        // Header
+        // Header with title and refresh
         Surface(
             modifier = Modifier.fillMaxWidth(),
             color = Color(0xFF1B263B)
@@ -64,7 +66,10 @@ fun HomeScreen(homeViewModel: HomeViewModel) {
                         color = Color(0xFFE5E7EB)
                     )
                     Text(
-                        text = "${games.size} games available",
+                        text = if (searchQuery.isNotEmpty()) 
+                            "${games.size} results found" 
+                        else 
+                            "${games.size} games available",
                         fontSize = 13.sp,
                         color = Color(0xFF9CA3AF)
                     )
@@ -77,6 +82,20 @@ fun HomeScreen(homeViewModel: HomeViewModel) {
                     )
                 }
             }
+        }
+
+        // Search Bar
+        Surface(
+            modifier = Modifier.fillMaxWidth(),
+            color = Color(0xFF0D1B2A)
+        ) {
+            GameSearchBar(
+                text = searchQuery,
+                onTextChange = { homeViewModel.updateSearchQuery(it) },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 12.dp)
+            )
         }
 
         // Content
@@ -122,6 +141,33 @@ fun HomeScreen(homeViewModel: HomeViewModel) {
                 }
             }
 
+            games.isEmpty() && searchQuery.isNotEmpty() -> {
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text(
+                            text = "🔍",
+                            fontSize = 48.sp
+                        )
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Text(
+                            text = "No games found for \"$searchQuery\"",
+                            color = Color(0xFF9CA3AF),
+                            fontSize = 16.sp
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        TextButton(onClick = { homeViewModel.updateSearchQuery("") }) {
+                            Text(
+                                text = "Clear search",
+                                color = Color(0xFF10B981)
+                            )
+                        }
+                    }
+                }
+            }
+
             games.isEmpty() -> {
                 Box(
                     modifier = Modifier.fillMaxSize(),
@@ -158,7 +204,6 @@ fun HomeScreen(homeViewModel: HomeViewModel) {
                             gameDto = game,
                             onClick = {
                                 println("Clicked: ${game.title}")
-                                // TODO: Navigate to game detail
                             }
                         )
                     }
