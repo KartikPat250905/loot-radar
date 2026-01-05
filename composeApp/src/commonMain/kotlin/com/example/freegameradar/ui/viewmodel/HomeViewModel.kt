@@ -1,28 +1,34 @@
 package com.example.freegameradar.ui.viewmodel
 
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.example.freegameradar.data.models.GameDto
 import com.example.freegameradar.data.repository.GameRepository
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.stateIn
+import com.example.freegameradar.data.state.DataSource
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 
 class HomeViewModel(
     private val gameRepository: GameRepository
-) : KmpViewModel() { // Inherit from KmpViewModel
+) : ViewModel() {
 
     private val _allGames = MutableStateFlow<List<GameDto>>(emptyList())
     private val _searchQuery = MutableStateFlow("")
     val searchQuery: StateFlow<String> = _searchQuery.asStateFlow()
-    
-    // Add filter state
+
     private val _gameTypeFilter = MutableStateFlow(GameTypeFilter.ALL)
     val gameTypeFilter: StateFlow<GameTypeFilter> = _gameTypeFilter.asStateFlow()
 
-    // Combine search and filter
+    // Get dataSource directly from repository
+    val dataSource: StateFlow<DataSource> = gameRepository.dataSource
+
+    private val _isLoading = MutableStateFlow(false)
+    val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
+
+    private val _error = MutableStateFlow<String?>(null)
+    val error: StateFlow<String?> = _error.asStateFlow()
+
+    // Filtered games
     val games: StateFlow<List<GameDto>> = combine(
         _allGames,
         _searchQuery,
@@ -30,7 +36,6 @@ class HomeViewModel(
     ) { games, query, filter ->
         games
             .filter { game ->
-                // Apply type filter
                 val apiValue = filter.toApiValue()
                 if (apiValue != null) {
                     game.type == apiValue
@@ -39,13 +44,12 @@ class HomeViewModel(
                 }
             }
             .filter { game ->
-                // Apply search filter
                 if (query.isBlank()) {
                     true
                 } else {
                     game.title?.contains(query, ignoreCase = true) == true ||
-                    game.description?.contains(query, ignoreCase = true) == true ||
-                    game.platforms?.contains(query, ignoreCase = true) == true
+                            game.description?.contains(query, ignoreCase = true) == true ||
+                            game.platforms?.contains(query, ignoreCase = true) == true
                 }
             }
     }.stateIn(
@@ -54,23 +58,8 @@ class HomeViewModel(
         initialValue = emptyList()
     )
 
-    private val _isLoading = MutableStateFlow(false)
-    val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
-
-    private val _error = MutableStateFlow<String?>(null)
-    val error: StateFlow<String?> = _error.asStateFlow()
-
     init {
         loadGames()
-    }
-
-    fun updateSearchQuery(query: String) {
-        _searchQuery.value = query
-    }
-    
-    // Add this function
-    fun updateFilter(filter: GameTypeFilter) {
-        _gameTypeFilter.value = filter
     }
 
     fun loadGames() {
@@ -79,6 +68,7 @@ class HomeViewModel(
             _error.value = null
 
             try {
+                // Your repository already handles cache->network flow
                 gameRepository.getFreeGames().collect { gameList ->
                     _allGames.value = gameList
                     _isLoading.value = false
@@ -90,7 +80,19 @@ class HomeViewModel(
         }
     }
 
+    fun updateSearchQuery(query: String) {
+        _searchQuery.value = query
+    }
+
+    fun updateFilter(filter: GameTypeFilter) {
+        _gameTypeFilter.value = filter
+    }
+
     fun refresh() {
-        loadGames()
+        loadGames() // This will trigger cache->network flow in repository
+    }
+
+    fun clear() {
+        // Cleanup if needed
     }
 }

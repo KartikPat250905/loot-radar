@@ -46,13 +46,14 @@ fun HomeScreen(homeViewModel: HomeViewModel) {
     val error by homeViewModel.error.collectAsState()
     val searchQuery by homeViewModel.searchQuery.collectAsState()
     val selectedFilter by homeViewModel.gameTypeFilter.collectAsState()
+    val dataSource by homeViewModel.dataSource.collectAsState()  // ← Add this line
 
     Column(
         modifier = Modifier
             .fillMaxSize()
             .background(Color(0xFF0D1B2A))
     ) {
-        // Header with title and refresh
+        // Header
         Surface(
             modifier = Modifier.fillMaxWidth(),
             color = Color(0xFF1B263B)
@@ -72,20 +73,14 @@ fun HomeScreen(homeViewModel: HomeViewModel) {
                         color = Color(0xFFE5E7EB)
                     )
                     Text(
-                        text = if (searchQuery.isNotEmpty()) 
-                            "${games.size} results found" 
-                        else 
-                            "${games.size} games available",
+                        text = "${games.size} games available",
                         fontSize = 13.sp,
                         color = Color(0xFF9CA3AF)
                     )
                 }
 
                 IconButton(onClick = { homeViewModel.refresh() }) {
-                    Text(
-                        text = "🔄",
-                        fontSize = 24.sp
-                    )
+                    Text(text = "🔄", fontSize = 24.sp)
                 }
             }
         }
@@ -98,22 +93,22 @@ fun HomeScreen(homeViewModel: HomeViewModel) {
                 .fillMaxWidth()
                 .padding(horizontal = 16.dp, vertical = 12.dp)
         )
-        
-        // ADD FILTER TABS HERE
+
+        // Filter Tabs
         GameTypeFilterTabs(
             selectedFilter = selectedFilter,
             onFilterSelected = { homeViewModel.updateFilter(it) }
         )
 
-        // Total Worth Bar
+        // Total Worth Bar - Now shows correct data source!
         if (games.isNotEmpty()) {
             TotalWorthBar(
                 games = games,
-                dataSource = DataSource.CACHE
+                dataSource = dataSource  // ← Use real dataSource from repository
             )
         }
 
-        // Content
+        // Rest of your UI...
         when {
             isLoading -> {
                 Box(
@@ -123,10 +118,7 @@ fun HomeScreen(homeViewModel: HomeViewModel) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         CircularProgressIndicator(color = Color(0xFF10B981))
                         Spacer(modifier = Modifier.height(16.dp))
-                        Text(
-                            text = "Loading games...",
-                            color = Color(0xFF9CA3AF)
-                        )
+                        Text(text = "Loading games...", color = Color(0xFF9CA3AF))
                     }
                 }
             }
@@ -140,10 +132,7 @@ fun HomeScreen(homeViewModel: HomeViewModel) {
                         horizontalAlignment = Alignment.CenterHorizontally,
                         verticalArrangement = Arrangement.spacedBy(16.dp)
                     ) {
-                        Text(
-                            text = "⚠️ Error: $error",
-                            color = Color(0xFFEF4444)
-                        )
+                        Text(text = "⚠️ $error", color = Color(0xFFEF4444))
                         Button(
                             onClick = { homeViewModel.refresh() },
                             colors = ButtonDefaults.buttonColors(
@@ -156,49 +145,22 @@ fun HomeScreen(homeViewModel: HomeViewModel) {
                 }
             }
 
-            games.isEmpty() && searchQuery.isNotEmpty() -> {
-                Box(
-                    modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text(
-                            text = "🔍",
-                            fontSize = 48.sp
-                        )
-                        Spacer(modifier = Modifier.height(16.dp))
-                        Text(
-                            text = "No games found for \"$searchQuery\"",
-                            color = Color(0xFF9CA3AF),
-                            fontSize = 16.sp
-                        )
-                        Spacer(modifier = Modifier.height(8.dp))
-                        TextButton(onClick = { homeViewModel.updateSearchQuery("") }) {
-                            Text(
-                                text = "Clear search",
-                                color = Color(0xFF10B981)
-                            )
-                        }
-                    }
-                }
-            }
-
             games.isEmpty() -> {
                 Box(
                     modifier = Modifier.fillMaxSize(),
                     contentAlignment = Alignment.Center
                 ) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text(
-                            text = "No games in database",
-                            color = Color(0xFF9CA3AF)
-                        )
+                        Text(text = "No games available", color = Color(0xFF9CA3AF))
                         Spacer(modifier = Modifier.height(16.dp))
-                        Text(
-                            text = "Games need to be synced first",
-                            fontSize = 13.sp,
-                            color = Color(0xFF6B7280)
-                        )
+                        Button(
+                            onClick = { homeViewModel.refresh() },
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = Color(0xFF10B981)
+                            )
+                        ) {
+                            Text(text = "Load Games")
+                        }
                     }
                 }
             }

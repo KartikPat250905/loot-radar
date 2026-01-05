@@ -49,7 +49,7 @@ fun App(
             }
 
             AppContainer { gameRepository, notificationRepository, userStatsRepository ->
-                val homeViewModel: HomeViewModel = rememberKmpViewModel { HomeViewModel(gameRepository) }
+                val homeViewModel: HomeViewModel = remember { HomeViewModel(gameRepository) }
                 val notificationViewModel: NotificationViewModel = rememberKmpViewModel { NotificationViewModel(notificationRepository) }
                 val userStatsViewModel: UserStatsViewModel = rememberKmpViewModel { UserStatsViewModel(userStatsRepository, gameRepository) }
                 val settingsViewModel: SettingsViewModel = rememberKmpViewModel { SettingsViewModel(authRepository) }
