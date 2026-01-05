@@ -30,10 +30,13 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.freegameradar.data.models.GameDto
 import com.example.freegameradar.data.state.DataSource
 import com.example.freegameradar.ui.components.GameItemCard
 import com.example.freegameradar.ui.components.GameSearchBar
+import com.example.freegameradar.ui.components.GameTypeFilterTabs
 import com.example.freegameradar.ui.components.TotalWorthBar
+import com.example.freegameradar.ui.viewmodel.GameTypeFilter
 import com.example.freegameradar.ui.viewmodel.HomeViewModel
 
 @Composable
@@ -42,29 +45,71 @@ fun HomeScreen(homeViewModel: HomeViewModel) {
     val isLoading by homeViewModel.isLoading.collectAsState()
     val error by homeViewModel.error.collectAsState()
     val searchQuery by homeViewModel.searchQuery.collectAsState()
+    val selectedFilter by homeViewModel.gameTypeFilter.collectAsState()
 
     Column(
         modifier = Modifier
             .fillMaxSize()
             .background(Color(0xFF0D1B2A))
     ) {
+        // Header with title and refresh
         Surface(
             modifier = Modifier.fillMaxWidth(),
-            color = Color(0xFF0D1B2A)
+            color = Color(0xFF1B263B)
         ) {
-            GameSearchBar(
-                text = searchQuery,
-                onTextChange = { homeViewModel.updateSearchQuery(it) },
+            Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 12.dp)
-            )
+                    .padding(16.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column {
+                    Text(
+                        text = "🎮 Free Games",
+                        fontSize = 24.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xFFE5E7EB)
+                    )
+                    Text(
+                        text = if (searchQuery.isNotEmpty()) 
+                            "${games.size} results found" 
+                        else 
+                            "${games.size} games available",
+                        fontSize = 13.sp,
+                        color = Color(0xFF9CA3AF)
+                    )
+                }
+
+                IconButton(onClick = { homeViewModel.refresh() }) {
+                    Text(
+                        text = "🔄",
+                        fontSize = 24.sp
+                    )
+                }
+            }
         }
 
-        if (!isLoading && games.isNotEmpty()) {
+        // Search Bar
+        GameSearchBar(
+            text = searchQuery,
+            onTextChange = { homeViewModel.updateSearchQuery(it) },
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 12.dp)
+        )
+        
+        // ADD FILTER TABS HERE
+        GameTypeFilterTabs(
+            selectedFilter = selectedFilter,
+            onFilterSelected = { homeViewModel.updateFilter(it) }
+        )
+
+        // Total Worth Bar
+        if (games.isNotEmpty()) {
             TotalWorthBar(
                 games = games,
-                dataSource = DataSource.NETWORK
+                dataSource = DataSource.CACHE
             )
         }
 

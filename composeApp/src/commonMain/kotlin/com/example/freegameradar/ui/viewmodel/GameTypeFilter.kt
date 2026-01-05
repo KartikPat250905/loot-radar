@@ -2,16 +2,21 @@ package com.example.freegameradar.ui.viewmodel
 
 enum class GameTypeFilter {
     ALL,
-    GAMES,
-    DLC,
-    EARLY_ACCESS;
+    GAME,
+    LOOT,
+    DLC;
 
-    fun toDisplayString(): String {
-        return when (this) {
-            ALL -> "All"
-            GAMES -> "Games"
-            DLC -> "DLC"
-            EARLY_ACCESS -> "Early Access"
-        }
+    fun toDisplayString(): String = when (this) {
+        ALL -> "All"
+        GAME -> "Game"
+        LOOT -> "Loot"
+        DLC -> "DLC"
+    }
+    
+    fun toApiValue(): String? = when (this) {
+        ALL -> null
+        GAME -> "Game"
+        LOOT -> "Loot"
+        DLC -> "DLC"
     }
 }

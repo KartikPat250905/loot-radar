@@ -62,9 +62,9 @@ class GameViewModel(
 
                 val matchesGameTypeFilter = when (typeFilter) {
                     GameTypeFilter.ALL -> true
-                    GameTypeFilter.GAMES -> game.type.equals("Game", ignoreCase = true)
+                    GameTypeFilter.GAME -> game.type.equals("Game", ignoreCase = true)
                     GameTypeFilter.DLC -> game.type.equals("DLC", ignoreCase = true)
-                    GameTypeFilter.EARLY_ACCESS -> game.type.equals("Early Access", ignoreCase = true)
+                    GameTypeFilter.LOOT -> game.type.equals("Early Access", ignoreCase = true)
                 }
 
                 matchesSearch && matchesPlatform && matchesType && matchesGameTypeFilter

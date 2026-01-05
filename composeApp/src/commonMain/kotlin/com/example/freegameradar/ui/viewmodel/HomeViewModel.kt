@@ -3,6 +3,7 @@ package com.example.freegameradar.ui.viewmodel
 import com.example.freegameradar.data.models.GameDto
 import com.example.freegameradar.data.repository.GameRepository
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
@@ -16,24 +17,40 @@ class HomeViewModel(
     private val _allGames = MutableStateFlow<List<GameDto>>(emptyList())
     private val _searchQuery = MutableStateFlow("")
     val searchQuery: StateFlow<String> = _searchQuery.asStateFlow()
+    
+    // Add filter state
+    private val _gameTypeFilter = MutableStateFlow(GameTypeFilter.ALL)
+    val gameTypeFilter: StateFlow<GameTypeFilter> = _gameTypeFilter.asStateFlow()
 
-    // Filtered games based on search query
+    // Combine search and filter
     val games: StateFlow<List<GameDto>> = combine(
         _allGames,
-        _searchQuery
-    ) { games, query ->
-        if (query.isBlank()) {
-            games
-        } else {
-            games.filter { game ->
-                game.title?.contains(query, ignoreCase = true) == true ||
-                game.description?.contains(query, ignoreCase = true) == true ||
-                game.platforms?.contains(query, ignoreCase = true) == true
+        _searchQuery,
+        _gameTypeFilter
+    ) { games, query, filter ->
+        games
+            .filter { game ->
+                // Apply type filter
+                val apiValue = filter.toApiValue()
+                if (apiValue != null) {
+                    game.type == apiValue
+                } else {
+                    true
+                }
             }
-        }
+            .filter { game ->
+                // Apply search filter
+                if (query.isBlank()) {
+                    true
+                } else {
+                    game.title?.contains(query, ignoreCase = true) == true ||
+                    game.description?.contains(query, ignoreCase = true) == true ||
+                    game.platforms?.contains(query, ignoreCase = true) == true
+                }
+            }
     }.stateIn(
         scope = viewModelScope,
-        started = kotlinx.coroutines.flow.SharingStarted.WhileSubscribed(5000),
+        started = SharingStarted.WhileSubscribed(5000),
         initialValue = emptyList()
     )
 
@@ -49,6 +66,11 @@ class HomeViewModel(
 
     fun updateSearchQuery(query: String) {
         _searchQuery.value = query
+    }
+    
+    // Add this function
+    fun updateFilter(filter: GameTypeFilter) {
+        _gameTypeFilter.value = filter
     }
 
     fun loadGames() {

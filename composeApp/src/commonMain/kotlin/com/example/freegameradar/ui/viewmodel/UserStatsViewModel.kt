@@ -41,9 +41,9 @@ class UserStatsViewModel(
     val filteredStats: StateFlow<FilteredStats> = combine(gameRepository.getFreeGames(), filter) { allGames, filter ->
         val filteredGames = when (filter) {
             GameTypeFilter.ALL -> allGames
-            GameTypeFilter.GAMES -> allGames.filter { it.type?.lowercase() == "game" }
+            GameTypeFilter.GAME -> allGames.filter { it.type?.lowercase() == "game" }
             GameTypeFilter.DLC -> allGames.filter { it.type?.lowercase() == "dlc" }
-            GameTypeFilter.EARLY_ACCESS -> allGames.filter { it.type?.lowercase() == "early access" }
+            GameTypeFilter.LOOT -> allGames.filter { it.type?.lowercase() == "early access" }
         }.distinctBy { it.id }
 
         var totalWorth = 0.0
