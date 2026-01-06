@@ -1,6 +1,7 @@
 package com.example.freegameradar.ui.screens.hotdeals
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.interaction.collectIsDraggedAsState
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
@@ -17,6 +18,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -24,6 +26,7 @@ import androidx.navigation.NavHostController
 import com.example.freegameradar.ui.components.HotDealCard
 import com.example.freegameradar.ui.viewmodel.HotDealsViewModel
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 @Composable
 fun DesktopHotDealsScreen(
@@ -68,26 +71,72 @@ fun DesktopHotDealsScreen(
         if (heroItems.isNotEmpty()) {
             val pagerState = rememberPagerState(pageCount = { heroItems.size })
             val isDragged by pagerState.interactionSource.collectIsDraggedAsState()
+            val scope = rememberCoroutineScope()
+            var dragOffset by remember { mutableStateOf(0f) }
+            var isDragging by remember { mutableStateOf(false) }
 
-            LaunchedEffect(isDragged) {
-                while (!isDragged) {
+            // Auto-scroll when not being dragged
+            LaunchedEffect(isDragged, isDragging) {
+                while (!isDragged && !isDragging) {
                     delay(3000)
                     val nextPage = (pagerState.currentPage + 1) % heroItems.size
                     pagerState.animateScrollToPage(nextPage)
                 }
             }
 
-            HorizontalPager(
-                state = pagerState,
+            // Add mouse drag detection
+            Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(400.dp),
-                pageSpacing = 24.dp,
-                contentPadding = PaddingValues(horizontal = 100.dp)
-            ) { page ->
-                val game = heroItems[page]
-                DesktopHeroBanner(game = game) {
-                    game.id?.let { id -> navController.navigate("details/$id") }
+                    .height(400.dp)
+                    .pointerInput(Unit) {
+                        detectDragGestures(
+                            onDragStart = {
+                                dragOffset = 0f
+                                isDragging = true
+                            },
+                            onDrag = { change, dragAmount ->
+                                change.consume()
+                                dragOffset += dragAmount.x
+                            },
+                            onDragEnd = {
+                                scope.launch {
+                                    // Threshold for page change (150 pixels)
+                                    when {
+                                        dragOffset > 150 && pagerState.currentPage > 0 -> {
+                                            pagerState.animateScrollToPage(pagerState.currentPage - 1)
+                                        }
+                                        dragOffset < -150 && pagerState.currentPage < heroItems.size - 1 -> {
+                                            pagerState.animateScrollToPage(pagerState.currentPage + 1)
+                                        }
+                                    }
+                                    dragOffset = 0f
+                                    isDragging = false
+                                }
+                            },
+                            onDragCancel = {
+                                dragOffset = 0f
+                                isDragging = false
+                            }
+                        )
+                    }
+            ) {
+                HorizontalPager(
+                    state = pagerState,
+                    modifier = Modifier.fillMaxSize(),
+                    pageSpacing = 24.dp,
+                    contentPadding = PaddingValues(horizontal = 100.dp),
+                    userScrollEnabled = !isDragging
+                ) { page ->
+                    val game = heroItems[page]
+                    DesktopHeroBanner(
+                        game = game,
+                        isDragging = isDragging
+                    ) {
+                        if (!isDragging) {
+                            game.id?.let { id -> navController.navigate("details/$id") }
+                        }
+                    }
                 }
             }
 
