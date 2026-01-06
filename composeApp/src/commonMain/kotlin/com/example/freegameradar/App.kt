@@ -1,5 +1,6 @@
 package com.example.freegameradar
 
+import androidx.compose.foundation.layout.Row
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
@@ -15,12 +16,19 @@ import com.example.freegameradar.data.auth.AuthRepositoryImpl
 import com.example.freegameradar.data.repository.UserSettingsRepository
 import com.example.freegameradar.data.repository.UserSettingsRepositoryImpl
 import com.example.freegameradar.ui.auth.AuthGate
+import com.example.freegameradar.ui.components.AdaptiveNavigationBar
 import com.example.freegameradar.ui.components.AppLoadingScreen
 import com.example.freegameradar.ui.components.TopBar
 import com.example.freegameradar.ui.navigation.AppNavigation
 import com.example.freegameradar.ui.navigation.Screen
 import com.example.freegameradar.ui.theme.ModernDarkTheme
-import com.example.freegameradar.ui.viewmodel.*
+import com.example.freegameradar.ui.viewmodel.AuthViewModel
+import com.example.freegameradar.ui.viewmodel.NotificationViewModel
+import com.example.freegameradar.ui.viewmodel.SettingsViewModel
+import com.example.freegameradar.ui.viewmodel.SetupViewModel
+import com.example.freegameradar.ui.viewmodel.UserPreferencesViewModel
+import com.example.freegameradar.ui.viewmodel.UserStatsViewModel
+import com.example.freegameradar.ui.viewmodel.rememberKmpViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -28,18 +36,28 @@ fun App(
     authViewModel: AuthViewModel,
     startRoute: String? = null
 ) {
-    ModernDarkTheme { // Theme is now at the root
+    ModernDarkTheme {
         val navController = rememberNavController()
         val navBackStackEntry by navController.currentBackStackEntryAsState()
         val currentRoute = navBackStackEntry?.destination?.route
         var isBottomBarVisible by remember { mutableStateOf(true) }
 
-        // Remember repositories to prevent re-initialization on recomposition
         val authRepository = remember { AuthRepositoryImpl() }
-        val userSettingsRepository: UserSettingsRepository = remember(authRepository) { UserSettingsRepositoryImpl(authRepository) }
+        val userSettingsRepository: UserSettingsRepository = remember(authRepository) { 
+            UserSettingsRepositoryImpl(authRepository) 
+        }
 
         val currentUser by authViewModel.currentUser.collectAsState()
         val userSettings by userSettingsRepository.getSettings().collectAsState(initial = null)
+
+        // Detect if desktop
+        val isDesktop = remember {
+            System.getProperty("os.name")?.let { os ->
+                os.contains("Windows", ignoreCase = true) ||
+                os.contains("Mac", ignoreCase = true) ||
+                os.contains("Linux", ignoreCase = true)
+            } ?: false
+        }
 
         if (userSettings == null) {
             AppLoadingScreen()
@@ -49,11 +67,21 @@ fun App(
             }
 
             AppContainer { gameRepository, notificationRepository, userStatsRepository ->
-                val notificationViewModel: NotificationViewModel = rememberKmpViewModel { NotificationViewModel(notificationRepository) }
-                val userStatsViewModel: UserStatsViewModel = rememberKmpViewModel { UserStatsViewModel(userStatsRepository, gameRepository) }
-                val settingsViewModel: SettingsViewModel = rememberKmpViewModel { SettingsViewModel(authRepository) }
-                val setupViewModel: SetupViewModel = rememberKmpViewModel { SetupViewModel(userSettingsRepository, authRepository) }
-                val userPreferencesViewModel : UserPreferencesViewModel = rememberKmpViewModel { UserPreferencesViewModel(userSettingsRepository) }
+                val notificationViewModel: NotificationViewModel = rememberKmpViewModel { 
+                    NotificationViewModel(notificationRepository) 
+                }
+                val userStatsViewModel: UserStatsViewModel = rememberKmpViewModel { 
+                    UserStatsViewModel(userStatsRepository, gameRepository) 
+                }
+                val settingsViewModel: SettingsViewModel = rememberKmpViewModel { 
+                    SettingsViewModel(authRepository) 
+                }
+                val setupViewModel: SetupViewModel = rememberKmpViewModel { 
+                    SetupViewModel(userSettingsRepository, authRepository) 
+                }
+                val userPreferencesViewModel: UserPreferencesViewModel = rememberKmpViewModel { 
+                    UserPreferencesViewModel(userSettingsRepository) 
+                }
 
                 AuthGate(authViewModel = authViewModel) {
                     LaunchedEffect(currentUser) {
@@ -63,27 +91,60 @@ fun App(
                         }
                     }
 
-                    Scaffold(
-                        topBar = {
+                    if (isDesktop) {
+                        // Desktop: Sidebar + Content
+                        Row {
+                            // Show navigation rail unless on setup screen
                             if (currentRoute != Screen.Setup.route) {
-                                TopBar(navController, notificationViewModel)
+                                AdaptiveNavigationBar(navController)
                             }
-                        },
-                        bottomBar = {
-                           // Add back later
+                            
+                            Scaffold(
+                                topBar = {
+                                    if (currentRoute != Screen.Setup.route) {
+                                        TopBar(navController, notificationViewModel)
+                                    }
+                                }
+                            ) { innerPadding ->
+                                AppNavigation(
+                                    navController = navController,
+                                    innerPadding = innerPadding,
+                                    startDestination = startDestination,
+                                    notificationViewModel = notificationViewModel,
+                                    userStatsViewModel = userStatsViewModel,
+                                    settingsViewModel = settingsViewModel,
+                                    userPreferencesViewModel = userPreferencesViewModel,
+                                    setupViewModel = setupViewModel,
+                                    onBottomBarVisibilityChange = { isBottomBarVisible = it }
+                                )
+                            }
                         }
-                    ) { innerPadding ->
-                        AppNavigation(
-                            navController = navController,
-                            innerPadding = innerPadding,
-                            startDestination = startDestination,
-                            notificationViewModel = notificationViewModel,
-                            userStatsViewModel = userStatsViewModel,
-                            settingsViewModel = settingsViewModel,
-                            setupViewModel = setupViewModel,
-                            onBottomBarVisibilityChange = { isBottomBarVisible = it },
-                            userPreferencesViewModel = userPreferencesViewModel
-                        )
+                    } else {
+                        // Mobile: Bottom Navigation
+                        Scaffold(
+                            topBar = {
+                                if (currentRoute != Screen.Setup.route) {
+                                    TopBar(navController, notificationViewModel)
+                                }
+                            },
+                            bottomBar = {
+                                if (currentRoute != Screen.Setup.route && isBottomBarVisible) {
+                                    AdaptiveNavigationBar(navController)
+                                }
+                            }
+                        ) { innerPadding ->
+                            AppNavigation(
+                                navController = navController,
+                                innerPadding = innerPadding,
+                                startDestination = startDestination,
+                                notificationViewModel = notificationViewModel,
+                                userStatsViewModel = userStatsViewModel,
+                                settingsViewModel = settingsViewModel,
+                                userPreferencesViewModel = userPreferencesViewModel,
+                                setupViewModel = setupViewModel,
+                                onBottomBarVisibilityChange = { isBottomBarVisible = it }
+                            )
+                        }
                     }
                 }
             }
