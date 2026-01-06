@@ -60,7 +60,7 @@ fun AdaptiveNavigationBar(navController: NavController) {
 // Mobile Bottom Navigation
 @Composable
 private fun MobileBottomNavBar(navController: NavController) {
-    val screens = listOf(Screen.Home, Screen.Notification, Screen.Stats, Screen.Settings)
+    val screens = listOf(Screen.Home, Screen.HotDeals, Screen.Stats, Screen.Settings)
 
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
@@ -130,7 +130,7 @@ private fun MobileBottomNavBar(navController: NavController) {
 // Modern Desktop Navigation Rail with Animated Logo
 @Composable
 private fun DesktopNavigationRail(navController: NavController) {
-    val screens = listOf(Screen.Home, Screen.Notification, Screen.Stats, Screen.Settings)
+    val screens = listOf(Screen.Home, Screen.HotDeals, Screen.Stats, Screen.Settings)
 
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
@@ -218,13 +218,12 @@ private fun DesktopNavigationRail(navController: NavController) {
     }
 }
 
-// Animated Logo Component - Updated without deprecated ripple
+// Animated Logo Component
 @Composable
 private fun ThemedLogoButton(
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    // Pulse animation matching TopBar
     val infiniteTransition = rememberInfiniteTransition(label = "pulse")
     val scale by infiniteTransition.animateFloat(
         initialValue = 1f,
@@ -236,7 +235,6 @@ private fun ThemedLogoButton(
         label = "scale"
     )
 
-    // Glow animation
     val glowAlpha by infiniteTransition.animateFloat(
         initialValue = 0.3f,
         targetValue = 0.6f,
@@ -263,11 +261,10 @@ private fun ThemedLogoButton(
             .clickable(
                 onClick = onClick,
                 interactionSource = remember { MutableInteractionSource() },
-                indication = null  // Remove ripple, rely on animations instead
+                indication = null
             ),
         contentAlignment = Alignment.Center
     ) {
-        // Animated glow overlay
         Box(
             modifier = Modifier
                 .fillMaxSize()
@@ -282,7 +279,6 @@ private fun ThemedLogoButton(
                 )
         )
 
-        // Bottom accent line
         Box(
             modifier = Modifier
                 .fillMaxWidth(0.7f)
@@ -302,7 +298,6 @@ private fun ThemedLogoButton(
                 )
         )
 
-        // Game controller emoji with gradient background
         Box(
             modifier = Modifier
                 .size(40.dp)

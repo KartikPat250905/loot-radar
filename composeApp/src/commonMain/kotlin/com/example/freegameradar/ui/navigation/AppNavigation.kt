@@ -9,6 +9,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import com.example.freegameradar.ui.screens.GameDetailScreen
 import com.example.freegameradar.ui.screens.HomeScreen
+import com.example.freegameradar.ui.screens.HotDealsScreen
 import com.example.freegameradar.ui.screens.NotificationScreen
 import com.example.freegameradar.ui.screens.SettingsScreen
 import com.example.freegameradar.ui.screens.SetupScreen
@@ -51,6 +52,13 @@ fun AppNavigation(
                 navController = navController,
                 modifier = Modifier.padding(innerPadding),
                 onBottomBarVisibilityChange = onBottomBarVisibilityChange
+            )
+        }
+
+        composable(Screen.HotDeals.route) {
+            HotDealsScreen(
+                navController = navController,
+                modifier = Modifier.padding(innerPadding)
             )
         }
 
