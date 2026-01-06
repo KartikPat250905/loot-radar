@@ -49,12 +49,11 @@ fun App(
             }
 
             AppContainer { gameRepository, notificationRepository, userStatsRepository ->
-                val homeViewModel: HomeViewModel = remember { HomeViewModel(gameRepository) }
                 val notificationViewModel: NotificationViewModel = rememberKmpViewModel { NotificationViewModel(notificationRepository) }
                 val userStatsViewModel: UserStatsViewModel = rememberKmpViewModel { UserStatsViewModel(userStatsRepository, gameRepository) }
                 val settingsViewModel: SettingsViewModel = rememberKmpViewModel { SettingsViewModel(authRepository) }
-                val userPreferencesViewModel: UserPreferencesViewModel = rememberKmpViewModel { UserPreferencesViewModel(userSettingsRepository) }
                 val setupViewModel: SetupViewModel = rememberKmpViewModel { SetupViewModel(userSettingsRepository, authRepository) }
+                val userPreferencesViewModel : UserPreferencesViewModel = rememberKmpViewModel { UserPreferencesViewModel(userSettingsRepository) }
 
                 AuthGate(authViewModel = authViewModel) {
                     LaunchedEffect(currentUser) {
@@ -78,13 +77,12 @@ fun App(
                             navController = navController,
                             innerPadding = innerPadding,
                             startDestination = startDestination,
-                            homeViewModel = homeViewModel,
                             notificationViewModel = notificationViewModel,
                             userStatsViewModel = userStatsViewModel,
                             settingsViewModel = settingsViewModel,
-                            userPreferencesViewModel = userPreferencesViewModel,
                             setupViewModel = setupViewModel,
-                            onBottomBarVisibilityChange = { isBottomBarVisible = it }
+                            onBottomBarVisibilityChange = { isBottomBarVisible = it },
+                            userPreferencesViewModel = userPreferencesViewModel
                         )
                     }
                 }

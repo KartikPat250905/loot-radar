@@ -16,11 +16,9 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
-
 data class GameFilters(
     val platforms: Set<String> = emptySet(),
     val types: Set<String> = emptySet(),
-
 )
 
 class GameViewModel(
@@ -28,6 +26,7 @@ class GameViewModel(
 ) {
     private val _filters = MutableStateFlow(GameFilters())
     val filters: StateFlow<GameFilters> = _filters
+
     private val viewModelScope = CoroutineScope(
         SupervisorJob() + Dispatchers.Default
     )
@@ -35,11 +34,16 @@ class GameViewModel(
     private val _gameTypeFilter = MutableStateFlow(GameTypeFilter.ALL)
     val gameTypeFilter: StateFlow<GameTypeFilter> = _gameTypeFilter
 
+    // Add isSyncing state for loading indicator
+    private val _isSyncing = MutableStateFlow(false)
+    val isSyncing: StateFlow<Boolean> = _isSyncing
 
     val dataSource: StateFlow<DataSource> = repository.dataSource
 
     private var _allGames = MutableStateFlow<List<GameDto>>(emptyList())
     private val _searchQuery = MutableStateFlow("")
+
+    val searchQuery: StateFlow<String> = _searchQuery  // Expose searchQuery
 
     val games: StateFlow<List<GameDto>> =
         combine(_allGames, _searchQuery, _filters, _gameTypeFilter) { games, query, filters, typeFilter ->
@@ -84,6 +88,24 @@ class GameViewModel(
                 .collect { gameList ->
                     _allGames.value = gameList
                 }
+        }
+    }
+
+    // Simplified syncFromNetwork - just reloads games with sync indicator
+    fun syncFromNetwork() {
+        viewModelScope.launch {
+            _isSyncing.value = true
+            try {
+                repository.getFreeGames()
+                    .catch { e ->
+                        println("Error syncing games: ${e.message}")
+                    }
+                    .collect { gameList ->
+                        _allGames.value = gameList
+                    }
+            } finally {
+                _isSyncing.value = false
+            }
         }
     }
 

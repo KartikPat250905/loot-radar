@@ -1,26 +1,29 @@
 package com.example.freegameradar.ui.navigation
 
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import com.example.freegameradar.ui.screens.GameDetailScreen
 import com.example.freegameradar.ui.screens.HomeScreen
-import com.example.freegameradar.ui.viewmodel.*
+import com.example.freegameradar.ui.screens.NotificationScreen
+import com.example.freegameradar.ui.screens.SettingsScreen
+import com.example.freegameradar.ui.screens.SetupScreen
+import com.example.freegameradar.ui.screens.StatsScreen
+import com.example.freegameradar.ui.viewmodel.NotificationViewModel
+import com.example.freegameradar.ui.viewmodel.SettingsViewModel
+import com.example.freegameradar.ui.viewmodel.SetupViewModel
+import com.example.freegameradar.ui.viewmodel.UserPreferencesViewModel
+import com.example.freegameradar.ui.viewmodel.UserStatsViewModel
 
 @Composable
 fun AppNavigation(
     navController: NavHostController,
     innerPadding: PaddingValues,
     startDestination: String,
-    homeViewModel: HomeViewModel,
     notificationViewModel: NotificationViewModel,
     userStatsViewModel: UserStatsViewModel,
     settingsViewModel: SettingsViewModel,
@@ -30,59 +33,59 @@ fun AppNavigation(
 ) {
     NavHost(
         navController = navController,
-        startDestination = startDestination,
-        modifier = Modifier.padding(innerPadding)
+        startDestination = startDestination
     ) {
-        // Setup Screen
         composable(Screen.Setup.route) {
-            onBottomBarVisibilityChange(false)
-            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                Text("Setup Screen", style = MaterialTheme.typography.headlineMedium)
-            }
+            SetupScreen(
+                viewModel = setupViewModel,
+                onNavigateToHome = {
+                    navController.navigate(Screen.Home.route) {
+                        popUpTo(Screen.Setup.route) { inclusive = true }
+                    }
+                }
+            )
         }
 
-        // Home Screen
         composable(Screen.Home.route) {
-            onBottomBarVisibilityChange(true)
-            HomeScreen(homeViewModel)
+            HomeScreen(
+                navController = navController,
+                modifier = Modifier.padding(innerPadding),
+                onBottomBarVisibilityChange = onBottomBarVisibilityChange
+            )
         }
 
-        // Hot Deals Screen
-        composable(Screen.HotDeals.route) {
-            onBottomBarVisibilityChange(true)
-            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                Text("Hot Deals Screen", style = MaterialTheme.typography.headlineMedium)
-            }
-        }
-
-        // Stats Screen
-        composable(Screen.Stats.route) {
-            onBottomBarVisibilityChange(true)
-            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                Text("Stats Screen", style = MaterialTheme.typography.headlineMedium)
-            }
-        }
-
-        // Settings Screen
-        composable(Screen.Settings.route) {
-            onBottomBarVisibilityChange(true)
-            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                Text("Settings Screen", style = MaterialTheme.typography.headlineMedium)
-            }
-        }
-
-        // Notifications Screen
         composable(Screen.Notification.route) {
-            onBottomBarVisibilityChange(true)
-            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                Text("Notifications Screen", style = MaterialTheme.typography.headlineMedium)
-            }
+            NotificationScreen(
+                viewModel = notificationViewModel,
+                navController = navController,
+                modifier = Modifier.padding(innerPadding)
+            )
         }
 
-        // Add more screens as needed
-        // composable(Screen.GameDetail.route + "/{gameId}") { backStackEntry ->
-        //     val gameId = backStackEntry.arguments?.getString("gameId")
-        //     GameDetailScreen(gameId = gameId, navController = navController)
-        // }
+        composable(Screen.Settings.route) {
+            SettingsScreen(
+                viewModel = settingsViewModel,
+                userPreferencesViewModel = userPreferencesViewModel,
+                navController = navController,
+                modifier = Modifier.padding(innerPadding)
+            )
+        }
+
+        composable(Screen.Stats.route) {
+            StatsScreen(
+                viewModel = userStatsViewModel,
+                modifier = Modifier.padding(innerPadding)
+            )
+        }
+
+        composable(Screen.Details.route) { backStackEntry ->
+            val gameId = backStackEntry.arguments?.getString("gameId")?.toLongOrNull()
+            GameDetailScreen(
+                navController = navController,
+                gameId = gameId,
+                userStatsViewModel = userStatsViewModel,
+                modifier = Modifier.padding(innerPadding)
+            )
+        }
     }
 }
