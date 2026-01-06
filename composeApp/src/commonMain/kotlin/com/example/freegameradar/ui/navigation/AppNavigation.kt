@@ -7,6 +7,7 @@ import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import com.example.freegameradar.ui.screens.AboutScreen
 import com.example.freegameradar.ui.screens.GameDetailScreen
 import com.example.freegameradar.ui.screens.HomeScreen
 import com.example.freegameradar.ui.screens.HotDealsScreen
@@ -94,6 +95,10 @@ fun AppNavigation(
                 userStatsViewModel = userStatsViewModel,
                 modifier = Modifier.padding(innerPadding)
             )
+        }
+
+        composable(Screen.About.route) {
+            AboutScreen(navController = navController)
         }
     }
 }
