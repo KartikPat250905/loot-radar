@@ -1,5 +1,6 @@
 package com.example.freegameradar.firebase
 
+import com.example.freegameradar.ui.validation.ValidationUtils
 import io.ktor.client.call.*
 import io.ktor.client.request.*
 import io.ktor.client.statement.*
@@ -57,16 +58,24 @@ class FirebaseAuthService {
     }
 
     /**
-     * Sign up with email and password
+     * Sign up with email and password (already exists, enhanced with error mapping)
      */
     suspend fun signUp(email: String, password: String): Result<FirebaseAuthResponse> {
         return try {
+            // Validate inputs before API call
+            if (!ValidationUtils.isValidEmail(email)) {
+                return Result.failure(FirebaseAuthException("Please enter a valid email"))
+            }
+            if (!ValidationUtils.isValidPassword(password)) {
+                return Result.failure(FirebaseAuthException("Password must be at least 6 characters"))
+            }
+
             println("📝 Attempting sign up for: $email")
 
             val response: HttpResponse = client.post(FirebaseConfig.SIGN_UP_URL) {
                 contentType(ContentType.Application.Json)
                 setBody(SignUpRequest(
-                    email = email,
+                    email = email.trim(),
                     password = password,
                     returnSecureToken = true
                 ))
@@ -76,7 +85,7 @@ class FirebaseAuthService {
                 val authResponse = response.body<FirebaseAuthResponse>()
                 println("✅ Sign up successful: ${authResponse.email}")
 
-                // ADD THIS - Save tokens to storage
+                // Auto-save tokens to storage
                 TokenStorage.saveAuthResponse(authResponse)
 
                 Result.success(authResponse)
@@ -89,13 +98,14 @@ class FirebaseAuthService {
                     val userFriendlyError = FirebaseErrorMapper.mapError(errorResponse.error)
                     Result.failure(FirebaseAuthException(userFriendlyError))
                 } catch (e: Exception) {
-                    Result.failure(FirebaseAuthException("Request failed: ${response.status}"))
+                    Result.failure(FirebaseAuthException("Sign up failed: ${response.status}"))
                 }
             }
         } catch (e: Exception) {
             println("❌ Sign up exception: ${e.message}")
             e.printStackTrace()
-            Result.failure(e)
+            val userFriendlyError = FirebaseErrorMapper.mapException(e)
+            Result.failure(FirebaseAuthException(userFriendlyError))
         }
     }
     suspend fun refreshToken(refreshToken: String? = null): Result<RefreshTokenResponse> {

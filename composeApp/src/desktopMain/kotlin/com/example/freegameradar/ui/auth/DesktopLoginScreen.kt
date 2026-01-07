@@ -287,13 +287,12 @@ fun DesktopLoginScreen(
                             Spacer(modifier = Modifier.height(16.dp))
 
                             // Create Account Button
-                            ThemedButton(
-                                text = "Create Account",
+                            TextButton(
                                 onClick = onGoToSignUp,
-                                enabled = authState !is AuthState.Loading,
-                                isPrimary = false,
-                                modifier = Modifier.fillMaxWidth()
-                            )
+                                modifier = Modifier.fillMaxWidth(0.4f)
+                            ) {
+                                Text("Don't have an account? Sign up")
+                            }
 
                             Spacer(modifier = Modifier.height(16.dp))
 

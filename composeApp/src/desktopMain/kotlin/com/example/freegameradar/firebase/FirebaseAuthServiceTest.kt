@@ -188,6 +188,43 @@ suspend fun testCompleteAuthFlow() {
 }
 
 /**
+ * Test 7: Sign-Up Flow
+ */
+suspend fun testSignUpFlow() {
+    println("\n=== Test 7: Sign-Up Flow ===")
+
+    val timestamp = System.currentTimeMillis()
+    val testEmail = "signuptest_${timestamp}@example.com"
+    val testPassword = "TestPass123!"
+
+    println("Creating new account: $testEmail")
+
+    val result = authService.signUp(testEmail, testPassword)
+
+    result.onSuccess { response ->
+        println("✅ Sign-Up Success!")
+        println("   - User ID: ${response.localId}")
+        println("   - Email: ${response.email}")
+        println("   - Tokens saved to storage")
+
+        TokenStorage.printStorageState()
+
+        // Clean up: delete the test account
+        delay(1000)
+        println("\nCleaning up test account...")
+        val deleteResult = authService.deleteAccount(response.idToken)
+        deleteResult.onSuccess {
+            println("✅ Test account deleted")
+        }
+    }
+
+    result.onFailure { error ->
+        println("❌ Sign-Up Failed: ${error.message}")
+        println("   (Expected errors: EMAIL_EXISTS if already used)")
+    }
+}
+
+/**
  * Run all authentication service tests
  */
 suspend fun runAllAuthServiceTests() {
@@ -207,6 +244,10 @@ suspend fun runAllAuthServiceTests() {
     delay(1000)
 
     testSignIn()
+    delay(1000)
+
+    // Add to the test sequence:
+    testSignUpFlow()
     delay(1000)
 
     // Only run these if you want to test account creation
