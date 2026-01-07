@@ -12,6 +12,11 @@ import com.example.freegameradar.initializeDatabase
 import com.example.freegameradar.ui.navigation.Screen
 import com.example.freegameradar.ui.viewmodel.AuthViewModel
 import com.example.freegameradar.firebase.testFirebaseConfig
+import com.example.freegameradar.firebase.runAllHttpClientTests  // ADD THIS
+import com.example.freegameradar.firebase.FirebaseHttpClient      // ADD THIS
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import java.lang.Thread
 
 fun main() {
@@ -21,8 +26,13 @@ fun main() {
         throwable.printStackTrace()
     }
 
-    // ADD THIS - Test Firebase config loading
+    // Phase 3 Test: Firebase config loading
     testFirebaseConfig()
+
+    // ADD THIS - Phase 4 Test: HTTP client
+    CoroutineScope(Dispatchers.IO).launch {
+        runAllHttpClientTests()
+    }
 
     // Synchronously initialize the database before starting the UI
     try {
@@ -36,7 +46,11 @@ fun main() {
     // Start the Compose application
     application {
         Window(
-            onCloseRequest = ::exitApplication,
+            onCloseRequest = {
+                // ADD THIS - Clean up HTTP client on exit
+                FirebaseHttpClient.close()
+                exitApplication()
+            },
             title = "Free Game Radar",
             state = rememberWindowState(width = 1200.dp, height = 800.dp)
         ) {
