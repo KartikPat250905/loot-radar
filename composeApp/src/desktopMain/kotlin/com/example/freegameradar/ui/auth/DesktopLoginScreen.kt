@@ -19,13 +19,12 @@ import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.freegameradar.data.auth.AuthState
-import com.example.freegameradar.firebase.FirebaseErrorMapper
 import com.example.freegameradar.ui.components.AppLoadingScreen
-import com.example.freegameradar.ui.validation.ValidationUtils
 
 @Composable
 fun DesktopLoginScreen(
@@ -36,24 +35,6 @@ fun DesktopLoginScreen(
 ) {
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
-    var emailError by remember { mutableStateOf<String?>(null) }
-    var passwordError by remember { mutableStateOf<String?>(null) }
-
-    // Handle Firebase errors specifically
-    val firebaseError by remember(authState) {
-        derivedStateOf {
-            when (authState) {
-                is AuthState.Error -> {
-                    // Map Firebase errors to user-friendly messages
-                    FirebaseErrorMapper.mapException(
-                        RuntimeException(authState.message)
-                    )
-                }
-                else -> null
-            }
-        }
-    }
-
 
     Box(
         modifier = Modifier
@@ -231,54 +212,33 @@ fun DesktopLoginScreen(
                             horizontalAlignment = Alignment.CenterHorizontally
                         ) {
                             // Email Field
-                            ThemedTextField(
+                            ThemedLoginTextField(
                                 value = email,
                                 onValueChange = { email = it },
                                 label = "Email Address",
-                                modifier = Modifier.fillMaxWidth(),
-                                isError = emailError != null,
-                                supportingText = emailError
-
+                                modifier = Modifier.fillMaxWidth()
                             )
 
                             Spacer(modifier = Modifier.height(20.dp))
 
                             // Password Field
-                            ThemedTextField(
+                            ThemedLoginTextField(
                                 value = password,
                                 onValueChange = { password = it },
                                 label = "Password",
                                 isPassword = true,
-                                modifier = Modifier.fillMaxWidth(),
-                                isError = passwordError != null,
-                                supportingText = passwordError
+                                modifier = Modifier.fillMaxWidth()
                             )
 
-
-                            // Firebase-specific error (after validation errors)
-                            firebaseError?.let {
-                                Spacer(modifier = Modifier.height(8.dp))
-                                Text(
-                                    text = it,
-                                    color = Color.White,
-                                    style = MaterialTheme.typography.bodySmall
-                                )
-                            }
-
                             Spacer(modifier = Modifier.height(32.dp))
-
 
                             // Sign In Button
                             ThemedButton(
                                 text = "Sign In",
-                                onClick = {
-                                    emailError = ValidationUtils.getEmailError(email)
-                                    passwordError = ValidationUtils.getPasswordError(password)
-                                    if (emailError == null && passwordError == null) {
-                                        onSignInClick(email.trim(), password)
-                                    }
-                                },
-                                enabled = authState !is AuthState.Loading,
+                                onClick = { onSignInClick(email.trim(), password) },
+                                enabled = authState !is AuthState.Loading &&
+                                        email.isNotBlank() &&
+                                        password.isNotBlank(),
                                 isLoading = authState is AuthState.Loading,
                                 isPrimary = true,
                                 modifier = Modifier.fillMaxWidth()
@@ -287,12 +247,13 @@ fun DesktopLoginScreen(
                             Spacer(modifier = Modifier.height(16.dp))
 
                             // Create Account Button
-                            TextButton(
+                            ThemedButton(
+                                text = "Create Account",
                                 onClick = onGoToSignUp,
-                                modifier = Modifier.fillMaxWidth(0.4f)
-                            ) {
-                                Text("Don't have an account? Sign up")
-                            }
+                                enabled = authState !is AuthState.Loading,
+                                isPrimary = false,
+                                modifier = Modifier.fillMaxWidth()
+                            )
 
                             Spacer(modifier = Modifier.height(16.dp))
 
@@ -305,7 +266,8 @@ fun DesktopLoginScreen(
                                 modifier = Modifier.fillMaxWidth()
                             )
 
-                            // Error/Success Messages
+                            Spacer(modifier = Modifier.height(24.dp))
+
                             when (authState) {
                                 is AuthState.Error -> {
                                     Spacer(modifier = Modifier.height(20.dp))
@@ -323,6 +285,34 @@ fun DesktopLoginScreen(
                                 }
                                 else -> Unit
                             }
+
+                            // Don't have account link
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.Center,
+                                modifier = Modifier
+                                    .clip(RoundedCornerShape(8.dp))
+                                    .clickable(
+                                        onClick = onGoToSignUp,
+                                        interactionSource = remember { MutableInteractionSource() },
+                                        indication = null
+                                    )
+                                    .padding(8.dp)
+                            ) {
+                                Text(
+                                    text = "Don't have an account? ",
+                                    fontSize = 14.sp,
+                                    color = Color(0xFF9CA3AF)
+                                )
+                                Text(
+                                    text = "Sign Up",
+                                    fontSize = 14.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color(0xFF10B981),
+                                    textDecoration = TextDecoration.Underline
+                                )
+                            }
+
                         }
                     }
                 }
@@ -332,14 +322,12 @@ fun DesktopLoginScreen(
 }
 
 @Composable
-private fun ThemedTextField(
+private fun ThemedLoginTextField(
     value: String,
     onValueChange: (String) -> Unit,
     label: String,
     isPassword: Boolean = false,
-    modifier: Modifier = Modifier,
-    isError: Boolean = false,
-    supportingText: String? = null,
+    modifier: Modifier = Modifier
 ) {
     Column(modifier = modifier) {
         Text(
@@ -364,17 +352,9 @@ private fun ThemedTextField(
                 unfocusedTextColor = Color(0xFF9CA3AF),
                 cursorColor = Color(0xFF10B981),
                 focusedContainerColor = Color(0xFF1B263B).copy(alpha = 0.3f),
-                unfocusedContainerColor = Color(0xFF0D1B2A).copy(alpha = 0.3f),
-                errorBorderColor = Color(0xFFEF4444),
-                errorTextColor = Color.White
-                ),
-            shape = RoundedCornerShape(12.dp),
-            isError = isError,
-            supportingText = {
-                supportingText?.let {
-                    Text(it, color = Color.White)
-                }
-            },
+                unfocusedContainerColor = Color(0xFF0D1B2A).copy(alpha = 0.3f)
+            ),
+            shape = RoundedCornerShape(12.dp)
         )
     }
 }
@@ -445,23 +425,7 @@ private fun ThemedButton(
                     ),
                 contentAlignment = Alignment.Center
             ) {
-                if (isLoading) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        CircularProgressIndicator(
-                            modifier = Modifier.size(20.dp),
-                        )
-                        Text(
-                            "Signing In...",
-                            fontWeight = FontWeight.ExtraBold,
-                            fontSize = 16.sp,
-                            color = Color(0xFF6EE7B7),
-                            letterSpacing = 0.5.sp
-                        )
-                    }
-                } else {
+                if (!isLoading) {
                     Text(
                         text = text,
                         fontWeight = if (isPrimary) FontWeight.ExtraBold else FontWeight.SemiBold,
