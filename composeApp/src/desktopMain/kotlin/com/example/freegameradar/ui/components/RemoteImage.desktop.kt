@@ -33,8 +33,6 @@ actual fun RemoteImage(
         return
     }
 
-    println("Loading image: $url") // Debug log
-
     AsyncImage(
         model = ImageRequest.Builder(context)
             .data(url)
@@ -43,13 +41,10 @@ actual fun RemoteImage(
         modifier = modifier,
         contentScale = contentScale,
         onLoading = {
-            println("Image loading: $url")
         },
         onSuccess = {
-            println("Image loaded successfully: $url")
         },
         onError = {
-            println("Image failed to load: $url - ${it.result.throwable.message}")
         }
     )
 }

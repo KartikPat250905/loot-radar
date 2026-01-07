@@ -13,7 +13,8 @@ import com.example.freegameradar.ui.navigation.Screen
 import com.example.freegameradar.ui.viewmodel.AuthViewModel
 import com.example.freegameradar.firebase.testFirebaseConfig
 import com.example.freegameradar.firebase.runAllHttpClientTests
-import com.example.freegameradar.firebase.runAllModelTests  // ADD THIS
+import com.example.freegameradar.firebase.runAllModelTests
+import com.example.freegameradar.firebase.runAllAuthServiceTests  // ADD THIS
 import com.example.freegameradar.firebase.FirebaseHttpClient
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -21,24 +22,15 @@ import kotlinx.coroutines.launch
 import java.lang.Thread
 
 fun main() {
-    // Set a global uncaught exception handler to see UI thread crashes
     Thread.setDefaultUncaughtExceptionHandler { thread, throwable ->
         println("Uncaught exception in thread '${thread.name}':")
         throwable.printStackTrace()
     }
 
-    // Phase 3 Test: Firebase config
-    testFirebaseConfig()
-
-    // Phase 4 Test: HTTP client
     CoroutineScope(Dispatchers.IO).launch {
-        runAllHttpClientTests()
+        runAllAuthServiceTests()
     }
 
-    // ADD THIS - Phase 5 Test: Data models
-    runAllModelTests()
-
-    // Synchronously initialize the database before starting the UI
     try {
         initializeDatabase()
     } catch (e: Exception) {
@@ -47,7 +39,6 @@ fun main() {
         return
     }
 
-    // Start the Compose application
     application {
         Window(
             onCloseRequest = {
