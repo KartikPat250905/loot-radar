@@ -7,7 +7,7 @@ import coil3.ImageLoader
 import coil3.compose.setSingletonImageLoaderFactory
 import coil3.network.ktor3.KtorNetworkFetcherFactory
 import com.example.freegameradar.App
-import com.example.freegameradar.data.auth.AuthRepositoryImpl
+import com.example.freegameradar.data.auth.createAuthRepository
 import com.example.freegameradar.initializeDatabase
 import com.example.freegameradar.ui.navigation.Screen
 import com.example.freegameradar.ui.viewmodel.AuthViewModel
@@ -61,7 +61,7 @@ fun main() {
                     .build()
             }
 
-            val authRepository = remember { AuthRepositoryImpl() }
+            val authRepository = remember { createAuthRepository() }
             val authViewModel = remember { AuthViewModel(authRepository) }
             App(authViewModel = authViewModel, startRoute = Screen.Home.route)
         }
