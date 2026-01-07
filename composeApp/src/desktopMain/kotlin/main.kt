@@ -6,16 +6,12 @@ import androidx.compose.ui.window.rememberWindowState
 import coil3.ImageLoader
 import coil3.compose.setSingletonImageLoaderFactory
 import coil3.network.ktor3.KtorNetworkFetcherFactory
-import com.example.freegameradar.App
 import com.example.freegameradar.data.auth.createAuthRepository
 import com.example.freegameradar.initializeDatabase
-import com.example.freegameradar.ui.navigation.Screen
+import com.example.freegameradar.ui.auth.DesktopAuthRoot
 import com.example.freegameradar.ui.viewmodel.AuthViewModel
-import com.example.freegameradar.firebase.testFirebaseConfig
-import com.example.freegameradar.firebase.runAllHttpClientTests
-import com.example.freegameradar.firebase.runAllModelTests
-import com.example.freegameradar.firebase.runAllAuthServiceTests  // ADD THIS
 import com.example.freegameradar.firebase.FirebaseHttpClient
+import com.example.freegameradar.firebase.TokenStorage
 import com.example.freegameradar.firebase.runAllTokenStorageTests
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -23,17 +19,11 @@ import kotlinx.coroutines.launch
 import java.lang.Thread
 
 fun main() {
+    TokenStorage.clearAll()
+
     Thread.setDefaultUncaughtExceptionHandler { thread, throwable ->
         println("Uncaught exception in thread '${thread.name}':")
         throwable.printStackTrace()
-    }
-
-//    CoroutineScope(Dispatchers.IO).launch {
-//        runAllAuthServiceTests()
-//    }
-
-    CoroutineScope(Dispatchers.IO).launch {
-        runAllTokenStorageTests()
     }
 
     try {
@@ -63,7 +53,8 @@ fun main() {
 
             val authRepository = remember { createAuthRepository() }
             val authViewModel = remember { AuthViewModel(authRepository) }
-            App(authViewModel = authViewModel, startRoute = Screen.Home.route)
+
+            DesktopAuthRoot(authViewModel = authViewModel)
         }
     }
 }
