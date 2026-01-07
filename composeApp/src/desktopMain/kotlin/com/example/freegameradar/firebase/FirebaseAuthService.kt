@@ -32,6 +32,10 @@ class FirebaseAuthService {
             if (response.status.isSuccess()) {
                 val authResponse = response.body<FirebaseAuthResponse>()
                 println("✅ Sign in successful: ${authResponse.email}")
+
+                // ADD THIS - Save tokens to storage
+                TokenStorage.saveAuthResponse(authResponse)
+
                 Result.success(authResponse)
             } else {
                 val errorBody = response.bodyAsText()
@@ -70,6 +74,10 @@ class FirebaseAuthService {
             if (response.status.isSuccess()) {
                 val authResponse = response.body<FirebaseAuthResponse>()
                 println("✅ Sign up successful: ${authResponse.email}")
+
+                // ADD THIS - Save tokens to storage
+                TokenStorage.saveAuthResponse(authResponse)
+
                 Result.success(authResponse)
             } else {
                 val errorBody = response.bodyAsText()
@@ -87,6 +95,28 @@ class FirebaseAuthService {
             e.printStackTrace()
             Result.failure(e)
         }
+    }
+
+    /**
+     * Sign out - clear stored tokens
+     */
+    fun signOut() {
+        println("👋 Signing out...")
+        TokenStorage.clearAll()
+    }
+
+    /**
+     * Get current user from storage
+     */
+    fun getCurrentUser(): StoredUser? {
+        return TokenStorage.getStoredUser()
+    }
+
+    /**
+     * Check if user is currently logged in
+     */
+    fun isLoggedIn(): Boolean {
+        return TokenStorage.hasValidSession()
     }
 
     /**
@@ -136,6 +166,10 @@ class FirebaseAuthService {
 
             if (response.status.isSuccess()) {
                 println("✅ Account deleted successfully")
+
+                // ADD THIS - Clear tokens after deletion
+                TokenStorage.clearAll()
+
                 Result.success(Unit)
             } else {
                 val errorBody = response.bodyAsText()
@@ -156,24 +190,40 @@ class FirebaseAuthService {
     }
 
     /**
-     * Refresh ID token
+     * Refresh ID token using refresh token
      */
-    suspend fun refreshToken(refreshToken: String): Result<RefreshTokenResponse> {
+    suspend fun refreshToken(refreshToken: String? = null): Result<RefreshTokenResponse> {
         return try {
+            val tokenToRefresh = refreshToken ?: TokenStorage.getRefreshToken()
+
+            if (tokenToRefresh == null) {
+                return Result.failure(FirebaseAuthException("No refresh token available"))
+            }
+
             println("🔄 Refreshing authentication token")
 
             val response: HttpResponse = client.post(FirebaseConfig.REFRESH_TOKEN_URL) {
                 contentType(ContentType.Application.Json)
-                setBody(RefreshTokenRequest(refreshToken = refreshToken))
+                setBody(RefreshTokenRequest(refreshToken = tokenToRefresh))
             }
 
             if (response.status.isSuccess()) {
                 val tokenResponse = response.body<RefreshTokenResponse>()
                 println("✅ Token refreshed successfully")
+
+                // ADD THIS - Update stored tokens
+                TokenStorage.saveIdToken(tokenResponse.idToken)
+                TokenStorage.saveRefreshToken(tokenResponse.refreshToken)
+                TokenStorage.saveTokenExpiry(tokenResponse.expiresIn)
+
                 Result.success(tokenResponse)
             } else {
                 val errorBody = response.bodyAsText()
                 println("❌ Token refresh failed: ${response.status} - $errorBody")
+
+                // If refresh fails, clear all tokens
+                TokenStorage.clearAll()
+
                 Result.failure(FirebaseAuthException("Token refresh failed"))
             }
         } catch (e: Exception) {

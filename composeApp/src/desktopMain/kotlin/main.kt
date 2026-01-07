@@ -16,6 +16,7 @@ import com.example.freegameradar.firebase.runAllHttpClientTests
 import com.example.freegameradar.firebase.runAllModelTests
 import com.example.freegameradar.firebase.runAllAuthServiceTests  // ADD THIS
 import com.example.freegameradar.firebase.FirebaseHttpClient
+import com.example.freegameradar.firebase.runAllTokenStorageTests
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -27,8 +28,12 @@ fun main() {
         throwable.printStackTrace()
     }
 
+//    CoroutineScope(Dispatchers.IO).launch {
+//        runAllAuthServiceTests()
+//    }
+
     CoroutineScope(Dispatchers.IO).launch {
-        runAllAuthServiceTests()
+        runAllTokenStorageTests()
     }
 
     try {
