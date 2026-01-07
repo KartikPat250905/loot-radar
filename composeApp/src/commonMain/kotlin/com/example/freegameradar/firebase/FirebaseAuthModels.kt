@@ -4,11 +4,13 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 /**
- * Firebase Auth REST API request/response models
+ * Firebase Auth REST API request/response models (Desktop Only)
+ * Android uses native Firebase SDK, not these models
  * Based on: https://firebase.google.com/docs/reference/rest/auth
  */
 
-// Sign In Request
+// ==================== REQUEST MODELS ====================
+
 @Serializable
 data class SignInRequest(
     val email: String,
@@ -16,7 +18,6 @@ data class SignInRequest(
     val returnSecureToken: Boolean = true
 )
 
-// Sign Up Request
 @Serializable
 data class SignUpRequest(
     val email: String,
@@ -24,20 +25,17 @@ data class SignUpRequest(
     val returnSecureToken: Boolean = true
 )
 
-// Password Reset Request
 @Serializable
 data class PasswordResetRequest(
     val requestType: String = "PASSWORD_RESET",
     val email: String
 )
 
-// Delete Account Request
 @Serializable
 data class DeleteAccountRequest(
     val idToken: String
 )
 
-// Refresh Token Request
 @Serializable
 data class RefreshTokenRequest(
     @SerialName("grant_type")
@@ -46,13 +44,13 @@ data class RefreshTokenRequest(
     val refreshToken: String
 )
 
-// Get User Data Request
 @Serializable
 data class GetUserDataRequest(
     val idToken: String
 )
 
-// Auth Response (Sign In / Sign Up)
+// ==================== RESPONSE MODELS ====================
+
 @Serializable
 data class FirebaseAuthResponse(
     val idToken: String,
@@ -60,10 +58,10 @@ data class FirebaseAuthResponse(
     val refreshToken: String,
     val expiresIn: String,
     val localId: String,
-    val registered: Boolean? = null
+    val registered: Boolean? = null,
+    val displayName: String? = null
 )
 
-// Refresh Token Response
 @Serializable
 data class RefreshTokenResponse(
     @SerialName("id_token")
@@ -73,10 +71,13 @@ data class RefreshTokenResponse(
     @SerialName("expires_in")
     val expiresIn: String,
     @SerialName("user_id")
-    val userId: String
+    val userId: String,
+    @SerialName("project_id")
+    val projectId: String? = null,
+    @SerialName("token_type")
+    val tokenType: String? = null
 )
 
-// User Data Response
 @Serializable
 data class UserDataResponse(
     val users: List<FirebaseUser>
@@ -95,10 +96,31 @@ data class FirebaseUser(
     val disabled: Boolean = false,
     val lastLoginAt: String? = null,
     val createdAt: String? = null,
-    val customAuth: Boolean = false
+    val customAuth: Boolean = false,
+    val providerUserInfo: List<ProviderUserInfo>? = null
 )
 
-// Error Response
+@Serializable
+data class ProviderUserInfo(
+    val providerId: String,
+    val federatedId: String? = null,
+    val displayName: String? = null,
+    val photoUrl: String? = null,
+    val email: String? = null
+)
+
+@Serializable
+data class PasswordResetResponse(
+    val email: String
+)
+
+@Serializable
+data class DeleteAccountResponse(
+    val kind: String? = null
+)
+
+// ==================== ERROR MODELS ====================
+
 @Serializable
 data class FirebaseErrorResponse(
     val error: FirebaseError
@@ -114,6 +136,6 @@ data class FirebaseError(
 @Serializable
 data class FirebaseErrorDetail(
     val message: String,
-    val domain: String,
-    val reason: String
+    val domain: String? = null,
+    val reason: String? = null
 )

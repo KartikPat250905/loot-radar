@@ -12,8 +12,9 @@ import com.example.freegameradar.initializeDatabase
 import com.example.freegameradar.ui.navigation.Screen
 import com.example.freegameradar.ui.viewmodel.AuthViewModel
 import com.example.freegameradar.firebase.testFirebaseConfig
-import com.example.freegameradar.firebase.runAllHttpClientTests  // ADD THIS
-import com.example.freegameradar.firebase.FirebaseHttpClient      // ADD THIS
+import com.example.freegameradar.firebase.runAllHttpClientTests
+import com.example.freegameradar.firebase.runAllModelTests  // ADD THIS
+import com.example.freegameradar.firebase.FirebaseHttpClient
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -26,13 +27,16 @@ fun main() {
         throwable.printStackTrace()
     }
 
-    // Phase 3 Test: Firebase config loading
+    // Phase 3 Test: Firebase config
     testFirebaseConfig()
 
-    // ADD THIS - Phase 4 Test: HTTP client
+    // Phase 4 Test: HTTP client
     CoroutineScope(Dispatchers.IO).launch {
         runAllHttpClientTests()
     }
+
+    // ADD THIS - Phase 5 Test: Data models
+    runAllModelTests()
 
     // Synchronously initialize the database before starting the UI
     try {
@@ -40,21 +44,19 @@ fun main() {
     } catch (e: Exception) {
         println("Fatal error during database initialization: ${e.message}")
         e.printStackTrace()
-        return // Exit if the database can't be initialized
+        return
     }
 
     // Start the Compose application
     application {
         Window(
             onCloseRequest = {
-                // ADD THIS - Clean up HTTP client on exit
                 FirebaseHttpClient.close()
                 exitApplication()
             },
             title = "Free Game Radar",
             state = rememberWindowState(width = 1200.dp, height = 800.dp)
         ) {
-            // Initialize Coil ImageLoader for Desktop
             setSingletonImageLoaderFactory { context ->
                 ImageLoader.Builder(context)
                     .components {
