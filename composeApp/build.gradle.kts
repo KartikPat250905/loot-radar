@@ -39,17 +39,17 @@ kotlin {
             implementation(libs.ktor.client.okhttp)
             implementation(kotlin("reflect"))
             implementation(libs.sqldelight.android.driver)
-            
-            // Move Coil to androidMain ONLY (for now)
+
+            // Coil for Android
             implementation(libs.coil.compose)
             implementation(libs.coil.network.ktor)
-            
-            // Move Vico to androidMain ONLY (for now)
+
+            // Vico for Android
             implementation(libs.vico.compose)
             implementation(libs.vico.compose.m3)
             implementation(libs.vico.core)
-            
-            // Import the Firebase BoM
+
+            // Firebase Android SDK
             implementation(platform("com.google.firebase:firebase-bom:33.1.0"))
             implementation(platform("io.opentelemetry:opentelemetry-bom:1.18.0"))
             implementation("com.google.firebase:firebase-auth-ktx")
@@ -73,12 +73,17 @@ kotlin {
             implementation("org.jetbrains.androidx.lifecycle:lifecycle-viewmodel-compose:2.8.0")
             implementation("org.jetbrains.androidx.navigation:navigation-compose:2.8.0-alpha10")
 
+            // Ktor - Already present
             implementation(libs.ktor.client.core)
             implementation(libs.ktor.client.content.negotiation)
             implementation(libs.ktor.serialization.kotlinx.json)
 
-            // REMOVED: coil, vico - moved to androidMain
-            
+            // ADD THIS - Kotlinx Serialization for JSON parsing
+            implementation(libs.kotlinx.serialization.json)
+
+            // ADD THIS - Coroutines core (if not implicitly included)
+            implementation(libs.kotlinx.coroutines.core)
+
             implementation(libs.kotlinx.datetime)
             implementation(libs.sqldelight.runtime)
             implementation(libs.sqldelight.coroutines.extensions)
@@ -91,9 +96,14 @@ kotlin {
                 implementation(compose.desktop.currentOs)
                 implementation(libs.ktor.client.okhttp)
                 implementation(libs.sqldelight.sqlite.driver)
-                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-swing:1.8.0")
-                
-                // For Desktop image loading, use Coil3 multiplatform
+
+                // ADD THIS - Coroutines Swing for Desktop
+                implementation(libs.kotlinx.coroutines.swing)
+
+                // ADD THIS - Ktor logging for debugging (optional but recommended)
+                implementation(libs.ktor.client.logging)
+
+                // Coil3 for Desktop
                 implementation("io.coil-kt.coil3:coil-compose:3.0.0-rc01")
                 implementation("io.coil-kt.coil3:coil-network-ktor3:3.0.0-rc01")
             }
