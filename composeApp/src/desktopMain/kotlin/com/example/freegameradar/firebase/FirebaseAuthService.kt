@@ -43,9 +43,10 @@ class FirebaseAuthService {
 
                 try {
                     val errorResponse = response.body<FirebaseErrorResponse>()
-                    Result.failure(FirebaseAuthException(errorResponse.error.message))
+                    val userFriendlyError = FirebaseErrorMapper.mapError(errorResponse.error)
+                    Result.failure(FirebaseAuthException(userFriendlyError))
                 } catch (e: Exception) {
-                    Result.failure(FirebaseAuthException("Sign in failed: ${response.status}"))
+                    Result.failure(FirebaseAuthException("Request failed: ${response.status}"))
                 }
             }
         } catch (e: Exception) {
@@ -85,9 +86,10 @@ class FirebaseAuthService {
 
                 try {
                     val errorResponse = response.body<FirebaseErrorResponse>()
-                    Result.failure(FirebaseAuthException(errorResponse.error.message))
+                    val userFriendlyError = FirebaseErrorMapper.mapError(errorResponse.error)
+                    Result.failure(FirebaseAuthException(userFriendlyError))
                 } catch (e: Exception) {
-                    Result.failure(FirebaseAuthException("Sign up failed: ${response.status}"))
+                    Result.failure(FirebaseAuthException("Request failed: ${response.status}"))
                 }
             }
         } catch (e: Exception) {
@@ -132,9 +134,10 @@ class FirebaseAuthService {
 
                 try {
                     val errorResponse = response.body<FirebaseErrorResponse>()
-                    Result.failure(FirebaseAuthException(errorResponse.error.message))
+                    val userFriendlyError = FirebaseErrorMapper.mapError(errorResponse.error)
+                    Result.failure(FirebaseAuthException(userFriendlyError))
                 } catch (e: Exception) {
-                    Result.failure(FirebaseAuthException("Token refresh failed: ${response.status}"))
+                    Result.failure(FirebaseAuthException("Request failed: ${response.status}"))
                 }
             }
         } catch (e: Exception) {
@@ -221,9 +224,10 @@ class FirebaseAuthService {
 
                 try {
                     val errorResponse = response.body<FirebaseErrorResponse>()
-                    Result.failure(FirebaseAuthException(errorResponse.error.message))
+                    val userFriendlyError = FirebaseErrorMapper.mapError(errorResponse.error)
+                    Result.failure(FirebaseAuthException(userFriendlyError))
                 } catch (e: Exception) {
-                    Result.failure(FirebaseAuthException("Password reset failed: ${response.status}"))
+                    Result.failure(FirebaseAuthException("Request failed: ${response.status}"))
                 }
             }
         } catch (e: Exception) {
@@ -258,9 +262,10 @@ class FirebaseAuthService {
 
                 try {
                     val errorResponse = response.body<FirebaseErrorResponse>()
-                    Result.failure(FirebaseAuthException(errorResponse.error.message))
+                    val userFriendlyError = FirebaseErrorMapper.mapError(errorResponse.error)
+                    Result.failure(FirebaseAuthException(userFriendlyError))
                 } catch (e: Exception) {
-                    Result.failure(FirebaseAuthException("Account deletion failed: ${response.status}"))
+                    Result.failure(FirebaseAuthException("Request failed: ${response.status}"))
                 }
             }
         } catch (e: Exception) {

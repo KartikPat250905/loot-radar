@@ -4,6 +4,7 @@ import com.example.freegameradar.data.GameDatabaseProvider
 import com.example.freegameradar.data.auth.AuthRepository
 import com.example.freegameradar.data.auth.AuthState
 import com.example.freegameradar.data.models.User
+import com.example.freegameradar.firebase.FirebaseErrorMapper
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -35,8 +36,11 @@ class AuthViewModel(private val authRepository: AuthRepository) : KmpViewModel()
             _authState.value = AuthState.Loading
             val result = authRepository.login(email, password)
             result.onFailure {
-                _authState.value = AuthState.Error(it.message ?: "Unknown login error")
+                // Use FirebaseErrorMapper for desktop-friendly errors
+                val userFriendlyError = FirebaseErrorMapper.mapException(it)
+                _authState.value = AuthState.Error(userFriendlyError)
             }
+            // Success case already handled via authRepository.getAuthStateFlow()
         }
     }
 
@@ -45,7 +49,8 @@ class AuthViewModel(private val authRepository: AuthRepository) : KmpViewModel()
             _authState.value = AuthState.Loading
             val result = authRepository.register(email, password)
             result.onFailure {
-                _authState.value = AuthState.Error(it.message ?: "Unknown registration error")
+                val userFriendlyError = FirebaseErrorMapper.mapException(it)
+                _authState.value = AuthState.Error(userFriendlyError)
             }
         }
     }
@@ -56,11 +61,11 @@ class AuthViewModel(private val authRepository: AuthRepository) : KmpViewModel()
             val result = authRepository.sendPasswordResetEmail(email)
             result.onSuccess {
                 _authState.value = AuthState.Success(
-                    "If your email is registered, you will receive a password reset link. " +
-                            "If you don\'t have an account, please sign up."
+                    "Password reset email sent! Check your inbox."
                 )
             }.onFailure {
-                _authState.value = AuthState.Error(it.message ?: "Unknown error")
+                val userFriendlyError = FirebaseErrorMapper.mapException(it)
+                _authState.value = AuthState.Error(userFriendlyError)
             }
         }
     }

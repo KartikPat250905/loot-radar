@@ -23,7 +23,9 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.freegameradar.data.auth.AuthState
+import com.example.freegameradar.firebase.FirebaseErrorMapper
 import com.example.freegameradar.ui.components.AppLoadingScreen
+import com.example.freegameradar.ui.validation.ValidationUtils
 
 @Composable
 fun DesktopLoginScreen(
@@ -34,6 +36,24 @@ fun DesktopLoginScreen(
 ) {
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
+    var emailError by remember { mutableStateOf<String?>(null) }
+    var passwordError by remember { mutableStateOf<String?>(null) }
+
+    // Handle Firebase errors specifically
+    val firebaseError by remember(authState) {
+        derivedStateOf {
+            when (authState) {
+                is AuthState.Error -> {
+                    // Map Firebase errors to user-friendly messages
+                    FirebaseErrorMapper.mapException(
+                        RuntimeException(authState.message)
+                    )
+                }
+                else -> null
+            }
+        }
+    }
+
 
     Box(
         modifier = Modifier
@@ -215,7 +235,10 @@ fun DesktopLoginScreen(
                                 value = email,
                                 onValueChange = { email = it },
                                 label = "Email Address",
-                                modifier = Modifier.fillMaxWidth()
+                                modifier = Modifier.fillMaxWidth(),
+                                isError = emailError != null,
+                                supportingText = emailError
+
                             )
 
                             Spacer(modifier = Modifier.height(20.dp))
@@ -226,18 +249,36 @@ fun DesktopLoginScreen(
                                 onValueChange = { password = it },
                                 label = "Password",
                                 isPassword = true,
-                                modifier = Modifier.fillMaxWidth()
+                                modifier = Modifier.fillMaxWidth(),
+                                isError = passwordError != null,
+                                supportingText = passwordError
                             )
 
+
+                            // Firebase-specific error (after validation errors)
+                            firebaseError?.let {
+                                Spacer(modifier = Modifier.height(8.dp))
+                                Text(
+                                    text = it,
+                                    color = Color.White,
+                                    style = MaterialTheme.typography.bodySmall
+                                )
+                            }
+
                             Spacer(modifier = Modifier.height(32.dp))
+
 
                             // Sign In Button
                             ThemedButton(
                                 text = "Sign In",
-                                onClick = { onSignInClick(email.trim(), password) },
-                                enabled = authState !is AuthState.Loading &&
-                                        email.isNotBlank() &&
-                                        password.isNotBlank(),
+                                onClick = {
+                                    emailError = ValidationUtils.getEmailError(email)
+                                    passwordError = ValidationUtils.getPasswordError(password)
+                                    if (emailError == null && passwordError == null) {
+                                        onSignInClick(email.trim(), password)
+                                    }
+                                },
+                                enabled = authState !is AuthState.Loading,
                                 isLoading = authState is AuthState.Loading,
                                 isPrimary = true,
                                 modifier = Modifier.fillMaxWidth()
@@ -297,7 +338,9 @@ private fun ThemedTextField(
     onValueChange: (String) -> Unit,
     label: String,
     isPassword: Boolean = false,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    isError: Boolean = false,
+    supportingText: String? = null,
 ) {
     Column(modifier = modifier) {
         Text(
@@ -322,9 +365,17 @@ private fun ThemedTextField(
                 unfocusedTextColor = Color(0xFF9CA3AF),
                 cursorColor = Color(0xFF10B981),
                 focusedContainerColor = Color(0xFF1B263B).copy(alpha = 0.3f),
-                unfocusedContainerColor = Color(0xFF0D1B2A).copy(alpha = 0.3f)
-            ),
-            shape = RoundedCornerShape(12.dp)
+                unfocusedContainerColor = Color(0xFF0D1B2A).copy(alpha = 0.3f),
+                errorBorderColor = Color(0xFFEF4444),
+                errorTextColor = Color.White
+                ),
+            shape = RoundedCornerShape(12.dp),
+            isError = isError,
+            supportingText = {
+                supportingText?.let {
+                    Text(it, color = Color.White)
+                }
+            },
         )
     }
 }
@@ -395,7 +446,23 @@ private fun ThemedButton(
                     ),
                 contentAlignment = Alignment.Center
             ) {
-                if (!isLoading) {
+                if (isLoading) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(20.dp),
+                        )
+                        Text(
+                            "Signing In...",
+                            fontWeight = FontWeight.ExtraBold,
+                            fontSize = 16.sp,
+                            color = Color(0xFF6EE7B7),
+                            letterSpacing = 0.5.sp
+                        )
+                    }
+                } else {
                     Text(
                         text = text,
                         fontWeight = if (isPrimary) FontWeight.ExtraBold else FontWeight.SemiBold,
