@@ -11,6 +11,7 @@ import com.example.freegameradar.data.auth.AuthRepositoryImpl
 import com.example.freegameradar.initializeDatabase
 import com.example.freegameradar.ui.navigation.Screen
 import com.example.freegameradar.ui.viewmodel.AuthViewModel
+import com.example.freegameradar.firebase.testFirebaseConfig
 import java.lang.Thread
 
 fun main() {
@@ -19,6 +20,9 @@ fun main() {
         println("Uncaught exception in thread '${thread.name}':")
         throwable.printStackTrace()
     }
+
+    // ADD THIS - Test Firebase config loading
+    testFirebaseConfig()
 
     // Synchronously initialize the database before starting the UI
     try {
