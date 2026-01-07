@@ -12,18 +12,23 @@ import com.example.freegameradar.ui.auth.DesktopAuthRoot
 import com.example.freegameradar.ui.viewmodel.AuthViewModel
 import com.example.freegameradar.firebase.FirebaseHttpClient
 import com.example.freegameradar.firebase.TokenStorage
-import com.example.freegameradar.firebase.runAllTokenStorageTests
+import com.example.freegameradar.firebase.runAllTokenRefreshTests
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import java.lang.Thread
 
 fun main() {
-    TokenStorage.clearAll()
+    TokenStorage.clearAll() // resets everything
 
     Thread.setDefaultUncaughtExceptionHandler { thread, throwable ->
         println("Uncaught exception in thread '${thread.name}':")
         throwable.printStackTrace()
+    }
+
+    // Phase 11 Test: Token refresh
+    CoroutineScope(Dispatchers.IO).launch {
+        runAllTokenRefreshTests()
     }
 
     try {

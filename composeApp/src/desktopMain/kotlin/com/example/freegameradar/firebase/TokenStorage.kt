@@ -2,60 +2,40 @@ package com.example.freegameradar.firebase
 
 import java.util.prefs.Preferences
 
-/**
- * Token storage for Desktop using Java Preferences API
- * Android uses native Firebase SDK which handles token storage automatically
- */
 object TokenStorage {
 
     private val prefs = Preferences.userRoot().node("com.example.freegameradar.auth")
 
-    // Keys for storage
     private const val KEY_ID_TOKEN = "idToken"
     private const val KEY_REFRESH_TOKEN = "refreshToken"
     private const val KEY_USER_EMAIL = "userEmail"
     private const val KEY_USER_ID = "userId"
     private const val KEY_TOKEN_EXPIRY = "tokenExpiry"
 
-    /**
-     * Save ID token
-     */
     fun saveIdToken(token: String) {
         prefs.put(KEY_ID_TOKEN, token)
         prefs.flush()
         println("💾 Saved ID token")
     }
 
-    /**
-     * Save refresh token
-     */
     fun saveRefreshToken(token: String) {
         prefs.put(KEY_REFRESH_TOKEN, token)
         prefs.flush()
         println("💾 Saved refresh token")
     }
 
-    /**
-     * Save user email
-     */
     fun saveUserEmail(email: String) {
         prefs.put(KEY_USER_EMAIL, email)
         prefs.flush()
         println("💾 Saved user email: $email")
     }
 
-    /**
-     * Save user ID
-     */
     fun saveUserId(userId: String) {
         prefs.put(KEY_USER_ID, userId)
         prefs.flush()
         println("💾 Saved user ID: $userId")
     }
 
-    /**
-     * Save token expiry time (current time + expiresIn seconds)
-     */
     fun saveTokenExpiry(expiresInSeconds: String) {
         try {
             val expiryTime = System.currentTimeMillis() + (expiresInSeconds.toLong() * 1000)
@@ -67,9 +47,6 @@ object TokenStorage {
         }
     }
 
-    /**
-     * Save complete authentication response
-     */
     fun saveAuthResponse(response: FirebaseAuthResponse) {
         saveIdToken(response.idToken)
         saveRefreshToken(response.refreshToken)
@@ -79,44 +56,26 @@ object TokenStorage {
         println("✅ Saved complete auth response")
     }
 
-    /**
-     * Get ID token
-     */
     fun getIdToken(): String? {
         return prefs.get(KEY_ID_TOKEN, null)
     }
 
-    /**
-     * Get refresh token
-     */
     fun getRefreshToken(): String? {
         return prefs.get(KEY_REFRESH_TOKEN, null)
     }
 
-    /**
-     * Get user email
-     */
     fun getUserEmail(): String? {
         return prefs.get(KEY_USER_EMAIL, null)
     }
 
-    /**
-     * Get user ID
-     */
     fun getUserId(): String? {
         return prefs.get(KEY_USER_ID, null)
     }
 
-    /**
-     * Get token expiry time
-     */
     fun getTokenExpiry(): Long {
         return prefs.getLong(KEY_TOKEN_EXPIRY, 0L)
     }
 
-    /**
-     * Check if token is expired
-     */
     fun isTokenExpired(): Boolean {
         val expiry = getTokenExpiry()
         if (expiry == 0L) return true
@@ -128,9 +87,51 @@ object TokenStorage {
         return isExpired
     }
 
-    /**
-     * Check if user is logged in (has valid tokens)
-     */
+    fun isTokenExpiringSoon(thresholdMinutes: Int = 5): Boolean {
+        val expiry = getTokenExpiry()
+        if (expiry == 0L) return true
+
+        val thresholdMillis = thresholdMinutes * 60 * 1000L
+        val timeUntilExpiry = expiry - System.currentTimeMillis()
+
+        val isExpiringSoon = timeUntilExpiry <= thresholdMillis
+
+        if (isExpiringSoon && timeUntilExpiry > 0) {
+            val minutesLeft = timeUntilExpiry / 1000 / 60
+            println("⚠️ Token expires in $minutesLeft minutes")
+        }
+
+        return isExpiringSoon
+    }
+
+    fun getTimeUntilExpiry(): Long {
+        val expiry = getTokenExpiry()
+        if (expiry == 0L) return 0
+
+        val timeRemaining = (expiry - System.currentTimeMillis()) / 1000
+        return maxOf(0, timeRemaining)
+    }
+
+    fun printExpiryInfo() {
+        val expiry = getTokenExpiry()
+        if (expiry == 0L) {
+            println("⚠️ No token expiry information available")
+            return
+        }
+
+        val now = System.currentTimeMillis()
+        val timeRemaining = expiry - now
+
+        if (timeRemaining > 0) {
+            val minutes = timeRemaining / 1000 / 60
+            val seconds = (timeRemaining / 1000) % 60
+            println("⏱️ Token expires in: ${minutes}m ${seconds}s")
+        } else {
+            val expiredAgo = -timeRemaining / 1000 / 60
+            println("❌ Token expired $expiredAgo minutes ago")
+        }
+    }
+
     fun hasValidSession(): Boolean {
         val hasIdToken = getIdToken() != null
         val hasRefreshToken = getRefreshToken() != null
@@ -141,9 +142,6 @@ object TokenStorage {
         return isValid
     }
 
-    /**
-     * Get stored user info if available
-     */
     fun getStoredUser(): StoredUser? {
         val userId = getUserId()
         val email = getUserEmail()
@@ -156,18 +154,12 @@ object TokenStorage {
         }
     }
 
-    /**
-     * Clear all stored tokens (logout)
-     */
     fun clearAll() {
         prefs.clear()
         prefs.flush()
         println("🗑️ Cleared all stored tokens")
     }
 
-    /**
-     * Print current storage state (for debugging)
-     */
     fun printStorageState() {
         println("\n=== Token Storage State ===")
         println("User ID: ${getUserId() ?: "None"}")
@@ -180,9 +172,6 @@ object TokenStorage {
     }
 }
 
-/**
- * Data class for stored user information
- */
 data class StoredUser(
     val uid: String,
     val email: String,

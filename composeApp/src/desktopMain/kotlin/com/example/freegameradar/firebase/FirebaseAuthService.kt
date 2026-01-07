@@ -96,6 +96,87 @@ class FirebaseAuthService {
             Result.failure(e)
         }
     }
+    suspend fun refreshToken(refreshToken: String? = null): Result<RefreshTokenResponse> {
+        return try {
+            val tokenToRefresh = refreshToken ?: TokenStorage.getRefreshToken()
+
+            if (tokenToRefresh == null) {
+                println("❌ No refresh token available")
+                return Result.failure(FirebaseAuthException("No refresh token available"))
+            }
+
+            println("🔄 Refreshing authentication token...")
+
+            val response: HttpResponse = client.post(FirebaseConfig.REFRESH_TOKEN_URL) {
+                contentType(ContentType.Application.Json)
+                setBody(RefreshTokenRequest(refreshToken = tokenToRefresh))
+            }
+
+            if (response.status.isSuccess()) {
+                val tokenResponse = response.body<RefreshTokenResponse>()
+                println("✅ Token refreshed successfully")
+                println("   - New token expires in: ${tokenResponse.expiresIn} seconds")
+
+                // UPDATE STORAGE AUTOMATICALLY
+                TokenStorage.saveIdToken(tokenResponse.idToken)
+                TokenStorage.saveRefreshToken(tokenResponse.refreshToken)
+                TokenStorage.saveTokenExpiry(tokenResponse.expiresIn)
+
+                Result.success(tokenResponse)
+            } else {
+                val errorBody = response.bodyAsText()
+                println("❌ Token refresh failed: ${response.status} - $errorBody")
+
+                // If refresh fails, tokens are invalid - clear them
+                TokenStorage.clearAll()
+
+                try {
+                    val errorResponse = response.body<FirebaseErrorResponse>()
+                    Result.failure(FirebaseAuthException(errorResponse.error.message))
+                } catch (e: Exception) {
+                    Result.failure(FirebaseAuthException("Token refresh failed: ${response.status}"))
+                }
+            }
+        } catch (e: Exception) {
+            println("❌ Token refresh exception: ${e.message}")
+            e.printStackTrace()
+            Result.failure(e)
+        }
+    }
+
+    /**
+     * Refresh token if expired or about to expire (within 5 minutes)
+     * Returns true if refresh was performed successfully, false if not needed
+     */
+    suspend fun refreshTokenIfNeeded(): Result<Boolean> {
+        if (!TokenStorage.isTokenExpiringSoon()) {
+            println("🔍 Token is still valid, no refresh needed")
+            return Result.success(false)
+        }
+
+        println("⚠️ Token is expired or expiring soon, refreshing...")
+        return refreshToken().map { true }
+    }
+
+    /**
+     * Check if user is logged in with valid token
+     * Auto-refreshes if token is expired but refresh token is available
+     */
+    suspend fun isLoggedInWithValidToken(): Boolean {
+        if (!TokenStorage.hasValidSession()) {
+            println("🔍 No valid session found")
+            return false
+        }
+
+        // Try to refresh if needed
+        if (TokenStorage.isTokenExpired()) {
+            println("🔄 Token expired, attempting auto-refresh...")
+            val refreshResult = refreshToken()
+            return refreshResult.isSuccess
+        }
+
+        return true
+    }
 
     /**
      * Sign out - clear stored tokens
@@ -184,50 +265,6 @@ class FirebaseAuthService {
             }
         } catch (e: Exception) {
             println("❌ Account deletion exception: ${e.message}")
-            e.printStackTrace()
-            Result.failure(e)
-        }
-    }
-
-    /**
-     * Refresh ID token using refresh token
-     */
-    suspend fun refreshToken(refreshToken: String? = null): Result<RefreshTokenResponse> {
-        return try {
-            val tokenToRefresh = refreshToken ?: TokenStorage.getRefreshToken()
-
-            if (tokenToRefresh == null) {
-                return Result.failure(FirebaseAuthException("No refresh token available"))
-            }
-
-            println("🔄 Refreshing authentication token")
-
-            val response: HttpResponse = client.post(FirebaseConfig.REFRESH_TOKEN_URL) {
-                contentType(ContentType.Application.Json)
-                setBody(RefreshTokenRequest(refreshToken = tokenToRefresh))
-            }
-
-            if (response.status.isSuccess()) {
-                val tokenResponse = response.body<RefreshTokenResponse>()
-                println("✅ Token refreshed successfully")
-
-                // ADD THIS - Update stored tokens
-                TokenStorage.saveIdToken(tokenResponse.idToken)
-                TokenStorage.saveRefreshToken(tokenResponse.refreshToken)
-                TokenStorage.saveTokenExpiry(tokenResponse.expiresIn)
-
-                Result.success(tokenResponse)
-            } else {
-                val errorBody = response.bodyAsText()
-                println("❌ Token refresh failed: ${response.status} - $errorBody")
-
-                // If refresh fails, clear all tokens
-                TokenStorage.clearAll()
-
-                Result.failure(FirebaseAuthException("Token refresh failed"))
-            }
-        } catch (e: Exception) {
-            println("❌ Token refresh exception: ${e.message}")
             e.printStackTrace()
             Result.failure(e)
         }

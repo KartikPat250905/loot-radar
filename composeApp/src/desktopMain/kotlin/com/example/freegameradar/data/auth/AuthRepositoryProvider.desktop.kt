@@ -25,6 +25,14 @@ class DesktopAuthRepositoryImpl : AuthRepository {
             authStateFlow.value = null
         }
     }
+    
+    /**
+     * Ensure valid token before operations
+     * Auto-refreshes if token is expired
+     */
+    private suspend fun ensureValidToken(): Boolean {
+        return authService.isLoggedInWithValidToken()
+    }
 
     override suspend fun login(email: String, password: String): Result<User> {
         return try {
@@ -75,14 +83,12 @@ class DesktopAuthRepositoryImpl : AuthRepository {
     }
 
     override suspend fun continueAsGuest(): Result<User> {
-        // Desktop: simple local guest user, no Firebase call
         val guestUser = User(
             uid = "guest",
             email = "Guest",
             isAnonymous = true
         )
         authStateFlow.value = guestUser
-        // Clear any Firebase tokens for safety
         TokenStorage.clearAll()
         return Result.success(guestUser)
     }
@@ -103,6 +109,11 @@ class DesktopAuthRepositoryImpl : AuthRepository {
     }
 
     override suspend fun deleteAccount(): Result<Unit> {
+        // Ensure valid token before deletion
+        if (!ensureValidToken()) {
+            return Result.failure(FirebaseAuthException("Session expired, please login again"))
+        }
+        
         val current = authStateFlow.value
         if (current == null || current.isAnonymous) {
             return Result.failure(IllegalStateException("User not logged in or guest."))
@@ -110,7 +121,7 @@ class DesktopAuthRepositoryImpl : AuthRepository {
 
         val token = TokenStorage.getIdToken()
         if (token == null) {
-            return Result.failure(FirebaseAuthException("No ID token available for account deletion"))
+            return Result.failure(FirebaseAuthException("No ID token available"))
         }
 
         val result = authService.deleteAccount(token)
@@ -121,10 +132,8 @@ class DesktopAuthRepositoryImpl : AuthRepository {
     }
 
     override suspend fun linkAccount(email: String, password: String): Result<User> {
-        // Linking anonymous → email/password is more complex with REST;
-        // for now, fail explicitly to avoid confusion.
         return Result.failure(
-            UnsupportedOperationException("Linking accounts is not implemented for Desktop Firebase REST")
+            UnsupportedOperationException("Linking accounts not implemented for Desktop")
         )
     }
 }
