@@ -24,7 +24,6 @@ import com.example.freegameradar.ui.navigation.Screen
 import com.example.freegameradar.ui.theme.ModernDarkTheme
 import com.example.freegameradar.ui.viewmodel.AuthViewModel
 import com.example.freegameradar.ui.viewmodel.NotificationViewModel
-import com.example.freegameradar.ui.viewmodel.SettingsViewModel
 import com.example.freegameradar.ui.viewmodel.SetupViewModel
 import com.example.freegameradar.ui.viewmodel.UserPreferencesViewModel
 import com.example.freegameradar.ui.viewmodel.UserStatsViewModel
@@ -73,9 +72,6 @@ fun App(
                 val userStatsViewModel: UserStatsViewModel = rememberKmpViewModel { 
                     UserStatsViewModel(gameRepository) 
                 }
-                val settingsViewModel: SettingsViewModel = rememberKmpViewModel { 
-                    SettingsViewModel(authRepository) 
-                }
                 val setupViewModel: SetupViewModel = rememberKmpViewModel { 
                     SetupViewModel(userSettingsRepository, authRepository) 
                 }
@@ -111,7 +107,6 @@ fun App(
                                     startDestination = startDestination,
                                     notificationViewModel = notificationViewModel,
                                     userStatsViewModel = userStatsViewModel,
-                                    settingsViewModel = settingsViewModel,
                                     userPreferencesViewModel = userPreferencesViewModel,
                                     setupViewModel = setupViewModel,
                                     onBottomBarVisibilityChange = { isBottomBarVisible = it }
@@ -138,7 +133,6 @@ fun App(
                                 startDestination = startDestination,
                                 notificationViewModel = notificationViewModel,
                                 userStatsViewModel = userStatsViewModel,
-                                settingsViewModel = settingsViewModel,
                                 userPreferencesViewModel = userPreferencesViewModel,
                                 setupViewModel = setupViewModel,
                                 onBottomBarVisibilityChange = { isBottomBarVisible = it }

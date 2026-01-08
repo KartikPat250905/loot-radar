@@ -1,6 +1,5 @@
 package com.example.freegameradar.ui.viewmodel
 
-import com.example.freegameradar.data.GameDatabaseProvider
 import com.example.freegameradar.data.auth.AuthRepository
 import com.example.freegameradar.data.auth.AuthState
 import com.example.freegameradar.data.models.User
@@ -59,25 +58,6 @@ class AuthViewModel(private val authRepository: AuthRepository) : KmpViewModel()
         viewModelScope.launch {
             _authState.value = AuthState.Loading
             authRepository.continueAsGuest()
-        }
-    }
-
-    fun signOut() {
-        viewModelScope.launch {
-            authRepository.signOut()
-            GameDatabaseProvider.clearAllData()
-        }
-    }
-
-    fun deleteAccount() {
-        viewModelScope.launch {
-            _authState.value = AuthState.Loading
-            val result = authRepository.deleteAccount()
-            result.onSuccess {
-                GameDatabaseProvider.clearAllData()
-            }.onFailure {
-                _authState.value = AuthState.Error(it.message ?: "Unknown error during account deletion")
-            }
         }
     }
 }

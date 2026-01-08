@@ -28,17 +28,4 @@ actual class AuthRepositoryImpl : AuthRepository {
     override fun isUserLoggedIn(): Boolean {
         return true
     }
-
-    override suspend fun signOut() {
-        println("Desktop dummy: signing out")
-    }
-
-    override suspend fun deleteAccount(): Result<Unit> {
-        println("Desktop dummy: deleting account")
-        return Result.success(Unit)
-    }
-
-    override suspend fun linkAccount(email: String, password: String): Result<User> {
-        return Result.success(User("desktop-user-id", email, false))
-    }
 }

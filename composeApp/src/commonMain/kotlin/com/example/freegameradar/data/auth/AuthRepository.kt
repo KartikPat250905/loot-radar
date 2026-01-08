@@ -10,7 +10,4 @@ interface AuthRepository {
     suspend fun signInAsGuest(): Result<User>
     fun getAuthStateFlow(): Flow<User?>
     fun isUserLoggedIn(): Boolean
-    suspend fun signOut()
-    suspend fun deleteAccount(): Result<Unit>
-    suspend fun linkAccount(email: String, password: String): Result<User>
 }

@@ -16,7 +16,6 @@ import com.example.freegameradar.ui.screens.SettingsScreen
 import com.example.freegameradar.ui.screens.SetupScreen
 import com.example.freegameradar.ui.screens.StatsScreen
 import com.example.freegameradar.ui.viewmodel.NotificationViewModel
-import com.example.freegameradar.ui.viewmodel.SettingsViewModel
 import com.example.freegameradar.ui.viewmodel.SetupViewModel
 import com.example.freegameradar.ui.viewmodel.UserPreferencesViewModel
 import com.example.freegameradar.ui.viewmodel.UserStatsViewModel
@@ -28,7 +27,6 @@ fun AppNavigation(
     startDestination: String,
     notificationViewModel: NotificationViewModel,
     userStatsViewModel: UserStatsViewModel,
-    settingsViewModel: SettingsViewModel,
     userPreferencesViewModel: UserPreferencesViewModel,
     setupViewModel: SetupViewModel,
     onBottomBarVisibilityChange: (Boolean) -> Unit
@@ -73,7 +71,6 @@ fun AppNavigation(
 
         composable(Screen.Settings.route) {
             SettingsScreen(
-                viewModel = settingsViewModel,
                 userPreferencesViewModel = userPreferencesViewModel,
                 navController = navController,
                 modifier = Modifier.padding(innerPadding)

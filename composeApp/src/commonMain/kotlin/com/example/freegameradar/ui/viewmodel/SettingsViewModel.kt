@@ -29,30 +29,4 @@ class SettingsViewModel(private val authRepository: AuthRepository) : KmpViewMod
             }
             .launchIn(viewModelScope)
     }
-
-    fun signOut() {
-        viewModelScope.launch {
-            authRepository.signOut()
-        }
-    }
-
-    fun deleteAccount(onResult: (Result<Unit>) -> Unit) {
-        viewModelScope.launch {
-            val result = authRepository.deleteAccount()
-            onResult(result)
-        }
-    }
-
-    fun upgradeAccount(email: String, password: String, onResult: (Result<User>) -> Unit) {
-        viewModelScope.launch {
-            val result = authRepository.linkAccount(email, password)
-            result.onSuccess { updatedUser ->
-                _uiState.value = SettingsUiState(
-                    user = updatedUser,
-                    isGuest = updatedUser.isAnonymous
-                )
-            }
-            onResult(result)
-        }
-    }
 }
