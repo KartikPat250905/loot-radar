@@ -37,13 +37,17 @@ class UserPreferencesViewModel(
     }
 
     fun setNotificationsEnabled(enabled: Boolean) {
+        // Optimistic update for the UI
+        val newUiState = _uiState.value.copy(notificationsEnabled = enabled)
+        _uiState.value = newUiState
+
+        // Launch a coroutine to persist the change
         viewModelScope.launch {
-            val currentUiState = _uiState.value
             val newSettings = UserSettings(
-                notificationsEnabled = enabled,
-                preferredGamePlatforms = currentUiState.preferredGamePlatforms,
-                preferredGameTypes = currentUiState.preferredGameTypes,
-                setupComplete = currentUiState.setupComplete
+                notificationsEnabled = newUiState.notificationsEnabled,
+                preferredGamePlatforms = newUiState.preferredGamePlatforms,
+                preferredGameTypes = newUiState.preferredGameTypes,
+                setupComplete = newUiState.setupComplete
             )
             userSettingsRepository.saveSettings(newSettings)
         }
@@ -53,19 +57,29 @@ class UserPreferencesViewModel(
         preferredGamePlatforms: List<String>,
         preferredGameTypes: List<String>
     ) {
+        // Optimistic update for the UI
+        val newUiState = _uiState.value.copy(
+            preferredGamePlatforms = preferredGamePlatforms,
+            preferredGameTypes = preferredGameTypes
+        )
+        _uiState.value = newUiState
+
+        // Launch a coroutine to persist the change
         viewModelScope.launch {
-            val currentUiState = _uiState.value
             val newSettings = UserSettings(
-                notificationsEnabled = currentUiState.notificationsEnabled,
-                preferredGamePlatforms = preferredGamePlatforms,
-                preferredGameTypes = preferredGameTypes,
-                setupComplete = currentUiState.setupComplete
+                notificationsEnabled = newUiState.notificationsEnabled,
+                preferredGamePlatforms = newUiState.preferredGamePlatforms,
+                preferredGameTypes = newUiState.preferredGameTypes,
+                setupComplete = newUiState.setupComplete
             )
             userSettingsRepository.saveSettings(newSettings)
         }
     }
 
     fun disableAllNotifications() {
+        // Optimistic update
+        _uiState.value = _uiState.value.copy(notificationsEnabled = false)
+
         viewModelScope.launch {
             userSettingsRepository.disableAllNotifications()
         }

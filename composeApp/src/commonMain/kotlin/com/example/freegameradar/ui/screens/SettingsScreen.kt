@@ -18,7 +18,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
-import com.example.freegameradar.permissions.rememberPermissionHandler
 import com.example.freegameradar.ui.components.FilterChip
 import com.example.freegameradar.ui.components.settings.SettingsItem
 import com.example.freegameradar.ui.components.settings.SettingsSectionHeader
@@ -34,8 +33,6 @@ fun SettingsScreen(
 ) {
     val preferencesState by userPreferencesViewModel.uiState.collectAsState()
     var showNotificationPreferenceDialog by remember { mutableStateOf(false) }
-
-    val permissionHandler = rememberPermissionHandler()
 
     Column(
         modifier = modifier
@@ -89,15 +86,8 @@ fun SettingsScreen(
                 )
                 Switch(
                     checked = preferencesState.notificationsEnabled,
-                    onCheckedChange = { wantsToEnable ->
-                        userPreferencesViewModel.setNotificationsEnabled(wantsToEnable)
-                        if (wantsToEnable) {
-                            permissionHandler.requestNotificationPermission { isGranted ->
-                                if(!isGranted) {
-                                    userPreferencesViewModel.setNotificationsEnabled(false)
-                                }
-                            }
-                        }
+                    onCheckedChange = { isEnabled ->
+                        userPreferencesViewModel.setNotificationsEnabled(isEnabled)
                     },
                     colors = SwitchDefaults.colors(
                         checkedThumbColor = Color.White,
@@ -141,6 +131,13 @@ fun SettingsScreen(
 
         var selectedPlatforms by remember { mutableStateOf(preferencesState.preferredGamePlatforms) }
         var selectedTypes by remember { mutableStateOf(preferencesState.preferredGameTypes) }
+
+        LaunchedEffect(showNotificationPreferenceDialog) {
+            if (showNotificationPreferenceDialog) {
+                selectedPlatforms = preferencesState.preferredGamePlatforms
+                selectedTypes = preferencesState.preferredGameTypes
+            }
+        }
 
         AlertDialog(
             onDismissRequest = { showNotificationPreferenceDialog = false },

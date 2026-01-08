@@ -15,7 +15,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.freegameradar.permissions.rememberPermissionHandler
 import com.example.freegameradar.ui.components.FilterChip
 import com.example.freegameradar.ui.viewmodel.SetupViewModel
 import kotlinx.coroutines.launch
@@ -26,16 +25,9 @@ fun SetupScreen(
     viewModel: SetupViewModel,
     onNavigateToHome: () -> Unit
 ) {
-    var notificationsEnabled by remember { mutableStateOf(false) }
-    var selectedPlatforms by remember { mutableStateOf(emptyList<String>()) }
-    var selectedTypes by remember { mutableStateOf(emptyList<String>()) }
+    val setupState by viewModel.uiState.collectAsState()
 
-    val permissionHandler = rememberPermissionHandler()
     val scope = rememberCoroutineScope()
-
-    LaunchedEffect(Unit) {
-        notificationsEnabled = permissionHandler.isNotificationPermissionGranted()
-    }
 
     val platforms = listOf(
         "pc", "steam", "epic-games-store", "ubisoft", "gog", "itchio",
@@ -97,14 +89,8 @@ fun SetupScreen(
                     platforms.forEach { platform ->
                         FilterChip(
                             text = platform,
-                            selected = selectedPlatforms.contains(platform),
-                            onClick = {
-                                selectedPlatforms = if (selectedPlatforms.contains(platform)) {
-                                    selectedPlatforms - platform
-                                } else {
-                                    selectedPlatforms + platform
-                                }
-                            }
+                            selected = setupState.preferredGamePlatforms.contains(platform),
+                            onClick = { viewModel.togglePlatform(platform) }
                         )
                     }
                 }
@@ -134,14 +120,8 @@ fun SetupScreen(
                     types.forEach { type ->
                         FilterChip(
                             text = type,
-                            selected = selectedTypes.contains(type),
-                            onClick = {
-                                selectedTypes = if (selectedTypes.contains(type)) {
-                                    selectedTypes - type
-                                } else {
-                                    selectedTypes + type
-                                }
-                            }
+                            selected = setupState.preferredGameTypes.contains(type),
+                            onClick = { viewModel.toggleType(type) }
                         )
                     }
                 }
@@ -169,15 +149,9 @@ fun SetupScreen(
                     color = Color(0xFFE5E7EB)
                 )
                 Switch(
-                    checked = notificationsEnabled,
-                    onCheckedChange = { wantsToEnable ->
-                        if (wantsToEnable) {
-                            permissionHandler.requestNotificationPermission { isGranted ->
-                                notificationsEnabled = isGranted
-                            }
-                        } else {
-                            notificationsEnabled = false
-                        }
+                    checked = setupState.notificationsEnabled,
+                    onCheckedChange = { isEnabled ->
+                        viewModel.setNotificationsEnabled(isEnabled)
                     },
                     colors = SwitchDefaults.colors(
                         checkedThumbColor = Color.White,
@@ -206,11 +180,7 @@ fun SetupScreen(
         Button(
             onClick = {
                 scope.launch {
-                    viewModel.savePreferencesAndCompleteSetup(
-                        notificationsEnabled = notificationsEnabled,
-                        preferredGamePlatforms = selectedPlatforms,
-                        preferredGameTypes = selectedTypes
-                    )
+                    viewModel.completeSetup()
                     onNavigateToHome()
                 }
             },

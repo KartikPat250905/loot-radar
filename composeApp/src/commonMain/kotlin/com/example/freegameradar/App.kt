@@ -73,7 +73,7 @@ fun App(
                     UserStatsViewModel(gameRepository) 
                 }
                 val setupViewModel: SetupViewModel = rememberKmpViewModel { 
-                    SetupViewModel(userSettingsRepository, authRepository) 
+                    SetupViewModel(userSettingsRepository)
                 }
                 val userPreferencesViewModel: UserPreferencesViewModel = rememberKmpViewModel { 
                     UserPreferencesViewModel(userSettingsRepository) 
