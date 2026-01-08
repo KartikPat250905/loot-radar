@@ -29,4 +29,10 @@ object FirebaseConfig {
     
     // Token refresh grant type
     const val REFRESH_GRANT_TYPE = "refresh_token"
+
+    // ADD THESE - Firestore REST API endpoints
+    const val FIRESTORE_BASE_URL = "https://firestore.googleapis.com/v1/projects/$PROJECT_ID/databases/(default)/documents"
+
+    fun getUserDocumentUrl(userId: String) = "$FIRESTORE_BASE_URL/users/$userId"
+    fun getCollectionUrl(collection: String) = "$FIRESTORE_BASE_URL/$collection"
 }

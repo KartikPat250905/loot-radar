@@ -19,16 +19,10 @@ import kotlinx.coroutines.launch
 import java.lang.Thread
 
 fun main() {
-    TokenStorage.clearAll() // resets everything
 
     Thread.setDefaultUncaughtExceptionHandler { thread, throwable ->
         println("Uncaught exception in thread '${thread.name}':")
         throwable.printStackTrace()
-    }
-
-    // Phase 11 Test: Token refresh
-    CoroutineScope(Dispatchers.IO).launch {
-        runAllTokenRefreshTests()
     }
 
     try {
