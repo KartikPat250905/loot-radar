@@ -40,7 +40,7 @@ fun DesktopStatsScreen(viewModel: UserStatsViewModel, modifier: Modifier = Modif
     ) {
         // Header
         Text(
-            text = "Your Game Statistics",
+            text = "Live Game Statistics",
             fontSize = 36.sp,
             fontWeight = FontWeight.ExtraBold,
             color = Color(0xFFE5E7EB),
