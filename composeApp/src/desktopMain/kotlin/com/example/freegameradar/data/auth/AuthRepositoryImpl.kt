@@ -13,11 +13,6 @@ actual class AuthRepositoryImpl : AuthRepository {
         return Result.success(User("desktop-user-id", email, false))
     }
 
-    override suspend fun sendPasswordResetEmail(email: String): Result<Unit> {
-        println("Desktop dummy: sending password reset to $email")
-        return Result.success(Unit)
-    }
-
     override suspend fun continueAsGuest(): Result<User> {
         return Result.success(User("desktop-guest-id", "Guest", true))
     }

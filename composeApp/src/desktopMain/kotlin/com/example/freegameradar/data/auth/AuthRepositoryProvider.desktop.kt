@@ -78,10 +78,6 @@ class DesktopAuthRepositoryImpl : AuthRepository {
         }
     }
 
-    override suspend fun sendPasswordResetEmail(email: String): Result<Unit> {
-        return authService.sendPasswordResetEmail(email)
-    }
-
     override suspend fun continueAsGuest(): Result<User> {
         val guestUser = User(
             uid = "guest",

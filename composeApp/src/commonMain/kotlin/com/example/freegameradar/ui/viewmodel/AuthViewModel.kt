@@ -55,21 +55,6 @@ class AuthViewModel(private val authRepository: AuthRepository) : KmpViewModel()
         }
     }
 
-    fun sendPasswordResetEmail(email: String) {
-        viewModelScope.launch {
-            _authState.value = AuthState.Loading
-            val result = authRepository.sendPasswordResetEmail(email)
-            result.onSuccess {
-                _authState.value = AuthState.Success(
-                    "Password reset email sent! Check your inbox."
-                )
-            }.onFailure {
-                val userFriendlyError = FirebaseErrorMapper.mapException(it)
-                _authState.value = AuthState.Error(userFriendlyError)
-            }
-        }
-    }
-
     fun continueAsGuest() {
         viewModelScope.launch {
             _authState.value = AuthState.Loading
