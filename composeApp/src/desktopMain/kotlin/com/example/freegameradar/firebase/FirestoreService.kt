@@ -33,8 +33,7 @@ class FirestoreService {
                 response.status.isSuccess() -> {
                     val firestoreDoc = response.body<FirestoreDocument>()
                     val userDoc = firestoreDoc.toUserDocument()
-                    println("✅ Firestore document fetched: ${userDoc.claimedGameIds.size} games, " +
-                           "${userDoc.preferredGamePlatforms.size} platforms")
+                    println("✅ Firestore document fetched: ${userDoc.preferredGamePlatforms.size} platforms")
                     Result.success(userDoc)
                 }
                 response.status == HttpStatusCode.NotFound -> {

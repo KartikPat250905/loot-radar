@@ -66,12 +66,12 @@ fun App(
                 startRoute ?: if (userSettings?.setupComplete == true) Screen.Home.route else Screen.Setup.route
             }
 
-            AppContainer { gameRepository, notificationRepository, userStatsRepository ->
+            AppContainer { gameRepository, notificationRepository ->
                 val notificationViewModel: NotificationViewModel = rememberKmpViewModel { 
                     NotificationViewModel(notificationRepository) 
                 }
                 val userStatsViewModel: UserStatsViewModel = rememberKmpViewModel { 
-                    UserStatsViewModel(userStatsRepository, gameRepository) 
+                    UserStatsViewModel(gameRepository) 
                 }
                 val settingsViewModel: SettingsViewModel = rememberKmpViewModel { 
                     SettingsViewModel(authRepository) 
@@ -86,7 +86,6 @@ fun App(
                 AuthGate(authViewModel = authViewModel) {
                     LaunchedEffect(currentUser) {
                         if (currentUser != null) {
-                            userStatsViewModel.syncClaimedValue()
                             userSettingsRepository.syncUserSettings()
                         }
                     }

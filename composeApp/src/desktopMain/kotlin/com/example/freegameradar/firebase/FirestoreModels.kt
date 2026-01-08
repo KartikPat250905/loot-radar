@@ -36,18 +36,16 @@ data class MapValue(
 
 /**
  * User document model matching Android Firestore structure
- * Fields: claimedGameIds, notificationTokens, notificationsEnabled, 
- *         preferredGamePlatforms, preferredGameTypes, setupComplete, totalClaimedValue
+ * Fields: notificationTokens, notificationsEnabled, 
+ *         preferredGamePlatforms, preferredGameTypes, setupComplete
  */
 @Serializable
 data class UserDocument(
-    val claimedGameIds: List<Long> = emptyList(),
     val notificationTokens: List<String> = emptyList(), // Desktop won't use FCM
     val notificationsEnabled: Boolean = false,
     val preferredGamePlatforms: List<String> = emptyList(),
     val preferredGameTypes: List<String> = emptyList(),
-    val setupComplete: Boolean = false,
-    val totalClaimedValue: Double = 0.0
+    val setupComplete: Boolean = false
 )
 
 /**
@@ -56,11 +54,6 @@ data class UserDocument(
 fun UserDocument.toFirestoreDocument(): FirestoreDocument {
     return FirestoreDocument(
         fields = mapOf(
-            "claimedGameIds" to FirestoreValue(
-                arrayValue = ArrayValue(
-                    values = claimedGameIds.map { FirestoreValue(integerValue = it.toString()) }
-                )
-            ),
             "notificationTokens" to FirestoreValue(
                 arrayValue = ArrayValue(
                     values = notificationTokens.map { FirestoreValue(stringValue = it) }
@@ -77,8 +70,7 @@ fun UserDocument.toFirestoreDocument(): FirestoreDocument {
                     values = preferredGameTypes.map { FirestoreValue(stringValue = it) }
                 )
             ),
-            "setupComplete" to FirestoreValue(booleanValue = setupComplete),
-            "totalClaimedValue" to FirestoreValue(doubleValue = totalClaimedValue)
+            "setupComplete" to FirestoreValue(booleanValue = setupComplete)
         )
     )
 }
@@ -90,8 +82,6 @@ fun FirestoreDocument.toUserDocument(): UserDocument {
     val fields = this.fields ?: return UserDocument()
     
     return UserDocument(
-        claimedGameIds = fields["claimedGameIds"]?.arrayValue?.values
-            ?.mapNotNull { it.integerValue?.toLongOrNull() } ?: emptyList(),
         notificationTokens = fields["notificationTokens"]?.arrayValue?.values
             ?.mapNotNull { it.stringValue } ?: emptyList(),
         notificationsEnabled = fields["notificationsEnabled"]?.booleanValue ?: false,
@@ -99,7 +89,6 @@ fun FirestoreDocument.toUserDocument(): UserDocument {
             ?.mapNotNull { it.stringValue } ?: emptyList(),
         preferredGameTypes = fields["preferredGameTypes"]?.arrayValue?.values
             ?.mapNotNull { it.stringValue } ?: emptyList(),
-        setupComplete = fields["setupComplete"]?.booleanValue ?: false,
-        totalClaimedValue = fields["totalClaimedValue"]?.doubleValue ?: 0.0
+        setupComplete = fields["setupComplete"]?.booleanValue ?: false
     )
 }

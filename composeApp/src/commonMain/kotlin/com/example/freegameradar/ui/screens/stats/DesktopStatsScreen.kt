@@ -16,12 +16,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.freegameradar.ui.components.PlatformStatsCard
-import com.example.freegameradar.ui.components.TotalClaimedBar
 import com.example.freegameradar.ui.viewmodel.UserStatsViewModel
 
 @Composable
 fun DesktopStatsScreen(viewModel: UserStatsViewModel, modifier: Modifier = Modifier) {
-    val claimedValue by viewModel.claimedValue.collectAsState()
     val platformStats by viewModel.platformStats.collectAsState()
 
     Column(
@@ -50,27 +48,14 @@ fun DesktopStatsScreen(viewModel: UserStatsViewModel, modifier: Modifier = Modif
             modifier = Modifier.padding(bottom = 32.dp)
         )
 
-        // Side-by-side layout for desktop
-        Row(
+        // Center the platform stats
+        Box(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 40.dp),
-            horizontalArrangement = Arrangement.spacedBy(32.dp),
-            verticalAlignment = Alignment.Top
+            contentAlignment = Alignment.Center
         ) {
-            // Left side - Total Claimed Value (larger)
-            Box(
-                modifier = Modifier.weight(1.2f)
-            ) {
-                TotalClaimedBar(claimedValue = claimedValue)
-            }
-
-            // Right side - Platform Stats (smaller)
-            Box(
-                modifier = Modifier.weight(1f)
-            ) {
-                PlatformStatsCard(platformStats = platformStats)
-            }
+            PlatformStatsCard(platformStats = platformStats)
         }
 
         Spacer(modifier = Modifier.height(60.dp))

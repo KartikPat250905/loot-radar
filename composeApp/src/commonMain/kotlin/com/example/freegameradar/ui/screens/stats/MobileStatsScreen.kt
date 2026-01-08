@@ -16,12 +16,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.freegameradar.ui.components.PlatformStatsCard
-import com.example.freegameradar.ui.components.TotalClaimedBar
 import com.example.freegameradar.ui.viewmodel.UserStatsViewModel
 
 @Composable
 fun MobileStatsScreen(viewModel: UserStatsViewModel, modifier: Modifier = Modifier) {
-    val claimedValue by viewModel.claimedValue.collectAsState()
     val platformStats by viewModel.platformStats.collectAsState()
 
     Column(
@@ -48,10 +46,6 @@ fun MobileStatsScreen(viewModel: UserStatsViewModel, modifier: Modifier = Modifi
             color = Color(0xFFE5E7EB),
             modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
         )
-
-        Spacer(modifier = Modifier.height(8.dp))
-
-        TotalClaimedBar(claimedValue = claimedValue)
 
         Spacer(modifier = Modifier.height(16.dp))
 

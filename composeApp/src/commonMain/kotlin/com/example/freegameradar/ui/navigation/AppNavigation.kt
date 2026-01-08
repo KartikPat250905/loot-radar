@@ -92,7 +92,6 @@ fun AppNavigation(
             GameDetailScreen(
                 navController = navController,
                 gameId = gameId,
-                userStatsViewModel = userStatsViewModel,
                 modifier = Modifier.padding(innerPadding)
             )
         }
