@@ -42,8 +42,8 @@ fun App(
         var isBottomBarVisible by remember { mutableStateOf(true) }
 
         val authRepository = remember { AuthRepositoryImpl() }
-        val userSettingsRepository: UserSettingsRepository = remember(authRepository) { 
-            UserSettingsRepositoryImpl(authRepository) 
+        val userSettingsRepository: UserSettingsRepository = remember(authRepository) {
+            UserSettingsRepositoryImpl(authRepository)
         }
 
         val currentUser by authViewModel.currentUser.collectAsState()
@@ -66,17 +66,25 @@ fun App(
             }
 
             AppContainer { gameRepository, notificationRepository ->
-                val notificationViewModel: NotificationViewModel = rememberKmpViewModel { 
-                    NotificationViewModel(notificationRepository) 
+                val notificationViewModel: NotificationViewModel = rememberKmpViewModel(
+                    key = "notification"
+                ) {
+                    NotificationViewModel(notificationRepository)
                 }
-                val userStatsViewModel: UserStatsViewModel = rememberKmpViewModel { 
-                    UserStatsViewModel(gameRepository) 
+                val userStatsViewModel: UserStatsViewModel = rememberKmpViewModel(
+                    key = "userStats"
+                ) {
+                    UserStatsViewModel(gameRepository)
                 }
-                val setupViewModel: SetupViewModel = rememberKmpViewModel { 
+                val setupViewModel: SetupViewModel = rememberKmpViewModel(
+                    key = "setup"
+                ) {
                     SetupViewModel(userSettingsRepository)
                 }
-                val userPreferencesViewModel: UserPreferencesViewModel = rememberKmpViewModel { 
-                    UserPreferencesViewModel(userSettingsRepository) 
+                val userPreferencesViewModel: UserPreferencesViewModel = rememberKmpViewModel(
+                    key = "userPreferences"
+                ) {
+                    UserPreferencesViewModel(userSettingsRepository)
                 }
 
                 AuthGate(authViewModel = authViewModel) {
@@ -93,7 +101,7 @@ fun App(
                             if (currentRoute != Screen.Setup.route) {
                                 AdaptiveNavigationBar(navController)
                             }
-                            
+
                             Scaffold(
                                 topBar = {
                                     if (currentRoute != Screen.Setup.route) {

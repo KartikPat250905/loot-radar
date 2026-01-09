@@ -33,65 +33,70 @@ kotlin {
     }
 
     sourceSets {
-        androidMain.dependencies {
-            implementation(compose.preview)
-            implementation(libs.androidx.activity.compose)
-            implementation(libs.ktor.client.okhttp)
-            implementation(kotlin("reflect"))
-            implementation(libs.sqldelight.android.driver)
+        val commonMain by getting {
+            dependencies {
+                implementation(compose.runtime)
+                implementation(compose.foundation)
+                implementation(compose.material3)
+                implementation(compose.ui)
+                implementation(compose.components.resources)
+                implementation(compose.components.uiToolingPreview)
+                implementation(compose.materialIconsExtended)
 
-            // Coil for Android
-            implementation(libs.coil.compose)
-            implementation(libs.coil.network.ktor)
+                // Multiplatform Lifecycle and Navigation
+                implementation("org.jetbrains.androidx.lifecycle:lifecycle-viewmodel-compose:2.8.0")
+                implementation("org.jetbrains.androidx.navigation:navigation-compose:2.8.0-alpha10")
 
-            // Vico for Android
-            implementation(libs.vico.compose)
-            implementation(libs.vico.compose.m3)
-            implementation(libs.vico.core)
+                // Ktor - Already present
+                implementation(libs.ktor.client.core)
+                implementation(libs.ktor.client.content.negotiation)
+                implementation(libs.ktor.serialization.kotlinx.json)
 
-            // Firebase Android SDK
-            implementation(platform("com.google.firebase:firebase-bom:33.1.0"))
-            implementation(platform("io.opentelemetry:opentelemetry-bom:1.18.0"))
-            implementation("com.google.firebase:firebase-auth-ktx")
-            implementation("com.google.firebase:firebase-analytics")
-            implementation(libs.firebase.firestore.ktx)
-            implementation(libs.firebase.messaging.ktx)
-            implementation(libs.kotlinx.coroutines.play.services)
-            implementation("androidx.compose.ui:ui-tooling-preview")
+                // ADD THIS - Kotlinx Serialization for JSON parsing
+                implementation(libs.kotlinx.serialization.json)
+
+                // ADD THIS - Coroutines core (if not implicitly included)
+                implementation(libs.kotlinx.coroutines.core)
+
+                implementation(libs.kotlinx.datetime)
+                implementation(libs.sqldelight.runtime)
+                implementation(libs.sqldelight.coroutines.extensions)
+                implementation(libs.multiplatform.settings)
+                implementation(libs.multiplatform.settings.coroutines)
+            }
         }
+        val androidMain by getting {
+            dependsOn(commonMain)
+            dependencies {
+                implementation(compose.preview)
+                implementation(libs.androidx.activity.compose)
+                implementation(libs.ktor.client.okhttp)
+                implementation(kotlin("reflect"))
+                implementation(libs.sqldelight.android.driver)
 
-        commonMain.dependencies {
-            implementation(compose.runtime)
-            implementation(compose.foundation)
-            implementation(compose.material3)
-            implementation(compose.ui)
-            implementation(compose.components.resources)
-            implementation(compose.components.uiToolingPreview)
-            implementation(compose.materialIconsExtended)
+                // Coil for Android
+                implementation(libs.coil.compose)
+                implementation(libs.coil.network.ktor)
 
-            // Multiplatform Lifecycle and Navigation
-            implementation("org.jetbrains.androidx.lifecycle:lifecycle-viewmodel-compose:2.8.0")
-            implementation("org.jetbrains.androidx.navigation:navigation-compose:2.8.0-alpha10")
+                // Vico for Android
+                implementation(libs.vico.compose)
+                implementation(libs.vico.compose.m3)
+                implementation(libs.vico.core)
 
-            // Ktor - Already present
-            implementation(libs.ktor.client.core)
-            implementation(libs.ktor.client.content.negotiation)
-            implementation(libs.ktor.serialization.kotlinx.json)
-
-            // ADD THIS - Kotlinx Serialization for JSON parsing
-            implementation(libs.kotlinx.serialization.json)
-
-            // ADD THIS - Coroutines core (if not implicitly included)
-            implementation(libs.kotlinx.coroutines.core)
-
-            implementation(libs.kotlinx.datetime)
-            implementation(libs.sqldelight.runtime)
-            implementation(libs.sqldelight.coroutines.extensions)
-            implementation(libs.multiplatform.settings)
-            implementation(libs.multiplatform.settings.coroutines)
+                // Firebase Android SDK
+                implementation(platform("com.google.firebase:firebase-bom:33.1.0"))
+                implementation(platform("io.opentelemetry:opentelemetry-bom:1.18.0"))
+                implementation("com.google.firebase:firebase-auth-ktx")
+                implementation("com.google.firebase:firebase-analytics")
+                implementation(libs.firebase.firestore.ktx)
+                implementation(libs.firebase.messaging.ktx)
+                implementation(libs.kotlinx.coroutines.play.services)
+                implementation("androidx.compose.ui:ui-tooling-preview")
+            }
         }
 
         val desktopMain by getting {
+            dependsOn(commonMain)
             dependencies {
                 implementation(compose.desktop.currentOs)
                 implementation(libs.ktor.client.okhttp)

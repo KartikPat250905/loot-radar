@@ -11,6 +11,9 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.core.content.ContextCompat
+import coil3.ImageLoader
+import coil3.compose.setSingletonImageLoaderFactory
+import com.example.freegameradar.core.image.AppImageLoader
 import com.example.freegameradar.data.auth.AuthRepositoryImpl
 import com.example.freegameradar.data.repository.UserSettingsRepositoryImpl
 import com.example.freegameradar.ui.theme.ModernDarkTheme
@@ -39,6 +42,11 @@ class MainActivity : ComponentActivity() {
         val startRoute = intent.getStringExtra("route")
 
         setContent {
+            // ✅ ADD: Setup Coil ImageLoader in MainActivity
+            setSingletonImageLoaderFactory { context ->
+                AppImageLoader.get(context)
+            }
+
             ModernDarkTheme {
                 val currentUser by authViewModel.currentUser.collectAsState()
 

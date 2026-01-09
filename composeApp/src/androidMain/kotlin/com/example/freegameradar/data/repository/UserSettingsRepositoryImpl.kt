@@ -26,12 +26,17 @@ actual class UserSettingsRepositoryImpl actual constructor(
     private val authRepository: AuthRepository
 ) : UserSettingsRepository {
 
-    private val db = GameDatabaseProvider.getDatabase().user_settingsQueries
+    private val db by lazy {
+        GameDatabaseProvider.getDatabase().user_settingsQueries
+    }
 
     override fun getSettings(): Flow<UserSettings> = authRepository.getAuthStateFlow().flatMapLatest { user ->
         if (user == null) {
             // Unauthenticated: Provide settings from the local cache with notifications off by default.
-            db.getSettings().asFlow().mapToOneOrDefault(User_settings(0, 0L, "", ""), Dispatchers.IO).map { local ->
+            db.getSettings().asFlow().mapToOneOrDefault(
+                User_settings(0, 0L, "", ""),
+                Dispatchers.IO
+            ).map { local ->
                 UserSettings(
                     notificationsEnabled = local.notifications_enabled == 1L,
                     preferredGamePlatforms = local.preferred_game_platforms.split(',').filter { it.isNotEmpty() },

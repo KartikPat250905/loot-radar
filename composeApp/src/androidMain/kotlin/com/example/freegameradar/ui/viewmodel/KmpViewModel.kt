@@ -4,18 +4,26 @@ import androidx.compose.runtime.Composable
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.lifecycle.viewModelScope as androidViewModelScope
+import kotlinx.coroutines.CoroutineScope
+
+// ✅ Android: actual class extends ViewModel
+actual abstract class KmpViewModel : ViewModel() {
+    actual val viewModelScope: CoroutineScope
+        get() = androidViewModelScope
+}
 
 @Composable
 actual fun <T : KmpViewModel> rememberKmpViewModel(key: Any?, factory: () -> T): T {
-    return viewModel(modelClass = factory.toModelClass(), factory = object : ViewModelProvider.Factory {
-        override fun <T : ViewModel> create(modelClass: Class<T>): T {
-            return factory() as T
+    val viewModel = viewModel<ViewModel>(
+        key = key?.toString(),
+        factory = object : ViewModelProvider.Factory {
+            override fun <VM : ViewModel> create(modelClass: Class<VM>): VM {
+                @Suppress("UNCHECKED_CAST")
+                return factory() as VM
+            }
         }
-    })
-}
-
-private fun <T> (() -> T).toModelClass(): Class<T> {
-    return javaClass.declaredFields
-        .firstOrNull { it.name == "INSTANCE" }?.get(null)?.javaClass as? Class<T>
-        ?: error("Could not find model class for factory $this")
+    )
+    @Suppress("UNCHECKED_CAST")
+    return viewModel as T
 }
