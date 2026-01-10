@@ -38,24 +38,18 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import com.example.freegameradar.ui.navigation.Screen
+import com.example.freegameradar.core.Platform  // ✅ ADD THIS IMPORT at top
 
 @Composable
 fun AdaptiveNavigationBar(navController: NavController) {
-    // Detect platform
-    val isDesktop = remember {
-        System.getProperty("os.name")?.let { os ->
-            os.contains("Windows", ignoreCase = true) ||
-                    os.contains("Mac", ignoreCase = true) ||
-                    os.contains("Linux", ignoreCase = true)
-        } ?: false
-    }
-
-    if (isDesktop) {
+    // ✅ Use Platform.isDesktop instead of System.getProperty
+    if (Platform.isDesktop) {
         DesktopNavigationRail(navController)
     } else {
         MobileBottomNavBar(navController)
     }
 }
+
 
 // Mobile Bottom Navigation
 @Composable

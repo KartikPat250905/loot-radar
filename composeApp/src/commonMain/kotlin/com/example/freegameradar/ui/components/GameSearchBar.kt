@@ -18,6 +18,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import com.example.freegameradar.core.Platform
 
 @Composable
 fun GameSearchBar(
@@ -25,15 +26,7 @@ fun GameSearchBar(
     onTextChange: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val isDesktop = remember {
-        System.getProperty("os.name")?.let { os ->
-            os.contains("Windows", ignoreCase = true) ||
-                    os.contains("Mac", ignoreCase = true) ||
-                    os.contains("Linux", ignoreCase = true)
-        } ?: false
-    }
-
-    if (isDesktop) {
+    if (Platform.isDesktop) {
         DesktopGameSearchBar(text, onTextChange, modifier)
     } else {
         MobileGameSearchBar(text, onTextChange, modifier)

@@ -12,6 +12,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import com.example.freegameradar.core.Platform
 import com.example.freegameradar.data.auth.AuthRepositoryImpl
 import com.example.freegameradar.data.repository.UserSettingsRepository
 import com.example.freegameradar.data.repository.UserSettingsRepositoryImpl
@@ -36,6 +37,12 @@ fun App(
     startRoute: String? = null
 ) {
     ModernDarkTheme {
+        // ✅ DEBUG: Check platform detection
+        LaunchedEffect(Unit) {
+            println("🔍 DEBUG: Platform.isDesktop = ${Platform.isDesktop}")
+            println("🔍 DEBUG: Platform.isAndroid = ${Platform.isAndroid}")
+        }
+        
         val navController = rememberNavController()
         val navBackStackEntry by navController.currentBackStackEntryAsState()
         val currentRoute = navBackStackEntry?.destination?.route
@@ -49,14 +56,7 @@ fun App(
         val currentUser by authViewModel.currentUser.collectAsState()
         val userSettings by userSettingsRepository.getSettings().collectAsState(initial = null)
 
-        // Detect if desktop
-        val isDesktop = remember {
-            System.getProperty("os.name")?.let { os ->
-                os.contains("Windows", ignoreCase = true) ||
-                os.contains("Mac", ignoreCase = true) ||
-                os.contains("Linux", ignoreCase = true)
-            } ?: false
-        }
+        val isDesktop = Platform.isDesktop
 
         if (userSettings == null) {
             AppLoadingScreen()

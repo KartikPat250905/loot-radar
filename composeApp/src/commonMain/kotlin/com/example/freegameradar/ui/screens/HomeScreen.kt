@@ -42,6 +42,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
+import com.example.freegameradar.core.Platform
 import com.example.freegameradar.data.models.GameDto
 import com.example.freegameradar.data.state.DataSource
 import com.example.freegameradar.ui.components.AppLoadingScreen
@@ -71,11 +72,7 @@ fun HomeScreen(
     val gridState = rememberLazyGridState()
 
     // Detect if running on Desktop
-    val isDesktop = remember {
-        System.getProperty("os.name")?.contains("Windows", ignoreCase = true) == true ||
-                System.getProperty("os.name")?.contains("Mac", ignoreCase = true) == true ||
-                System.getProperty("os.name")?.contains("Linux", ignoreCase = true) == true
-    }
+    val isDesktop = Platform.isDesktop
 
     var isVisible by remember { mutableStateOf(true) }
 
@@ -239,8 +236,9 @@ fun HomeScreen(
                 }
 
                 else -> {
+                    val columns = if (isDesktop) GridCells.Adaptive(minSize = 280.dp) else GridCells.Fixed(2)
                     LazyVerticalGrid(
-                        columns = GridCells.Adaptive(minSize = 280.dp),
+                        columns = columns,
                         state = gridState,
                         contentPadding = PaddingValues(16.dp),
                         horizontalArrangement = Arrangement.spacedBy(12.dp),

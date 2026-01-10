@@ -17,6 +17,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.freegameradar.core.Platform
 import com.example.freegameradar.ui.viewmodel.GameTypeFilter
 
 @Composable
@@ -24,15 +25,7 @@ fun GameTypeFilterTabs(
     selectedFilter: GameTypeFilter,
     onFilterSelected: (GameTypeFilter) -> Unit
 ) {
-    val isDesktop = remember {
-        System.getProperty("os.name")?.let { os ->
-            os.contains("Windows", ignoreCase = true) ||
-                    os.contains("Mac", ignoreCase = true) ||
-                    os.contains("Linux", ignoreCase = true)
-        } ?: false
-    }
-
-    if (isDesktop) {
+    if (Platform.isDesktop) {
         DesktopGameTypeFilterTabs(selectedFilter, onFilterSelected)
     } else {
         MobileGameTypeFilterTabs(selectedFilter, onFilterSelected)

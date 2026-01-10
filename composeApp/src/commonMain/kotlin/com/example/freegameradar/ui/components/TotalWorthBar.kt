@@ -17,6 +17,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.freegameradar.core.Platform
 import com.example.freegameradar.data.models.GameDto
 import com.example.freegameradar.data.state.DataSource
 import kotlin.math.round
@@ -26,15 +27,7 @@ fun TotalWorthBar(
     games: List<GameDto>,
     dataSource: DataSource
 ) {
-    val isDesktop = remember {
-        System.getProperty("os.name")?.let { os ->
-            os.contains("Windows", ignoreCase = true) ||
-                    os.contains("Mac", ignoreCase = true) ||
-                    os.contains("Linux", ignoreCase = true)
-        } ?: false
-    }
-
-    if (isDesktop) {
+    if (Platform.isDesktop) {
         DesktopTotalWorthBar(games, dataSource)
     } else {
         MobileTotalWorthBar(games, dataSource)
