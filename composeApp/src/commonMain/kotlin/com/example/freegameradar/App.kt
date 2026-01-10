@@ -14,6 +14,8 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.example.freegameradar.core.Platform
 import com.example.freegameradar.data.auth.AuthRepositoryImpl
+import com.example.freegameradar.data.remote.ApiService
+import com.example.freegameradar.data.repository.GameRepository
 import com.example.freegameradar.data.repository.UserSettingsRepository
 import com.example.freegameradar.data.repository.UserSettingsRepositoryImpl
 import com.example.freegameradar.ui.auth.AuthGate
@@ -42,7 +44,7 @@ fun App(
             println("🔍 DEBUG: Platform.isDesktop = ${Platform.isDesktop}")
             println("🔍 DEBUG: Platform.isAndroid = ${Platform.isAndroid}")
         }
-        
+
         val navController = rememberNavController()
         val navBackStackEntry by navController.currentBackStackEntryAsState()
         val currentRoute = navBackStackEntry?.destination?.route

@@ -1,15 +1,19 @@
 package com.example.freegameradar.data.repository
 
+import app.cash.sqldelight.coroutines.asFlow
+import app.cash.sqldelight.coroutines.mapToList
+import app.cash.sqldelight.coroutines.mapToOneOrNull
 import com.example.freegameradar.data.GameDatabaseProvider
 import com.example.freegameradar.data.mappers.toDto
 import com.example.freegameradar.data.models.GameDto
 import com.example.freegameradar.data.remote.ApiService
 import com.example.freegameradar.data.state.DataSource
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.flow
-
+import kotlinx.coroutines.flow.map
 
 class GameRepository(
     private val api: ApiService
@@ -63,4 +67,10 @@ class GameRepository(
         }
     }
 
+    fun getGameById(id: Long): Flow<GameDto?> {
+        return database.gameQueries.selectById(id)
+            .asFlow()
+            .mapToOneOrNull(Dispatchers.IO)
+            .map { it?.toDto() }
+    }
 }

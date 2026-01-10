@@ -1,4 +1,3 @@
-
 package com.example.freegameradar.ui.screens
 
 import androidx.compose.foundation.layout.*
@@ -24,6 +23,7 @@ import com.example.freegameradar.ui.components.BackButton
 import com.example.freegameradar.ui.components.GameWorth
 import com.example.freegameradar.ui.components.RemoteImage
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.isActive
 import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
@@ -42,10 +42,9 @@ fun GameDetailScreen(
     val uriHandler = LocalUriHandler.current
     var timeRemaining by remember { mutableStateOf<String?>(null) }
 
-    // Load selected game based on ID
     LaunchedEffect(gameId) {
-        repository.getFreeGames().collect { list ->
-            game = list.find { it.id == gameId }
+        if (gameId != null) {
+            game = repository.getGameById(gameId).firstOrNull()
         }
     }
 
@@ -203,7 +202,7 @@ fun GameDetailScreen(
                                 .fillMaxWidth()
                                 .height(52.dp)
                         ) {
-                            Text("🎁 Claim Game")
+                            Text("🎁 Get Game")
                         }
                     }
 

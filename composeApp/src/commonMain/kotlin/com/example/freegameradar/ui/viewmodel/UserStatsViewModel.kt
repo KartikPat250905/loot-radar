@@ -29,11 +29,8 @@ class UserStatsViewModel(
             GameTypeFilter.LOOT -> allGames.filter { it.type?.lowercase() == "early access" }
         }.distinctBy { it.id }
 
-        var totalWorth = 0.0
-
-        filteredGames.forEach { game ->
-            val worth = game.worth?.replace("$", "")?.replace("N/A", "0")?.toDoubleOrNull() ?: 0.0
-            totalWorth += worth
+        val totalWorth = filteredGames.sumOf {
+            it.worth?.replace("$", "")?.replace("N/A", "0")?.toDoubleOrNull() ?: 0.0
         }
 
         FilteredStats(
@@ -56,7 +53,6 @@ class UserStatsViewModel(
 
             baseGames.forEach { game ->
                 val worth = game.worth?.replace("$", "")?.replace("N/A", "0")?.toDoubleOrNull() ?: 0.0
-
                 val mainPlatform = extractMainPlatform(game.platforms ?: "Unknown")
                 platformCounts.getOrPut(mainPlatform) { mutableListOf() }.add(worth)
             }
@@ -74,6 +70,9 @@ class UserStatsViewModel(
             started = SharingStarted.WhileSubscribed(5000),
             initialValue = emptyList()
         )
+
+    // Placeholder value as requested
+    val totalClaimedValue: StateFlow<Float> = MutableStateFlow(0f)
 
     private fun extractMainPlatform(platformString: String): String {
         val lower = platformString.lowercase()
