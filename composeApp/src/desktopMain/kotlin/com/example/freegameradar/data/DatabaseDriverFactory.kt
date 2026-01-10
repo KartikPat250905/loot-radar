@@ -12,7 +12,6 @@ actual class DatabaseDriverFactory {
 
         val driver = JdbcSqliteDriver("jdbc:sqlite:${dbFile.absolutePath}")
 
-        // Only create schema if tables don't exist yet
         try {
             GameDatabase.Schema.create(driver)
             println("Database schema created successfully")

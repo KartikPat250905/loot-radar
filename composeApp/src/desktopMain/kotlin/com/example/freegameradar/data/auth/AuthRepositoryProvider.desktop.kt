@@ -13,7 +13,6 @@ class DesktopAuthRepositoryImpl : AuthRepository {
     private val authStateFlow = MutableStateFlow<User?>(null)
 
     init {
-        // On startup, try to restore user from TokenStorage
         val stored = TokenStorage.getStoredUser()
         if (stored != null && TokenStorage.hasValidSession()) {
             authStateFlow.value = User(
@@ -25,11 +24,7 @@ class DesktopAuthRepositoryImpl : AuthRepository {
             authStateFlow.value = null
         }
     }
-    
-    /**
-     * Ensure valid token before operations
-     * Auto-refreshes if token is expired
-     */
+
     private suspend fun ensureValidToken(): Boolean {
         return authService.isLoggedInWithValidToken()
     }

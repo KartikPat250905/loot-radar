@@ -2,10 +2,6 @@ package com.example.freegameradar.firebase
 
 import kotlinx.serialization.Serializable
 
-/**
- * Firestore REST API document structure
- * Docs: https://firebase.google.com/docs/firestore/reference/rest/v1/projects.databases.documents
- */
 @Serializable
 data class FirestoreDocument(
     val name: String? = null,
@@ -34,11 +30,6 @@ data class MapValue(
     val fields: Map<String, FirestoreValue>? = null
 )
 
-/**
- * User document model matching Android Firestore structure
- * Fields: notificationTokens, notificationsEnabled, 
- *         preferredGamePlatforms, preferredGameTypes, setupComplete
- */
 @Serializable
 data class UserDocument(
     val notificationTokens: List<String> = emptyList(), // Desktop won't use FCM
@@ -48,9 +39,6 @@ data class UserDocument(
     val setupComplete: Boolean = false
 )
 
-/**
- * Convert UserDocument to Firestore REST API format
- */
 fun UserDocument.toFirestoreDocument(): FirestoreDocument {
     return FirestoreDocument(
         fields = mapOf(
@@ -75,9 +63,6 @@ fun UserDocument.toFirestoreDocument(): FirestoreDocument {
     )
 }
 
-/**
- * Parse Firestore REST document to UserDocument
- */
 fun FirestoreDocument.toUserDocument(): UserDocument {
     val fields = this.fields ?: return UserDocument()
     

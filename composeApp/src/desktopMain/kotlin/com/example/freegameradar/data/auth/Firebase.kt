@@ -4,7 +4,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlin.coroutines.CoroutineContext
 
 actual fun getFirebaseAuth(): FirebaseAuthWrapper {
-    return DesktopFirebaseAuthStub() // Stub implementation for now
+    return DesktopFirebaseAuthStub()
 }
 
 actual fun getCoroutineContext(): CoroutineContext {

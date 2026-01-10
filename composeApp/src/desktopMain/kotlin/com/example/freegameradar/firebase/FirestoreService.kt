@@ -5,18 +5,10 @@ import io.ktor.client.request.*
 import io.ktor.client.statement.*
 import io.ktor.http.*
 
-/**
- * Desktop Firestore client using REST API
- * Matches Android Firebase Firestore SDK functionality
- */
 class FirestoreService {
     
     private val client = FirebaseHttpClient.client
-    
-    /**
-     * Get user document from Firestore
-     * Returns default UserDocument if not found (404)
-     */
+
     suspend fun getUserDocument(
         userId: String,
         idToken: String
@@ -52,11 +44,7 @@ class FirestoreService {
             Result.failure(e)
         }
     }
-    
-    /**
-     * Create or update complete user document in Firestore
-     * Uses PATCH to merge with existing data
-     */
+
     suspend fun setUserDocument(
         userId: String,
         idToken: String,
@@ -87,11 +75,7 @@ class FirestoreService {
         }
     }
     
-    /**
-     * Delete user document from Firestore
-     * Used during account deletion cleanup
-     * Does NOT fail if document doesn't exist (idempotent)
-     */
+
     suspend fun deleteUserDocument(
         userId: String,
         idToken: String
@@ -111,18 +95,16 @@ class FirestoreService {
                 }
                 response.status == HttpStatusCode.NotFound -> {
                     println("ℹ️ Firestore document already deleted or never existed")
-                    Result.success(Unit) // Treat as success
+                    Result.success(Unit)
                 }
                 else -> {
                     val errorBody = response.bodyAsText()
                     println("⚠️ Firestore DELETE failed: ${response.status} - $errorBody")
-                    // Don't block account deletion if Firestore fails
                     Result.success(Unit)
                 }
             }
         } catch (e: Exception) {
             println("⚠️ Firestore DELETE exception: ${e.message}")
-            // Don't block account deletion if Firestore fails
             Result.success(Unit)
         }
     }
