@@ -12,7 +12,6 @@ import com.example.freegameradar.ui.auth.DesktopAuthRoot
 import com.example.freegameradar.ui.viewmodel.AuthViewModel
 import com.example.freegameradar.firebase.FirebaseHttpClient
 import com.example.freegameradar.firebase.TokenStorage
-import com.example.freegameradar.firebase.runAllTokenRefreshTests
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
