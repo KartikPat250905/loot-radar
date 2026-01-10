@@ -60,7 +60,6 @@ private fun MobileBottomNavBar(navController: NavController) {
     val currentRoute = navBackStackEntry?.destination?.route
 
     Box(modifier = Modifier.fillMaxWidth()) {
-        // Top gradient line
         Box(
             modifier = Modifier
                 .fillMaxWidth()

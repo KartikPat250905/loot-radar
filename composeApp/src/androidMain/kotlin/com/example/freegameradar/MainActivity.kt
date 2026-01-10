@@ -42,7 +42,6 @@ class MainActivity : ComponentActivity() {
         val startRoute = intent.getStringExtra("route")
 
         setContent {
-            // ✅ ADD: Setup Coil ImageLoader in MainActivity
             setSingletonImageLoaderFactory { context ->
                 AppImageLoader.get(context)
             }

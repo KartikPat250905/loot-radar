@@ -7,7 +7,6 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.viewModelScope as androidViewModelScope
 import kotlinx.coroutines.CoroutineScope
 
-// ✅ Android: actual class extends ViewModel
 actual abstract class KmpViewModel : ViewModel() {
     actual val viewModelScope: CoroutineScope
         get() = androidViewModelScope
