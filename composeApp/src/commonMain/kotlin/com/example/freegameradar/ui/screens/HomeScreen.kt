@@ -21,8 +21,10 @@ import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -71,12 +73,10 @@ fun HomeScreen(
 
     val gridState = rememberLazyGridState()
 
-    // Detect if running on Desktop
     val isDesktop = Platform.isDesktop
 
     var isVisible by remember { mutableStateOf(true) }
 
-    // Only hide header on mobile, not desktop
     if (!isDesktop) {
         LaunchedEffect(gridState) {
             var previousIndex = gridState.firstVisibleItemIndex
@@ -106,7 +106,6 @@ fun HomeScreen(
             }
         }
     } else {
-        // On desktop, always show header
         isVisible = true
     }
 
@@ -139,9 +138,7 @@ fun HomeScreen(
             ),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        // Animated on mobile, always visible on desktop
         if (isDesktop) {
-            // Desktop: No animation, always visible
             Column {
                 HeaderContent(
                     games = games,
@@ -153,7 +150,6 @@ fun HomeScreen(
                 )
             }
         } else {
-            // Mobile: Animated visibility
             AnimatedVisibility(
                 visible = isVisible,
                 enter = slideInVertically(
@@ -196,7 +192,6 @@ fun HomeScreen(
             }
         }
 
-        // Content Area (same for both)
         Box(
             contentAlignment = Alignment.Center,
             modifier = Modifier.weight(1f).fillMaxWidth()
@@ -207,32 +202,14 @@ fun HomeScreen(
                 }
 
                 games.isEmpty() && dataSource == DataSource.CACHE -> {
-                    Text(
-                        text = "😿 No freebies found!\nCache is empty and new data couldn't load.\nCheck your internet connection and try again.",
-                        textAlign = TextAlign.Center,
-                        modifier = Modifier.padding(16.dp),
-                        fontSize = 18.sp,
-                        color = Color(0xFF9CA3AF)
-                    )
+                    NoCachedGamesFound()
                 }
 
                 games.isEmpty() -> {
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text(
-                            text = "No games in database",
-                            color = Color(0xFF9CA3AF),
-                            fontSize = 18.sp
-                        )
-                        Spacer(modifier = Modifier.height(16.dp))
-                        Button(
-                            onClick = { gameViewModel.syncFromNetwork() },
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = Color(0xFF10B981)
-                            )
-                        ) {
-                            Text(text = "Sync from Network")
-                        }
-                    }
+                    NoGamesFound(
+                        isDesktop = isDesktop,
+                        onSync = { gameViewModel.syncFromNetwork() }
+                    )
                 }
 
                 else -> {
@@ -267,7 +244,6 @@ fun HomeScreen(
     }
 }
 
-// Simplified header - no game count or reload button
 @Composable
 private fun HeaderContent(
     games: List<GameDto>,
@@ -277,7 +253,6 @@ private fun HeaderContent(
     onSearchChange: (String) -> Unit,
     onFilterChange: (GameTypeFilter) -> Unit
 ) {
-    // Search Bar
     GameSearchBar(
         text = searchQuery,
         onTextChange = onSearchChange,
@@ -286,17 +261,81 @@ private fun HeaderContent(
             .padding(horizontal = 16.dp, vertical = 12.dp)
     )
 
-    // Filter Tabs
     GameTypeFilterTabs(
         selectedFilter = selectedFilter,
         onFilterSelected = onFilterChange
     )
 
-    // Total Worth Bar
     if (games.isNotEmpty()) {
         TotalWorthBar(
             games = games,
             dataSource = dataSource
         )
+    }
+}
+
+@Composable
+private fun NoCachedGamesFound() {
+    Text(
+        text = "😿 No freebies found!\nCache is empty and new data couldn't load.\nCheck your internet connection and try again.",
+        textAlign = TextAlign.Center,
+        modifier = Modifier.padding(16.dp),
+        fontSize = 16.sp,
+        color = Color(0xFF9CA3AF),
+        lineHeight = 24.sp
+    )
+}
+
+@Composable
+private fun NoGamesFound(
+    isDesktop: Boolean,
+    onSync: () -> Unit
+) {
+    if (isDesktop) {
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            Text(
+                text = "No games in database",
+                color = Color(0xFF9CA3AF),
+                fontSize = 18.sp
+            )
+            Spacer(modifier = Modifier.height(16.dp))
+            Button(
+                onClick = onSync,
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color(0xFF10B981)
+                )
+            ) {
+                Text(text = "Sync from Network")
+            }
+        }
+    } else {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            modifier = Modifier.padding(16.dp)
+        ) {
+            Text(
+                text = "No games found",
+                style = MaterialTheme.typography.titleMedium,
+                color = Color(0xFF9CA3AF)
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = "Try syncing with the network to get the latest free games.",
+                style = MaterialTheme.typography.bodyMedium,
+                color = Color(0xFF6B7280),
+                textAlign = TextAlign.Center,
+                modifier = Modifier.padding(horizontal = 32.dp)
+            )
+            Spacer(modifier = Modifier.height(16.dp))
+            Button(
+                onClick = onSync,
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color(0xFF10B981)
+                ),
+                shape = RoundedCornerShape(12.dp)
+            ) {
+                Text(text = "Sync Now")
+            }
+        }
     }
 }
