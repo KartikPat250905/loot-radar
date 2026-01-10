@@ -22,10 +22,8 @@ import androidx.compose.ui.text.font.FontWeight
 
 @Composable
 fun PlatformStatsCard(platformStats: List<PlatformStat>) {
-    // Filter out DRM-Free
     val filteredStats = platformStats.filter { it.platform.lowercase() != "drm-free" }
 
-    // Predefined colors for each platform
     val platformColors = remember {
         mapOf(
             "Steam" to Color(0xFF1DA1F2),          // Blue

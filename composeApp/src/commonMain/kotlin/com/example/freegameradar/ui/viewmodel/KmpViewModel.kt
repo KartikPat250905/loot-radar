@@ -3,7 +3,6 @@ package com.example.freegameradar.ui.viewmodel
 import androidx.compose.runtime.Composable
 import kotlinx.coroutines.CoroutineScope
 
-// ✅ Use expect class, not interface
 expect abstract class KmpViewModel() {
     val viewModelScope: CoroutineScope
 }

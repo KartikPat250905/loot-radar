@@ -16,7 +16,6 @@ import androidx.compose.ui.unit.sp
 @Composable
 fun GameWorth(price: String?) {
     Row {
-        // Original price crossed out
         Text(
             text = price ?: "N/A",
             style = MaterialTheme.typography.bodyMedium.copy(
@@ -28,7 +27,6 @@ fun GameWorth(price: String?) {
 
         Spacer(modifier = Modifier.width(8.dp))
 
-        // "FREE" in green
         Text(
             text = "FREE",
             style = MaterialTheme.typography.bodyMedium.copy(

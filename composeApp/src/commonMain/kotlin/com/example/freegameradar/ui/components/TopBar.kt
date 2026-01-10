@@ -26,7 +26,6 @@ import com.example.freegameradar.ui.viewmodel.NotificationViewModel
 fun TopBar(navController: NavController, notificationViewModel: NotificationViewModel) {
     val unreadCount by notificationViewModel.unreadNotificationCount.collectAsState()
 
-    // Subtle pulse animation
     val infiniteTransition = rememberInfiniteTransition(label = "pulse")
     val scale by infiniteTransition.animateFloat(
         initialValue = 1f,
@@ -50,7 +49,6 @@ fun TopBar(navController: NavController, notificationViewModel: NotificationView
                 )
             )
     ) {
-        // Subtle glow effect at the bottom
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -76,10 +74,8 @@ fun TopBar(navController: NavController, notificationViewModel: NotificationView
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Left spacer for balance
             Box(modifier = Modifier.width(48.dp))
 
-            // App Name with gradient and styling
             Box(
                 modifier = Modifier
                     .scale(scale)
@@ -141,7 +137,6 @@ fun TopBar(navController: NavController, notificationViewModel: NotificationView
                 Text(text = appNameText)
             }
 
-            // Notification Icon
             NotificationIcon(unreadCount = unreadCount) {
                 navController.navigate(Screen.Notification.route)
             }

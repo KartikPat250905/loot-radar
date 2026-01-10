@@ -22,7 +22,7 @@ fun GameGrid(
 ) {
     LazyVerticalGrid(
         state = gridState,
-        columns = GridCells.Adaptive(minSize = 280.dp), // Adaptive for desktop
+        columns = GridCells.Adaptive(minSize = 280.dp),
         modifier = Modifier.fillMaxSize(),
         contentPadding = PaddingValues(16.dp),
         horizontalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(12.dp),

@@ -37,7 +37,6 @@ fun GameItemCard(
         Column(
             modifier = Modifier.fillMaxWidth()
         ) {
-            // Image with overlay gradient
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -55,7 +54,6 @@ fun GameItemCard(
                         contentScale = ContentScale.Crop
                     )
                 } else {
-                    // Fallback placeholder
                     Box(
                         modifier = Modifier
                             .fillMaxSize()
@@ -70,7 +68,6 @@ fun GameItemCard(
                     }
                 }
 
-                // Subtle gradient overlay at bottom
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -87,7 +84,6 @@ fun GameItemCard(
                 )
             }
 
-            // Content section
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -109,7 +105,6 @@ fun GameItemCard(
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    // Game type badge
                     Box(
                         modifier = Modifier
                             .background(
@@ -126,11 +121,9 @@ fun GameItemCard(
                         )
                     }
 
-                    // Worth display
                     GameWorth(gameDto.worth)
                 }
 
-                // Optional: Platform badges
                 gameDto.platforms?.let { platforms ->
                     Spacer(modifier = Modifier.height(8.dp))
                     Row(

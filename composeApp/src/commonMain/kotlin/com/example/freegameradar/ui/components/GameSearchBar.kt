@@ -33,7 +33,6 @@ fun GameSearchBar(
     }
 }
 
-// Original mobile design - full width rounded
 @Composable
 private fun MobileGameSearchBar(
     text: String,
@@ -78,7 +77,6 @@ private fun MobileGameSearchBar(
     )
 }
 
-// Compact desktop design - smaller, less rounded
 @Composable
 private fun DesktopGameSearchBar(
     text: String,

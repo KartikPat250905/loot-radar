@@ -52,7 +52,5 @@ class NotificationViewModel(private val notificationRepository: NotificationRepo
 
     fun refreshNotifications() {
         _isLoading.value = true
-        // In a real app, you might trigger a network fetch here.
-        // For now, we just rely on the database flow to update.
     }
 }

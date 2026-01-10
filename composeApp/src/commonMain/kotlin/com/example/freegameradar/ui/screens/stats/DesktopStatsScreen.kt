@@ -48,7 +48,6 @@ fun DesktopStatsScreen(viewModel: UserStatsViewModel, modifier: Modifier = Modif
             modifier = Modifier.padding(bottom = 32.dp)
         )
 
-        // Center the platform stats
         Box(
             modifier = Modifier
                 .fillMaxWidth()

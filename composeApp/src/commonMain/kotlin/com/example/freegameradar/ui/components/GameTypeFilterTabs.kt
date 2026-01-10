@@ -32,7 +32,6 @@ fun GameTypeFilterTabs(
     }
 }
 
-// Original mobile design with TabRow
 @Composable
 private fun MobileGameTypeFilterTabs(
     selectedFilter: GameTypeFilter,
@@ -82,7 +81,6 @@ private fun MobileGameTypeFilterTabs(
     }
 }
 
-// Clean desktop design - no outer background, just floating buttons
 @Composable
 private fun DesktopGameTypeFilterTabs(
     selectedFilter: GameTypeFilter,
@@ -130,7 +128,6 @@ private fun DesktopFilterButton(
         modifier = modifier
             .height(48.dp)
     ) {
-        // Glow effect for selected button
         if (isSelected) {
             Box(
                 modifier = Modifier
@@ -148,7 +145,6 @@ private fun DesktopFilterButton(
             )
         }
 
-        // Button with gradient border for selected state
         Box(
             modifier = Modifier
                 .fillMaxSize()

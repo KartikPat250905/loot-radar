@@ -37,11 +37,9 @@ class UserPreferencesViewModel(
     }
 
     fun setNotificationsEnabled(enabled: Boolean) {
-        // Optimistic update for the UI
         val newUiState = _uiState.value.copy(notificationsEnabled = enabled)
         _uiState.value = newUiState
 
-        // Launch a coroutine to persist the change
         viewModelScope.launch {
             val newSettings = UserSettings(
                 notificationsEnabled = newUiState.notificationsEnabled,
@@ -57,14 +55,12 @@ class UserPreferencesViewModel(
         preferredGamePlatforms: List<String>,
         preferredGameTypes: List<String>
     ) {
-        // Optimistic update for the UI
         val newUiState = _uiState.value.copy(
             preferredGamePlatforms = preferredGamePlatforms,
             preferredGameTypes = preferredGameTypes
         )
         _uiState.value = newUiState
 
-        // Launch a coroutine to persist the change
         viewModelScope.launch {
             val newSettings = UserSettings(
                 notificationsEnabled = newUiState.notificationsEnabled,
@@ -77,7 +73,6 @@ class UserPreferencesViewModel(
     }
 
     fun disableAllNotifications() {
-        // Optimistic update
         _uiState.value = _uiState.value.copy(notificationsEnabled = false)
 
         viewModelScope.launch {

@@ -34,7 +34,6 @@ class GameViewModel(
     private val _gameTypeFilter = MutableStateFlow(GameTypeFilter.ALL)
     val gameTypeFilter: StateFlow<GameTypeFilter> = _gameTypeFilter
 
-    // Add isSyncing state for loading indicator
     private val _isSyncing = MutableStateFlow(false)
     val isSyncing: StateFlow<Boolean> = _isSyncing
 
@@ -43,7 +42,7 @@ class GameViewModel(
     private var _allGames = MutableStateFlow<List<GameDto>>(emptyList())
     private val _searchQuery = MutableStateFlow("")
 
-    val searchQuery: StateFlow<String> = _searchQuery  // Expose searchQuery
+    val searchQuery: StateFlow<String> = _searchQuery
 
     val games: StateFlow<List<GameDto>> =
         combine(_allGames, _searchQuery, _filters, _gameTypeFilter) { games, query, filters, typeFilter ->
@@ -91,7 +90,6 @@ class GameViewModel(
         }
     }
 
-    // Simplified syncFromNetwork - just reloads games with sync indicator
     fun syncFromNetwork() {
         viewModelScope.launch {
             _isSyncing.value = true

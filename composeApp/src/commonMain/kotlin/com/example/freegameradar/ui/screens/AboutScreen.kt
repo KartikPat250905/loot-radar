@@ -41,7 +41,6 @@ fun AboutScreen(navController: NavController) {
                 )
             )
     ) {
-        // Custom top bar
         Row(
             modifier = Modifier
                 .fillMaxWidth()

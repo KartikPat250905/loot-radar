@@ -86,7 +86,6 @@ fun GameDetailScreen(
                         .padding(horizontal = 16.dp)
                 ) {
 
-                    // Title
                     Text(
                         text = g.title ?: "Unknown Game",
                         style = MaterialTheme.typography.headlineSmall,
@@ -95,12 +94,10 @@ fun GameDetailScreen(
 
                     Spacer(modifier = Modifier.height(8.dp))
 
-                    // Worth
                     GameWorth(price = g.worth)
 
                     Spacer(modifier = Modifier.height(8.dp))
 
-                    // Status
                     Text(
                         text = g.status ?: "Unknown",
                         color = MaterialTheme.colorScheme.primary
@@ -108,7 +105,6 @@ fun GameDetailScreen(
 
                     Spacer(modifier = Modifier.height(12.dp))
 
-                    // Expiry Information Card
                     if (!g.end_date.isNullOrBlank()) {
                         Card(
                             modifier = Modifier.fillMaxWidth(),
@@ -167,7 +163,6 @@ fun GameDetailScreen(
                         Spacer(modifier = Modifier.height(12.dp))
                     }
 
-                    // Platforms
                     Text(
                         text = "Platforms: ${g.platforms ?: "Unknown"}",
                         style = MaterialTheme.typography.bodyMedium
@@ -175,7 +170,6 @@ fun GameDetailScreen(
 
                     Spacer(modifier = Modifier.height(16.dp))
 
-                    // Description
                     Text(
                         text = g.description ?: "No description available",
                         style = MaterialTheme.typography.bodyMedium
@@ -183,7 +177,6 @@ fun GameDetailScreen(
 
                     Spacer(modifier = Modifier.height(20.dp))
 
-                    // Instructions
                     if (!g.instructions.isNullOrBlank()) {
                         Text(
                             text = "How to get it",
@@ -201,7 +194,6 @@ fun GameDetailScreen(
 
                     Spacer(modifier = Modifier.height(24.dp))
 
-                    // Giveaway Button
                     if (!g.open_giveaway_url.isNullOrBlank()) {
                         Button(
                             onClick = {
@@ -220,7 +212,6 @@ fun GameDetailScreen(
             }
         }
 
-        // Styled Floating Back Button
         Box(
             modifier = Modifier
                 .padding(16.dp)
@@ -231,13 +222,9 @@ fun GameDetailScreen(
     }
 }
 
-// Helper function to calculate time remaining
 fun calculateTimeRemaining(endDateStr: String): String? {
     return try {
-        // Many APIs return date as "2023-10-27 23:59:00" which doesn't adhere to ISO 8601 strict T separator
-        // We replace space with T to make it ISO compliant for Instant.parse if needed
         val isoDateStr = endDateStr.replace(" ", "T")
-        // Appending Z if timezone is missing, assuming UTC
         val finalDateStr = if (isoDateStr.endsWith("Z")) isoDateStr else "${isoDateStr}Z"
         
         val endInstant = Instant.parse(finalDateStr)
@@ -260,13 +247,11 @@ fun calculateTimeRemaining(endDateStr: String): String? {
             }
         }
     } catch (e: Exception) {
-        // Fallback or debug print
         println("Error parsing date: $endDateStr -> ${e.message}")
         null
     }
 }
 
-// Helper function to format the end date
 fun formatEndDate(endDateStr: String): String {
     return try {
         val isoDateStr = endDateStr.replace(" ", "T")
@@ -300,7 +285,6 @@ fun formatEndDate(endDateStr: String): String {
     }
 }
 
-// Helper function to check if expiring within 24 hours
 fun isExpiringSoon(endDateStr: String): Boolean {
     return try {
         val isoDateStr = endDateStr.replace(" ", "T")

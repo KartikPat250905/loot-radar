@@ -35,11 +35,9 @@ class AuthViewModel(private val authRepository: AuthRepository) : KmpViewModel()
             _authState.value = AuthState.Loading
             val result = authRepository.login(email, password)
             result.onFailure {
-                // Use FirebaseErrorMapper for desktop-friendly errors
                 val userFriendlyError = FirebaseErrorMapper.mapException(it)
                 _authState.value = AuthState.Error(userFriendlyError)
             }
-            // Success case already handled via authRepository.getAuthStateFlow()
         }
     }
 

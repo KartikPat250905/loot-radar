@@ -34,7 +34,6 @@ fun TotalWorthBar(
     }
 }
 
-// Original mobile design - bold and animated
 @Composable
 private fun MobileTotalWorthBar(
     games: List<GameDto>,
@@ -199,7 +198,6 @@ private fun MobileTotalWorthBar(
     }
 }
 
-// Enhanced desktop design with premium styling
 @Composable
 private fun DesktopTotalWorthBar(
     games: List<GameDto>,
@@ -232,7 +230,6 @@ private fun DesktopTotalWorthBar(
             .fillMaxWidth()
             .padding(horizontal = 16.dp, vertical = 12.dp)
     ) {
-        // Radial glow background
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -249,7 +246,6 @@ private fun DesktopTotalWorthBar(
                 )
         )
 
-        // Main card with gradient border
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -300,7 +296,6 @@ private fun DesktopTotalWorthBar(
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        // Left section
                         Column(
                             verticalArrangement = Arrangement.spacedBy(6.dp)
                         ) {
@@ -338,7 +333,6 @@ private fun DesktopTotalWorthBar(
                             }
                         }
 
-                        // Right section - Price with gradient
                         val priceText = buildAnnotatedString {
                             withStyle(
                                 style = SpanStyle(
@@ -363,7 +357,6 @@ private fun DesktopTotalWorthBar(
                         )
                     }
 
-                    // Bottom accent line
                     Box(
                         modifier = Modifier
                             .fillMaxWidth(0.95f)

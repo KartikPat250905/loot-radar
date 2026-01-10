@@ -39,14 +39,14 @@ class GamesApiService {
 
     suspend fun fetchAllGames(): Result<List<GameApiResponse>> {
         return try {
-            println("🌐 Fetching games from API...")
+            println("Fetching games from API...")
             val games: List<GameApiResponse> = client
                 .get("https://www.gamerpower.com/api/giveaways")
                 .body()
-            println("✅ API returned ${games.size} games")
+            println("API returned ${games.size} games")
             Result.success(games)
         } catch (e: Exception) {
-            println("❌ API fetch failed: ${e.message}")
+            println("API fetch failed: ${e.message}")
             Result.failure(e)
         }
     }

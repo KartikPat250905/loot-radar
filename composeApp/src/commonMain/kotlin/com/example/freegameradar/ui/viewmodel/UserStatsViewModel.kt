@@ -78,7 +78,6 @@ class UserStatsViewModel(
     private fun extractMainPlatform(platformString: String): String {
         val lower = platformString.lowercase()
 
-        // Priority 1: Specific stores/launchers
         return when {
             lower.contains("epic games store") || lower.contains("epic-games-store") -> "Epic Games"
             lower.contains("steam") -> "Steam"
@@ -88,12 +87,10 @@ class UserStatsViewModel(
             lower.contains("origin") -> "EA Origin"
             lower.contains("battlenet") || lower.contains("battle.net") -> "Battle.net"
 
-            // Priority 2: Console platforms
             lower.contains("ps5") || lower.contains("ps4") -> "PlayStation"
             lower.contains("xbox") -> "Xbox"
             lower.contains("switch") -> "Nintendo Switch"
 
-            // Priority 4: Other platforms
             lower.contains("drm-free") || lower.contains("drm free") -> "DRM-Free"
 
             else -> "Other"
