@@ -11,18 +11,18 @@ FreeGameRadar is a **Kotlin Multiplatform** application built with **Compose Mul
 This project is a single KMP module with multiple targets:
 
 - **Android:**
-    - Target: composeApp
-    - UI: Compose Multiplatform on Android
-    - Auth: Firebase Android SDK
-    - Features: Bottom navigation, native notifications
+  - Target: `composeApp`
+  - UI: Compose Multiplatform on Android
+  - Auth: Firebase Android SDK
+  - Features: Bottom navigation, native notifications
 
 - **Desktop (JVM):**
-    - Target: composeApp[desktop]
-    - UI: Compose Multiplatform for Desktop
-    - Auth: Firebase via REST
-    - Features: Sidebar navigation, system tray integration
+  - Target: `composeApp[desktop]`
+  - UI: Compose Multiplatform for Desktop
+  - Auth: Firebase via REST
+  - Features: Sidebar navigation, system tray integration
 
-Both targets share the same business logic, data layer, and most UI code through the common KMP module, with platform-specific implementations provided via expect/actual patterns [web:6].
+Both targets share the same business logic, data layer, and most UI code through the common KMP module, with platform-specific implementations provided via expect/actual patterns.
 
 ---
 
@@ -30,14 +30,72 @@ Both targets share the same business logic, data layer, and most UI code through
 
 FreeGameRadar consolidates free game deals from **Epic Games, Steam, GOG, and itch.io** into one unified app with real-time notifications. Major platforms collectively give away $6,000-$8,000 worth of games annually, but these time-limited offers are scattered and easy to miss.
 
-**Key Features:**
+---
 
-- 🔐 Firebase Authentication (cross-platform)
-- 🔔 Real-time notifications (platform & content-type filtered)
-- 🎮 Multi-platform tracking (Epic/Steam/GOG/itch.io)
-- 📊 Savings dashboard (track claimed games & total value)
-- 🖥️ True cross-platform (native Android + Desktop from one codebase)
-- ⚡ 70% code sharing via Kotlin Multiplatform
+## ✨ Features
+
+### Core Functionality
+
+#### 🎮 Multi-Platform Game Tracking
+- Track free game giveaways from Epic Games Store, Steam, GOG, and itch.io in one unified interface
+- Real-time updates when new free games become available
+- Automatic deal expiration tracking with countdown timers
+- Filter and sort games by platform, release date, or expiration time
+
+#### 🔐 Cross-Platform Authentication
+- Secure Firebase authentication supporting email/password and social login
+- Synchronized user profile across Android and Desktop platforms
+- Persistent login sessions with automatic token refresh
+- Password reset and account management capabilities
+
+#### 🔔 Smart Notifications
+- Customizable push notifications for new free game alerts
+- Platform-specific filters (get notified only for Epic or Steam deals)
+- Content-type filtering (games, DLC, add-ons)
+- Notification scheduling to avoid off-hours alerts
+- Badge indicators showing unread deal counts
+
+#### 📊 Personal Savings Dashboard
+- Track all games you've claimed with automatic value calculation
+- Visual charts displaying your total savings over time
+- Monthly and yearly savings breakdown
+- Game library statistics (total games claimed, platform distribution)
+
+### Platform-Specific Features
+
+#### Android 🤖
+- **Bottom Navigation:** Intuitive tab-based navigation between Home, Browse, Favorites, and Profile
+- **Material Design 3:** Modern Android UI with dynamic color theming and adaptive layouts
+- **Native Notifications:** Android system notifications with rich media and action buttons
+- **Swipe Gestures:** Swipe to mark games as claimed or add to favorites
+- **Widget Support:** Home screen widget showing current free games at a glance
+- **Tablet Optimization:** Responsive layouts for tablets and foldable devices
+
+#### Desktop 🖥️
+- **Sidebar Navigation:** Persistent sidebar for easy access to all sections
+- **System Tray Integration:** Minimize to system tray with quick access menu
+- **Multi-Window Support:** Open multiple windows to compare game deals side-by-side
+- **Resizable Windows:** Flexible window sizing with saved layout preferences
+
+### Technical Highlights
+
+#### ⚡ Kotlin Multiplatform Architecture
+- **70-80% Code Sharing:** Business logic, data layer, and UI components shared between platforms
+- **Compose Multiplatform:** Single UI codebase with platform-specific optimizations
+- **Expect/Actual Pattern:** Platform-specific implementations for authentication, notifications, and storage
+- **Shared ViewModels:** Unified state management across Android and Desktop
+
+#### 🔄 Data Synchronization
+- Real-time Firebase Firestore sync for user data
+- Offline-first architecture with local caching
+- Conflict resolution for multi-device usage
+- Background sync with WorkManager (Android) and scheduled tasks (Desktop)
+
+#### 🚀 Performance Optimizations
+- Lazy loading for large game lists
+- Image caching and compression
+- Efficient API polling with exponential backoff
+- Memory-optimized data structures for smooth scrolling
 
 ---
 
@@ -95,7 +153,7 @@ The Android app will build, install, and launch automatically on your selected d
 A desktop window will open running the app natively on your current OS (Windows, macOS, or Linux).
 
 ### 🎯 Switching Between Targets
-- To easily switch between Android and Desktop:
+- To easily switch between Android and Desktop: run composeApp and composeApp[desktop] simultaneously.
 
 - Use the Run configuration dropdown in the top toolbar
 
