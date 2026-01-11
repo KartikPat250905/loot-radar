@@ -33,61 +33,8 @@ fun LoginScreen(
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var passwordVisibility by remember { mutableStateOf(false) }
-    var showForgotPasswordDialog by remember { mutableStateOf(false) }
-    var forgotPasswordEmail by remember { mutableStateOf("") }
 
     val authState by authViewModel.authState.collectAsState()
-
-    if (showForgotPasswordDialog) {
-        AlertDialog(
-            onDismissRequest = { showForgotPasswordDialog = false },
-            containerColor = Color(0xFF1B263B),
-            title = { Text("Reset Password", color = Color(0xFFE5E7EB)) },
-            text = {
-                Column {
-                    Text("Enter your email to receive a password reset link.", color = Color(0xFF9CA3AF))
-                    Spacer(modifier = Modifier.height(16.dp))
-                    OutlinedTextField(
-                        value = forgotPasswordEmail,
-                        onValueChange = { forgotPasswordEmail = it },
-                        label = { Text("Email") },
-                        singleLine = true,
-                        modifier = Modifier.fillMaxWidth(),
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = Color(0xFF10B981),
-                            unfocusedBorderColor = Color(0xFF374151),
-                            focusedTextColor = Color(0xFFE5E7EB),
-                            unfocusedTextColor = Color(0xFFE5E7EB),
-                            focusedLabelColor = Color(0xFF10B981),
-                            unfocusedLabelColor = Color(0xFF9CA3AF)
-                        )
-                    )
-                }
-            },
-            confirmButton = {
-                Button(
-                    onClick = {
-                        authViewModel.sendPasswordResetEmail(forgotPasswordEmail)
-                        showForgotPasswordDialog = false
-                    },
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = Color(0xFF10B981),
-                        contentColor = Color.White
-                    )
-                ) {
-                    Text("Send")
-                }
-            },
-            dismissButton = {
-                TextButton(
-                    onClick = { showForgotPasswordDialog = false },
-                    colors = ButtonDefaults.textButtonColors(contentColor = Color(0xFF9CA3AF))
-                ) {
-                    Text("Cancel")
-                }
-            }
-        )
-    }
 
     Box(
         modifier = Modifier
@@ -192,16 +139,6 @@ fun LoginScreen(
                     }
                 }
             )
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            TextButton(
-                onClick = { showForgotPasswordDialog = true },
-                modifier = Modifier.align(Alignment.End),
-                colors = ButtonDefaults.textButtonColors(contentColor = Color(0xFF10B981))
-            ) {
-                Text("Forgot Password?")
-            }
 
             Spacer(modifier = Modifier.height(16.dp))
 

@@ -17,12 +17,25 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.freegameradar.core.Platform
 import com.example.freegameradar.data.models.GameDto
 import com.example.freegameradar.data.state.DataSource
 import kotlin.math.round
 
 @Composable
 fun TotalWorthBar(
+    games: List<GameDto>,
+    dataSource: DataSource
+) {
+    if (Platform.isDesktop) {
+        DesktopTotalWorthBar(games, dataSource)
+    } else {
+        MobileTotalWorthBar(games, dataSource)
+    }
+}
+
+@Composable
+private fun MobileTotalWorthBar(
     games: List<GameDto>,
     dataSource: DataSource
 ) {
@@ -37,7 +50,6 @@ fun TotalWorthBar(
 
     val formattedTotal = "$${round(total * 100) / 100}"
 
-    // Pulse animation for the entire card
     val infiniteTransition = rememberInfiniteTransition(label = "pulse")
     val scale by infiniteTransition.animateFloat(
         initialValue = 1f,
@@ -55,7 +67,6 @@ fun TotalWorthBar(
             .padding(horizontal = 16.dp, vertical = 12.dp)
             .scale(scale)
     ) {
-        // Outer glow effect
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -72,31 +83,29 @@ fun TotalWorthBar(
                 )
         )
 
-        // Main card with gradient
         Box(
             modifier = Modifier
                 .fillMaxWidth()
                 .background(
                     brush = Brush.linearGradient(
                         colors = listOf(
-                            Color(0xFF0D1B2A), // Deep dark blue-gray
-                            Color(0xFF1B263B), // Slightly lighter dark
+                            Color(0xFF0D1B2A),
+                            Color(0xFF1B263B),
                             Color(0xFF0D1B2A)
                         )
                     ),
                     shape = RoundedCornerShape(20.dp)
                 )
-                .padding(1.5.dp) // Border width
+                .padding(1.5.dp)
         ) {
-            // Inner gradient border effect
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
                     .background(
                         brush = Brush.linearGradient(
                             colors = listOf(
-                                Color(0xFF10B981), // Emerald green
-                                Color(0xFF34D399), // Lighter emerald
+                                Color(0xFF10B981),
+                                Color(0xFF34D399),
                                 Color(0xFF10B981)
                             )
                         ),
@@ -104,7 +113,6 @@ fun TotalWorthBar(
                     )
                     .padding(1.5.dp)
             ) {
-                // Content background
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -134,7 +142,6 @@ fun TotalWorthBar(
 
                         Spacer(modifier = Modifier.height(8.dp))
 
-                        // Price display with gradient
                         val priceText = buildAnnotatedString {
                             withStyle(
                                 style = SpanStyle(
@@ -184,8 +191,190 @@ fun TotalWorthBar(
                                 fontWeight = FontWeight.SemiBold
                             )
                         }
-
                     }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun DesktopTotalWorthBar(
+    games: List<GameDto>,
+    dataSource: DataSource
+) {
+    val total = games.mapNotNull { game ->
+        val priceStr = game.worth?.replace("$", "")?.replace(",", "")?.trim()
+        when {
+            priceStr == null -> 0.0
+            priceStr.equals("N/A", ignoreCase = true) -> 0.0
+            else -> priceStr.toDoubleOrNull() ?: 0.0
+        }
+    }.sum()
+
+    val formattedTotal = "$${round(total * 100) / 100}"
+
+    val infiniteTransition = rememberInfiniteTransition(label = "glow")
+    val glowAlpha by infiniteTransition.animateFloat(
+        initialValue = 0.2f,
+        targetValue = 0.4f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(3000, easing = FastOutSlowInEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "glowAlpha"
+    )
+
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 12.dp)
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(80.dp)
+                .background(
+                    brush = Brush.radialGradient(
+                        colors = listOf(
+                            Color(0xFF10B981).copy(alpha = glowAlpha),
+                            Color.Transparent
+                        ),
+                        radius = 1200f
+                    ),
+                    shape = RoundedCornerShape(16.dp)
+                )
+        )
+
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(
+                    brush = Brush.linearGradient(
+                        colors = listOf(
+                            Color(0xFF0D1B2A),
+                            Color(0xFF1B263B),
+                            Color(0xFF0D1B2A)
+                        )
+                    ),
+                    shape = RoundedCornerShape(16.dp)
+                )
+                .padding(1.5.dp)
+        ) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(
+                        brush = Brush.linearGradient(
+                            colors = listOf(
+                                Color(0xFF10B981).copy(alpha = 0.4f),
+                                Color(0xFF34D399).copy(alpha = 0.3f),
+                                Color(0xFF10B981).copy(alpha = 0.4f)
+                            )
+                        ),
+                        shape = RoundedCornerShape(15.dp)
+                    )
+                    .padding(1.dp)
+            ) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(
+                            brush = Brush.verticalGradient(
+                                colors = listOf(
+                                    Color(0xFF1B263B),
+                                    Color(0xFF0D1B2A)
+                                )
+                            ),
+                            shape = RoundedCornerShape(14.dp)
+                        )
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 24.dp, vertical = 18.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Column(
+                            verticalArrangement = Arrangement.spacedBy(6.dp)
+                        ) {
+                            Text(
+                                text = "YOUR FREE GAMES VALUE",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = Color(0xFF6EE7B7),
+                                letterSpacing = 1.5.sp,
+                                fontWeight = FontWeight.SemiBold
+                            )
+
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                val (label, color) = when (dataSource) {
+                                    DataSource.NETWORK -> "LIVE DATA" to Color(0xFF10B981)
+                                    DataSource.CACHE -> "CACHED DATA" to Color(0xFFF59E0B)
+                                }
+
+                                Box(
+                                    modifier = Modifier
+                                        .size(8.dp)
+                                        .background(color, shape = RoundedCornerShape(50))
+                                )
+
+                                Text(
+                                    text = label,
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = color,
+                                    letterSpacing = 1.sp,
+                                    fontWeight = FontWeight.SemiBold,
+                                    fontSize = 11.sp
+                                )
+                            }
+                        }
+
+                        val priceText = buildAnnotatedString {
+                            withStyle(
+                                style = SpanStyle(
+                                    brush = Brush.linearGradient(
+                                        colors = listOf(
+                                            Color(0xFF10B981),
+                                            Color(0xFF34D399),
+                                            Color(0xFF6EE7B7)
+                                        )
+                                    ),
+                                    fontWeight = FontWeight.ExtraBold,
+                                    fontSize = 32.sp
+                                )
+                            ) {
+                                append(formattedTotal)
+                            }
+                        }
+
+                        Text(
+                            text = priceText,
+                            style = MaterialTheme.typography.headlineLarge
+                        )
+                    }
+
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth(0.95f)
+                            .height(2.dp)
+                            .align(Alignment.BottomCenter)
+                            .padding(bottom = 6.dp)
+                            .background(
+                                brush = Brush.horizontalGradient(
+                                    colors = listOf(
+                                        Color.Transparent,
+                                        Color(0xFF10B981).copy(alpha = 0.5f),
+                                        Color(0xFF34D399).copy(alpha = 0.6f),
+                                        Color(0xFF10B981).copy(alpha = 0.5f),
+                                        Color.Transparent
+                                    )
+                                )
+                            )
+                    )
                 }
             }
         }

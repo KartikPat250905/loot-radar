@@ -1,15 +1,10 @@
 package com.example.freegameradar.ui.theme
 
-import android.app.Activity
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.SideEffect
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.toArgb
-import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.sp
-import androidx.core.view.WindowCompat
 
 // ---------- Dark Palette ----------
 private val DarkColorScheme = darkColorScheme(
@@ -66,6 +61,10 @@ private val ModernTypography = Typography(
     )
 )
 
+// Expect function for platform-specific status bar
+@Composable
+expect fun ConfigureSystemBars(darkTheme: Boolean, colorScheme: ColorScheme)
+
 
 // ---------- Theme Composable ----------
 @Composable
@@ -75,16 +74,7 @@ fun ModernDarkTheme(
 ) {
     val colorScheme = if (darkTheme) DarkColorScheme else LightColorScheme
 
-    val view = LocalView.current
-    if (!view.isInEditMode) {
-        SideEffect {
-            val window = (view.context as Activity).window
-            window.statusBarColor = colorScheme.background.toArgb()
-            window.navigationBarColor = colorScheme.background.toArgb()
-            WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = !darkTheme
-            WindowCompat.getInsetsController(window, view).isAppearanceLightNavigationBars = !darkTheme
-        }
-    }
+    ConfigureSystemBars(darkTheme, colorScheme)  // Platform-specific call
 
     MaterialTheme(
         colorScheme = colorScheme,

@@ -4,8 +4,8 @@ import android.app.Application
 import android.util.Log
 import androidx.core.app.NotificationManagerCompat
 import com.example.freegameradar.data.DatabaseDriverFactory
+import com.example.freegameradar.data.GameDatabaseProvider
 import com.example.freegameradar.data.repository.NotificationRepository
-import com.example.freegameradar.db.GameDatabase
 import com.example.freegameradar.notification.NotificationService
 import com.example.freegameradar.notification.TokenManager
 import com.google.firebase.auth.ktx.auth
@@ -25,28 +25,25 @@ class FreeGameRadarApp : Application() {
         super.onCreate()
         instance = this
 
-        // Initialize the database driver and create a single repository instance
-        DatabaseDriverFactory.init(this)
-        val database = GameDatabase(DatabaseDriverFactory.createDriver())
+        val databaseDriverFactory = DatabaseDriverFactory(this)
+        GameDatabaseProvider.init(databaseDriverFactory.createDriver())
+        val database = GameDatabaseProvider.getDatabase()
+
         notificationRepository = NotificationRepository(database)
 
-        // Create the notification channel as soon as the app starts
         val notificationService = NotificationService(this)
         notificationService.createNotificationChannel()
 
-        // Per your instruction, clear all previously stuck notifications on startup.
         NotificationManagerCompat.from(this).cancelAll()
 
-        // Check if user is already logged in and save token
         if (Firebase.auth.currentUser != null) {
-            Log.d("App", "✅ User already logged in: ${Firebase.auth.currentUser?.uid}")
+            Log.d("App", "User already logged in: ${Firebase.auth.currentUser?.uid}")
             TokenManager.initializeFCMToken()
         }
 
-        // Listen for login events
         Firebase.auth.addAuthStateListener { auth ->
             if (auth.currentUser != null) {
-                Log.d("App", "✅ Auth state changed, user logged in")
+                Log.d("App", "Auth state changed, user logged in")
                 TokenManager.initializeFCMToken()
             }
         }

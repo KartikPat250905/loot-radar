@@ -124,11 +124,10 @@ private fun NotificationCard(
             modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Image defines height (true density control)
             Box(
                 modifier = Modifier
                     .width(72.dp)
-                    .aspectRatio(3f / 4f) // ~96dp height
+                    .aspectRatio(3f / 4f)
             ) {
                 AsyncImage(
                     model = imageUrl,
@@ -150,7 +149,6 @@ private fun NotificationCard(
                 )
             }
 
-            // Text content — NO vertical padding
             Column(
                 modifier = Modifier
                     .padding(start = 10.dp, end = 6.dp)
@@ -170,7 +168,6 @@ private fun NotificationCard(
                 GameWorth(price = worth)
             }
 
-            // Compact delete (no 48dp inflation)
             Icon(
                 imageVector = Icons.Default.Delete,
                 contentDescription = "Delete",

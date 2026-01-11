@@ -11,14 +11,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
-
-// =======================================================================================
-// DEPRECATION NOTICE
-// This service is no longer in use and can be safely deleted.
-// The active service is `PushNotificationService.kt` as defined in `AndroidManifest.xml`.
-// All notification logic has been moved there.
-// =======================================================================================
-
 @Serializable
 data class FcmDeal(
     val id: Long,

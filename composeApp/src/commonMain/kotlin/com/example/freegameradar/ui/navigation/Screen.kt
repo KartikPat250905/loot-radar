@@ -13,6 +13,6 @@ sealed class Screen(val route: String, val label: String, val icon: ImageVector)
     object Stats : Screen("stats", "Stats", Icons.Default.Equalizer)
     object About : Screen("about", "About", Icons.Default.Info)
     object Details : Screen("details/{gameId}", "Game Details", Icons.Default.Info) {
-        fun createRoute(id: Long?) = "details/$id"
+        fun createRoute(id: Long) = "details/$id"
     }
 }

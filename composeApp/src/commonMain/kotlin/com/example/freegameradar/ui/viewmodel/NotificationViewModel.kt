@@ -1,7 +1,5 @@
 package com.example.freegameradar.ui.viewmodel
 
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
 import com.example.freegameradar.data.model.DealNotification
 import com.example.freegameradar.data.repository.NotificationRepository
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -13,7 +11,7 @@ import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
-class NotificationViewModel(private val notificationRepository: NotificationRepository) : ViewModel() {
+class NotificationViewModel(private val notificationRepository: NotificationRepository) : KmpViewModel() {
 
     private val _isLoading = MutableStateFlow(true)
     val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
@@ -54,7 +52,5 @@ class NotificationViewModel(private val notificationRepository: NotificationRepo
 
     fun refreshNotifications() {
         _isLoading.value = true
-        // In a real app, you might trigger a network fetch here.
-        // For now, we just rely on the database flow to update.
     }
 }

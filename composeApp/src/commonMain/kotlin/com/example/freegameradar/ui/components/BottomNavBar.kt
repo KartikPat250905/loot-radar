@@ -4,12 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.material3.Icon
-import androidx.compose.material3.NavigationBar
-import androidx.compose.material3.NavigationBarDefaults
-import androidx.compose.material3.NavigationBarItem
-import androidx.compose.material3.NavigationBarItemDefaults
-import androidx.compose.material3.Text
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -31,7 +26,6 @@ fun BottomNavBar(navController: NavController) {
     val currentRoute = navBackStackEntry?.destination?.route
 
     Box(modifier = Modifier.fillMaxWidth()) {
-        // Top gradient line
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -51,7 +45,6 @@ fun BottomNavBar(navController: NavController) {
         )
 
         NavigationBar(
-            windowInsets = NavigationBarDefaults.windowInsets,
             containerColor = Color(0xFF0D1B2A),
             contentColor = Color(0xFF6EE7B7)
         ) {
@@ -69,7 +62,8 @@ fun BottomNavBar(navController: NavController) {
                         Text(
                             text = screen.label,
                             fontSize = 12.sp,
-                            fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal
+                            fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal,
+                            color = if (selected) Color(0xFF10B981) else Color(0xFF6B7280)
                         )
                     },
                     selected = selected,
@@ -84,7 +78,7 @@ fun BottomNavBar(navController: NavController) {
                         selectedTextColor = Color(0xFF10B981),
                         unselectedIconColor = Color(0xFF6B7280),
                         unselectedTextColor = Color(0xFF6B7280),
-                        indicatorColor = Color(0xFF1B263B)
+                        indicatorColor = Color.Transparent  // Disable indicator to avoid animation
                     )
                 )
             }

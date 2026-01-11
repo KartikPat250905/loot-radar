@@ -51,7 +51,6 @@ fun HeroBanner(game: GameDto?, onClick: () -> Unit) {
                     .clip(RoundedCornerShape(20.dp))
             )
 
-            // Enhanced gradient overlay
             Box(
                 modifier = Modifier
                     .fillMaxSize()
@@ -68,7 +67,6 @@ fun HeroBanner(game: GameDto?, onClick: () -> Unit) {
                     )
             )
 
-            // Emerald glow at bottom
             Box(
                 modifier = Modifier
                     .fillMaxWidth()

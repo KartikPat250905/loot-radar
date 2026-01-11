@@ -55,7 +55,6 @@ fun HotDealCard(game: GameDto, onClick: () -> Unit) {
                         .clip(RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp))
                 )
 
-                // Subtle gradient overlay at bottom
                 Box(
                     modifier = Modifier
                         .fillMaxSize()

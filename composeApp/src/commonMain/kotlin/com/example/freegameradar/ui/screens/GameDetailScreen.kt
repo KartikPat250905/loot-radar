@@ -16,35 +16,35 @@ import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
-import coil3.compose.AsyncImage
 import com.example.freegameradar.data.models.GameDto
 import com.example.freegameradar.data.remote.ApiService
 import com.example.freegameradar.data.repository.GameRepository
 import com.example.freegameradar.ui.components.BackButton
 import com.example.freegameradar.ui.components.GameWorth
-import com.example.freegameradar.ui.viewmodel.UserStatsViewModel
+import com.example.freegameradar.ui.components.RemoteImage
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.isActive
-import kotlinx.datetime.*
+import kotlinx.datetime.Clock
+import kotlinx.datetime.Instant
+import kotlinx.datetime.Month
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toLocalDateTime
 
 @Composable
 fun GameDetailScreen(
     navController: NavHostController,
     gameId: Long?,
-    userStatsViewModel: UserStatsViewModel,
     modifier: Modifier = Modifier
 ) {
     var game by remember { mutableStateOf<GameDto?>(null) }
     val repository = remember { GameRepository(ApiService()) }
     val uriHandler = LocalUriHandler.current
     var timeRemaining by remember { mutableStateOf<String?>(null) }
-    val claimedGameIds by userStatsViewModel.claimedGameIds.collectAsState()
-    val isClaimed = gameId in claimedGameIds
 
-    // Load selected game based on ID
     LaunchedEffect(gameId) {
-        repository.getFreeGames().collect { list ->
-            game = list.find { it.id == gameId }
+        if (gameId != null) {
+            game = repository.getGameById(gameId).firstOrNull()
         }
     }
 
@@ -66,8 +66,8 @@ fun GameDetailScreen(
         ) {
 
             game?.image?.let { imageUrl ->
-                AsyncImage(
-                    model = imageUrl,
+                RemoteImage(
+                    url = imageUrl,
                     contentDescription = game?.title,
                     modifier = Modifier
                         .fillMaxWidth()
@@ -85,7 +85,6 @@ fun GameDetailScreen(
                         .padding(horizontal = 16.dp)
                 ) {
 
-                    // Title
                     Text(
                         text = g.title ?: "Unknown Game",
                         style = MaterialTheme.typography.headlineSmall,
@@ -94,12 +93,10 @@ fun GameDetailScreen(
 
                     Spacer(modifier = Modifier.height(8.dp))
 
-                    // Worth
                     GameWorth(price = g.worth)
 
                     Spacer(modifier = Modifier.height(8.dp))
 
-                    // Status
                     Text(
                         text = g.status ?: "Unknown",
                         color = MaterialTheme.colorScheme.primary
@@ -107,7 +104,6 @@ fun GameDetailScreen(
 
                     Spacer(modifier = Modifier.height(12.dp))
 
-                    // Expiry Information Card
                     if (!g.end_date.isNullOrBlank()) {
                         Card(
                             modifier = Modifier.fillMaxWidth(),
@@ -166,7 +162,6 @@ fun GameDetailScreen(
                         Spacer(modifier = Modifier.height(12.dp))
                     }
 
-                    // Platforms
                     Text(
                         text = "Platforms: ${g.platforms ?: "Unknown"}",
                         style = MaterialTheme.typography.bodyMedium
@@ -174,7 +169,6 @@ fun GameDetailScreen(
 
                     Spacer(modifier = Modifier.height(16.dp))
 
-                    // Description
                     Text(
                         text = g.description ?: "No description available",
                         style = MaterialTheme.typography.bodyMedium
@@ -182,7 +176,6 @@ fun GameDetailScreen(
 
                     Spacer(modifier = Modifier.height(20.dp))
 
-                    // Instructions
                     if (!g.instructions.isNullOrBlank()) {
                         Text(
                             text = "How to get it",
@@ -200,39 +193,16 @@ fun GameDetailScreen(
 
                     Spacer(modifier = Modifier.height(24.dp))
 
-                    // Giveaway Button
                     if (!g.open_giveaway_url.isNullOrBlank()) {
                         Button(
-                            onClick = { 
-                                if (!isClaimed) {
-                                    g.id?.let { id ->
-                                        val value = g.worth?.replace("$", "")?.toFloatOrNull() ?: 0f
-                                        if (value > 0f) {
-                                            userStatsViewModel.addToClaimedValue(id, value)
-                                        }
-                                    }
-                                }
+                            onClick = {
                                 uriHandler.openUri(g.open_giveaway_url!!)
                              },
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = if (isClaimed) MaterialTheme.colorScheme.secondaryContainer else ButtonDefaults.buttonColors().containerColor,
-                            ),
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .height(52.dp)
                         ) {
-                            if (isClaimed) {
-                                val greenColor = Color(0xFF4CAF50)
-                                Icon(
-                                    Icons.Default.Check, 
-                                    contentDescription = "Claimed",
-                                    tint = greenColor
-                                )
-                                Spacer(modifier = Modifier.width(8.dp))
-                                Text("Game Claimed", color = greenColor)
-                            } else {
-                                Text("🎁 Claim Game")
-                            }
+                            Text("🎁 Get Game")
                         }
                     }
 
@@ -241,7 +211,6 @@ fun GameDetailScreen(
             }
         }
 
-        // Styled Floating Back Button
         Box(
             modifier = Modifier
                 .padding(16.dp)
@@ -252,13 +221,9 @@ fun GameDetailScreen(
     }
 }
 
-// Helper function to calculate time remaining
 fun calculateTimeRemaining(endDateStr: String): String? {
     return try {
-        // Many APIs return date as "2023-10-27 23:59:00" which doesn't adhere to ISO 8601 strict T separator
-        // We replace space with T to make it ISO compliant for Instant.parse if needed
         val isoDateStr = endDateStr.replace(" ", "T")
-        // Appending Z if timezone is missing, assuming UTC
         val finalDateStr = if (isoDateStr.endsWith("Z")) isoDateStr else "${isoDateStr}Z"
         
         val endInstant = Instant.parse(finalDateStr)
@@ -281,13 +246,11 @@ fun calculateTimeRemaining(endDateStr: String): String? {
             }
         }
     } catch (e: Exception) {
-        // Fallback or debug print
         println("Error parsing date: $endDateStr -> ${e.message}")
         null
     }
 }
 
-// Helper function to format the end date
 fun formatEndDate(endDateStr: String): String {
     return try {
         val isoDateStr = endDateStr.replace(" ", "T")
@@ -321,7 +284,6 @@ fun formatEndDate(endDateStr: String): String {
     }
 }
 
-// Helper function to check if expiring within 24 hours
 fun isExpiringSoon(endDateStr: String): Boolean {
     return try {
         val isoDateStr = endDateStr.replace(" ", "T")

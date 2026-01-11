@@ -1,11 +1,9 @@
 package com.example.freegameradar.ui.viewmodel
 
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
-import com.example.freegameradar.data.GameDatabaseProvider
 import com.example.freegameradar.data.auth.AuthRepository
 import com.example.freegameradar.data.auth.AuthState
 import com.example.freegameradar.data.models.User
+import com.example.freegameradar.firebase.FirebaseErrorMapper
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -13,7 +11,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
-class AuthViewModel(private val authRepository: AuthRepository) : ViewModel() {
+class AuthViewModel(private val authRepository: AuthRepository) : KmpViewModel() {
 
     private val _authState = MutableStateFlow<AuthState>(AuthState.Loading)
     val authState: StateFlow<AuthState> = _authState.asStateFlow()
@@ -37,7 +35,8 @@ class AuthViewModel(private val authRepository: AuthRepository) : ViewModel() {
             _authState.value = AuthState.Loading
             val result = authRepository.login(email, password)
             result.onFailure {
-                _authState.value = AuthState.Error(it.message ?: "Unknown login error")
+                val userFriendlyError = FirebaseErrorMapper.mapException(it)
+                _authState.value = AuthState.Error(userFriendlyError)
             }
         }
     }
@@ -47,22 +46,8 @@ class AuthViewModel(private val authRepository: AuthRepository) : ViewModel() {
             _authState.value = AuthState.Loading
             val result = authRepository.register(email, password)
             result.onFailure {
-                _authState.value = AuthState.Error(it.message ?: "Unknown registration error")
-            }
-        }
-    }
-
-    fun sendPasswordResetEmail(email: String) {
-        viewModelScope.launch {
-            _authState.value = AuthState.Loading
-            val result = authRepository.sendPasswordResetEmail(email)
-            result.onSuccess {
-                _authState.value = AuthState.Success(
-                    "If your email is registered, you will receive a password reset link. " +
-                            "If you don\'t have an account, please sign up."
-                )
-            }.onFailure {
-                _authState.value = AuthState.Error(it.message ?: "Unknown error")
+                val userFriendlyError = FirebaseErrorMapper.mapException(it)
+                _authState.value = AuthState.Error(userFriendlyError)
             }
         }
     }
@@ -71,25 +56,6 @@ class AuthViewModel(private val authRepository: AuthRepository) : ViewModel() {
         viewModelScope.launch {
             _authState.value = AuthState.Loading
             authRepository.continueAsGuest()
-        }
-    }
-
-    fun signOut() {
-        viewModelScope.launch {
-            authRepository.signOut()
-            GameDatabaseProvider.clearAllData()
-        }
-    }
-
-    fun deleteAccount() {
-        viewModelScope.launch {
-            _authState.value = AuthState.Loading
-            val result = authRepository.deleteAccount()
-            result.onSuccess {
-                GameDatabaseProvider.clearAllData()
-            }.onFailure {
-                _authState.value = AuthState.Error(it.message ?: "Unknown error during account deletion")
-            }
         }
     }
 }

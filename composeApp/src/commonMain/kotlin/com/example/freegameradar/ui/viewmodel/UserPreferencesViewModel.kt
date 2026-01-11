@@ -1,7 +1,5 @@
 package com.example.freegameradar.ui.viewmodel
 
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
 import com.example.freegameradar.data.repository.UserSettingsRepository
 import com.example.freegameradar.settings.UserSettings
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -20,7 +18,7 @@ data class UserPreferencesUiState(
 
 class UserPreferencesViewModel(
     private val userSettingsRepository: UserSettingsRepository
-) : ViewModel() {
+) : KmpViewModel() {
 
     private val _uiState = MutableStateFlow(UserPreferencesUiState())
     val uiState: StateFlow<UserPreferencesUiState> = _uiState.asStateFlow()
@@ -39,13 +37,15 @@ class UserPreferencesViewModel(
     }
 
     fun setNotificationsEnabled(enabled: Boolean) {
+        val newUiState = _uiState.value.copy(notificationsEnabled = enabled)
+        _uiState.value = newUiState
+
         viewModelScope.launch {
-            val currentUiState = _uiState.value
             val newSettings = UserSettings(
-                notificationsEnabled = enabled,
-                preferredGamePlatforms = currentUiState.preferredGamePlatforms,
-                preferredGameTypes = currentUiState.preferredGameTypes,
-                setupComplete = currentUiState.setupComplete
+                notificationsEnabled = newUiState.notificationsEnabled,
+                preferredGamePlatforms = newUiState.preferredGamePlatforms,
+                preferredGameTypes = newUiState.preferredGameTypes,
+                setupComplete = newUiState.setupComplete
             )
             userSettingsRepository.saveSettings(newSettings)
         }
@@ -55,19 +55,26 @@ class UserPreferencesViewModel(
         preferredGamePlatforms: List<String>,
         preferredGameTypes: List<String>
     ) {
+        val newUiState = _uiState.value.copy(
+            preferredGamePlatforms = preferredGamePlatforms,
+            preferredGameTypes = preferredGameTypes
+        )
+        _uiState.value = newUiState
+
         viewModelScope.launch {
-            val currentUiState = _uiState.value
             val newSettings = UserSettings(
-                notificationsEnabled = currentUiState.notificationsEnabled,
-                preferredGamePlatforms = preferredGamePlatforms,
-                preferredGameTypes = preferredGameTypes,
-                setupComplete = currentUiState.setupComplete
+                notificationsEnabled = newUiState.notificationsEnabled,
+                preferredGamePlatforms = newUiState.preferredGamePlatforms,
+                preferredGameTypes = newUiState.preferredGameTypes,
+                setupComplete = newUiState.setupComplete
             )
             userSettingsRepository.saveSettings(newSettings)
         }
     }
 
     fun disableAllNotifications() {
+        _uiState.value = _uiState.value.copy(notificationsEnabled = false)
+
         viewModelScope.launch {
             userSettingsRepository.disableAllNotifications()
         }

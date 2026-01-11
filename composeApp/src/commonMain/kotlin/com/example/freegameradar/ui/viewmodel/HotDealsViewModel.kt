@@ -51,8 +51,7 @@ class HotDealsViewModel(
             }
             val endInstant = Instant.parse(isoDateStr)
             val now = Clock.System.now()
-            
-            // Check if expiring in the future AND within the next 2 days
+
             val twoDaysFromNow = now.plus(2.days)
             endInstant > now && endInstant <= twoDaysFromNow
         } catch (e: Exception) {
@@ -60,7 +59,6 @@ class HotDealsViewModel(
         }
     }
 
-    //category flows
     val highestValue: StateFlow<List<GameDto>> = _allGames
         .map { list -> list.sortedByDescending { parsePriceDouble(it.worth) } }
         .stateIn(scope, started = kotlinx.coroutines.flow.SharingStarted.Eagerly, initialValue = emptyList())

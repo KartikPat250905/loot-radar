@@ -1,7 +1,5 @@
 package com.example.freegameradar.ui.viewmodel
 
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
 import com.example.freegameradar.data.auth.AuthRepository
 import com.example.freegameradar.data.models.User
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -16,7 +14,7 @@ data class SettingsUiState(
     val isGuest: Boolean = true
 )
 
-class SettingsViewModel(private val authRepository: AuthRepository) : ViewModel() {
+class SettingsViewModel(private val authRepository: AuthRepository) : KmpViewModel() {
 
     private val _uiState = MutableStateFlow(SettingsUiState())
     val uiState: StateFlow<SettingsUiState> = _uiState.asStateFlow()
@@ -30,31 +28,5 @@ class SettingsViewModel(private val authRepository: AuthRepository) : ViewModel(
                 )
             }
             .launchIn(viewModelScope)
-    }
-
-    fun signOut() {
-        viewModelScope.launch {
-            authRepository.signOut()
-        }
-    }
-
-    fun deleteAccount(onResult: (Result<Unit>) -> Unit) {
-        viewModelScope.launch {
-            val result = authRepository.deleteAccount()
-            onResult(result)
-        }
-    }
-
-    fun upgradeAccount(email: String, password: String, onResult: (Result<User>) -> Unit) {
-        viewModelScope.launch {
-            val result = authRepository.linkAccount(email, password)
-            result.onSuccess { updatedUser ->
-                _uiState.value = SettingsUiState(
-                    user = updatedUser,
-                    isGuest = updatedUser.isAnonymous
-                )
-            }
-            onResult(result)
-        }
     }
 }

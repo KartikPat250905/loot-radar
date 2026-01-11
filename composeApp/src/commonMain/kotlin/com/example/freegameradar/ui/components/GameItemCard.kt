@@ -16,17 +16,16 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import coil3.compose.SubcomposeAsyncImage
 import com.example.freegameradar.data.models.GameDto
 
 @Composable
 fun GameItemCard(
     gameDto: GameDto,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
 ) {
     Card(
-        modifier = Modifier
-            .padding(4.dp)
+        modifier = modifier
             .fillMaxWidth()
             .clickable { onClick() },
         shape = RoundedCornerShape(16.dp),
@@ -38,50 +37,37 @@ fun GameItemCard(
         Column(
             modifier = Modifier.fillMaxWidth()
         ) {
-            // Image with overlay gradient
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(140.dp)
             ) {
-                val imageUrl = gameDto.image.orEmpty()
+                val imageUrl = gameDto.thumbnail ?: gameDto.image
 
-                SubcomposeAsyncImage(
-                    model = imageUrl,
-                    contentDescription = gameDto.title.orEmpty(),
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .clip(RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp)),
-                    contentScale = ContentScale.Crop,
-                    loading = {
-                        Box(
-                            modifier = Modifier.fillMaxSize(),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            CircularProgressIndicator(
-                                modifier = Modifier.size(24.dp),
-                                strokeWidth = 2.dp,
-                                color = Color(0xFF10B981)
-                            )
-                        }
-                    },
-                    error = {
-                        Box(
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .background(Color(0xFF0D1B2A)),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Text(
-                                "No image",
-                                color = Color(0xFF6B7280),
-                                fontSize = 12.sp
-                            )
-                        }
+                if (!imageUrl.isNullOrEmpty()) {
+                    RemoteImage(
+                        url = imageUrl,
+                        contentDescription = gameDto.title,
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .clip(RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp)),
+                        contentScale = ContentScale.Crop
+                    )
+                } else {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .clip(RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp))
+                            .background(Color(0xFF0D1B2A)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = "🎮",
+                            style = MaterialTheme.typography.displaySmall
+                        )
                     }
-                )
+                }
 
-                // Subtle gradient overlay at bottom
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -98,14 +84,13 @@ fun GameItemCard(
                 )
             }
 
-            // Content section
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(12.dp)
             ) {
                 Text(
-                    text = gameDto.title ?: "No title found",
+                    text = gameDto.title ?: "No title",
                     color = Color(0xFFE5E7EB),
                     fontSize = 16.sp,
                     fontWeight = FontWeight.SemiBold,
@@ -120,7 +105,6 @@ fun GameItemCard(
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    // Game type badge
                     Box(
                         modifier = Modifier
                             .background(
@@ -130,15 +114,40 @@ fun GameItemCard(
                             .padding(horizontal = 10.dp, vertical = 4.dp)
                     ) {
                         Text(
-                            text = gameDto.type ?: "Unknown",
+                            text = gameDto.type ?: "Game",
                             color = Color(0xFF9CA3AF),
                             fontSize = 11.sp,
                             fontWeight = FontWeight.Medium
                         )
                     }
 
-                    // Worth with subtle accent
                     GameWorth(gameDto.worth)
+                }
+
+                gameDto.platforms?.let { platforms ->
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(6.dp),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        platforms.split(",").take(3).forEach { platform ->
+                            Box(
+                                modifier = Modifier
+                                    .background(
+                                        color = Color(0xFF10B981).copy(alpha = 0.15f),
+                                        shape = RoundedCornerShape(6.dp)
+                                    )
+                                    .padding(horizontal = 8.dp, vertical = 3.dp)
+                            ) {
+                                Text(
+                                    text = platform.trim(),
+                                    color = Color(0xFF10B981),
+                                    fontSize = 10.sp,
+                                    fontWeight = FontWeight.Medium
+                                )
+                            }
+                        }
+                    }
                 }
             }
         }
