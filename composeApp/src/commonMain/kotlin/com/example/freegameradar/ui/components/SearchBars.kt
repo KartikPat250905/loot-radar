@@ -1,3 +1,4 @@
+// ui/components/SearchAndRefreshBar.kt
 package com.example.freegameradar.ui.components
 
 import androidx.compose.foundation.layout.Arrangement
@@ -7,6 +8,9 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Search
+import androidx.compose.material3.Icon
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
@@ -29,20 +33,17 @@ fun SearchAndRefreshBar(
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 12.dp),
-        horizontalArrangement = Arrangement.spacedBy(12.dp),
+            .padding(horizontal = 16.dp, vertical = 8.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        // Search bar - takes most of the space
         OutlinedTextField(
             value = searchText,
             onValueChange = onSearchChange,
             label = { Text("Search games", color = Color(0xFF6EE7B7)) },
             singleLine = true,
             shape = RoundedCornerShape(14.dp),
-            modifier = Modifier
-                .weight(1f)
-                .height(56.dp),
+            modifier = Modifier.weight(1f).height(48.dp),
             colors = OutlinedTextFieldDefaults.colors(
                 focusedBorderColor = Color(0xFF10B981),
                 unfocusedBorderColor = Color(0xFF374151),
@@ -54,14 +55,15 @@ fun SearchAndRefreshBar(
             )
         )
 
-        // Refresh button - fixed width, matching height
         RefreshButton(
             isRefreshing = isRefreshing,
             canRefresh = canRefresh,
             remainingSeconds = remainingSeconds,
             onClick = onRefreshClick,
-            modifier = Modifier.width(120.dp).height(56.dp),
-            showText = true
+            showText = true,
+            modifier = Modifier
+                .width(120.dp)
+                .height(56.dp)
         )
     }
 }

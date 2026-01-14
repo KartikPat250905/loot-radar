@@ -13,7 +13,6 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlin.math.max
@@ -21,8 +20,7 @@ import kotlin.math.max
 data class GameFilters(
     val platforms: Set<String> = emptySet(),
     val types: Set<String> = emptySet(),
-
-    )
+)
 
 class GameViewModel(
     private val repository: GameRepository = GameRepository(ApiService())
@@ -32,7 +30,6 @@ class GameViewModel(
 
     private val _gameTypeFilter = MutableStateFlow(GameTypeFilter.ALL)
     val gameTypeFilter: StateFlow<GameTypeFilter> = _gameTypeFilter.asStateFlow()
-
 
     val dataSource: StateFlow<DataSource> = repository.dataSource
 
@@ -70,8 +67,8 @@ class GameViewModel(
             }
         }.stateIn(
             scope = viewModelScope,
-            SharingStarted.WhileSubscribed(5_000),
-            emptyList()
+            started = SharingStarted.WhileSubscribed(5_000),
+            initialValue = emptyList()
         )
 
     // Refresh state management
@@ -84,22 +81,37 @@ class GameViewModel(
     private val _canRefresh = MutableStateFlow(true)
     val canRefresh: StateFlow<Boolean> = _canRefresh.asStateFlow()
 
-    // Cooldown period: 30 seconds (adjust as needed)
+    // ✅ NEW: Reactive remaining cooldown
+    private val _remainingCooldown = MutableStateFlow(0)
+    val remainingCooldown: StateFlow<Int> = _remainingCooldown.asStateFlow()
+
+    // Cooldown period: 30 seconds
     private val REFRESH_COOLDOWN_MS = 30_000L
 
     init {
-        // Start cooldown timer
+        // ✅ FIXED: Non-blocking cooldown timer with reactive updates
         viewModelScope.launch {
-            _lastRefreshTime.collect { lastRefresh ->
-                if (lastRefresh > 0) {
-                    val elapsed = System.currentTimeMillis() - lastRefresh
-                    _canRefresh.value = elapsed >= REFRESH_COOLDOWN_MS
+            while (true) {
+                delay(1000) // Check every second
+                val lastRefresh = _lastRefreshTime.value
 
-                    // Update every second to show countdown
-                    if (elapsed < REFRESH_COOLDOWN_MS) {
-                        delay(1000)
-                        _lastRefreshTime.value = lastRefresh // Trigger recheck
+                if (lastRefresh > 0L) {
+                    val elapsed = System.currentTimeMillis() - lastRefresh
+                    val cooldownExpired = elapsed >= REFRESH_COOLDOWN_MS
+
+                    _canRefresh.value = cooldownExpired
+
+                    // Update remaining seconds for UI
+                    if (!cooldownExpired) {
+                        val remaining = ((REFRESH_COOLDOWN_MS - elapsed) / 1000).toInt()
+                        _remainingCooldown.value = max(0, remaining)
+                    } else {
+                        _remainingCooldown.value = 0
                     }
+                } else {
+                    // No refresh has occurred yet
+                    _canRefresh.value = true
+                    _remainingCooldown.value = 0
                 }
             }
         }
@@ -109,45 +121,62 @@ class GameViewModel(
         viewModelScope.launch {
             repository.getFreeGames()
                 .catch { e ->
-                    println("Error fetching games: ${e.message}")
+                    println("❌ Error fetching games: ${e.message}")
+                    e.printStackTrace()
                 }
                 .collect { gameList ->
                     _allGames.value = gameList
+                    println("✅ Loaded ${gameList.size} games")
                 }
         }
     }
 
     fun refreshGames() {
-        // Prevent refresh if still in cooldown
+        // Prevent refresh if still in cooldown or already refreshing
         if (!_canRefresh.value || _isRefreshing.value) {
+            println("⚠️ Refresh blocked: canRefresh=${_canRefresh.value}, isRefreshing=${_isRefreshing.value}")
             return
         }
 
         viewModelScope.launch {
             _isRefreshing.value = true
-            _canRefresh.value = false
+
+            println("🔄 Starting refresh...")
 
             try {
-                // Force fetch from API (bypass cache)
-                val freshGames = repository.getFreeGames(forceRefresh = true).first()
-                _allGames.value = freshGames
+                // Force refresh from API
+                repository.getFreeGames(forceRefresh = true)
+                    .catch { e ->
+                        println("❌ Refresh API error: ${e.message}")
+                        e.printStackTrace()
+                        throw e // Re-throw to outer catch
+                    }
+                    .collect { freshGames ->
+                        _allGames.value = freshGames
+                        println("✅ Refresh successful: ${freshGames.size} games loaded")
+                    }
 
-                // Update last refresh time
+                // Update last refresh time (starts cooldown)
                 _lastRefreshTime.value = System.currentTimeMillis()
 
+                println("⏱️ Cooldown started, next refresh available in ${REFRESH_COOLDOWN_MS / 1000}s")
+
             } catch (e: Exception) {
-                // Handle error (show snackbar, etc.)
-                println("Refresh failed: ${e.message}")
+                println("❌ Refresh failed: ${e.message}")
+                e.printStackTrace()
+                // Don't re-enable canRefresh - let cooldown expire naturally
+
             } finally {
                 _isRefreshing.value = false
+                println("🏁 Refresh completed, isRefreshing=false")
             }
         }
     }
 
+    // ✅ DEPRECATED: Use remainingCooldown StateFlow instead
+    @Deprecated("Use remainingCooldown StateFlow", ReplaceWith("remainingCooldown.value"))
     fun getRemainingCooldown(): Int {
-        val elapsed = System.currentTimeMillis() - _lastRefreshTime.value
-        val remaining = (REFRESH_COOLDOWN_MS - elapsed) / 1000
-        return max(0, remaining.toInt())
+        return _remainingCooldown.value
     }
 
     fun updateFilter(filter: GameTypeFilter) {
