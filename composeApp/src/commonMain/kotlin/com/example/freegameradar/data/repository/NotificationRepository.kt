@@ -63,7 +63,7 @@ class NotificationRepository(private val database: GameDatabase) {
         return queries.getUnreadNotificationCount().asFlow().mapToOne(Dispatchers.IO)
     }
 
-    fun deleteAllNotification() {
+    fun deleteAllNotifications() {
         queries.clearAllNotifications()
     }
 

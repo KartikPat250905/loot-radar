@@ -54,7 +54,7 @@ class NotificationViewModel(private val notificationRepository: NotificationRepo
 
     fun clearAllnotifications() {
         viewModelScope.launch {
-            notificationRepository.deleteAllNotification()
+            notificationRepository.deleteAllNotifications()
         }
     }
 
