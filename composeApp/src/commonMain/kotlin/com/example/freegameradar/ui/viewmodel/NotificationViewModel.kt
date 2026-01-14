@@ -52,6 +52,12 @@ class NotificationViewModel(private val notificationRepository: NotificationRepo
         }
     }
 
+    fun clearAllnotifications() {
+        viewModelScope.launch {
+            notificationRepository.deleteAllNotification()
+        }
+    }
+
     fun refreshNotifications() {
         _isLoading.value = true
         // In a real app, you might trigger a network fetch here.

@@ -22,4 +22,8 @@ object GameDatabaseProvider {
             database?.user_settingsQueries?.deleteSettings()
         }
     }
+
+    suspend fun clearAllNotifications() {
+        database?.notificationsQueries?.clearAllNotifications()
+    }
 }

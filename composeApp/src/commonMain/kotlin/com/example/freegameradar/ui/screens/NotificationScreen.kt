@@ -20,6 +20,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
@@ -64,13 +65,23 @@ fun NotificationScreen(
                 )
             )
     ) {
-        Text(
-            text = "Notifications",
-            fontSize = 24.sp,
-            fontWeight = FontWeight.ExtraBold,
-            color = Color(0xFFE5E7EB),
-            modifier = Modifier.padding(16.dp)
-        )
+        Row {
+            Text(
+                text = "Notifications",
+                fontSize = 24.sp,
+                fontWeight = FontWeight.ExtraBold,
+                color = Color(0xFFE5E7EB),
+                modifier = Modifier.padding(16.dp)
+            )
+
+            Button(
+                onClick = {
+                    viewModel.clearAllnotifications()
+                }
+            ) {
+                Text("Clear all")
+            }
+        }
 
         if (isLoading) {
             AppLoadingScreen(fullScreen = false)
