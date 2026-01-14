@@ -19,18 +19,23 @@ class GameRepository(
     private val database = GameDatabaseProvider.getDatabase()
     private val notificationRepository = NotificationRepository(database)
 
-    fun getFreeGames(): Flow<List<GameDto>> = flow {
-        val cached = database.gameQueries.selectAll().executeAsList().map { it.toDto() }
-        if (cached.isNotEmpty()){
-            _dataSource.value = DataSource.CACHE
-            emit(cached)
+    fun getFreeGames(forceRefresh: Boolean = false): Flow<List<GameDto>> = flow {
+        // If we aren't forcing a refresh, try to emit the cached data first.
+        if (!forceRefresh) {
+            val cached = database.gameQueries.selectAll().executeAsList().map { it.toDto() }
+            if (cached.isNotEmpty()) {
+                _dataSource.value = DataSource.CACHE
+                emit(cached)
+            }
         }
 
         try {
+            // Proceed to fetch from the network.
             api.getFreeGamesFlow().collect { remoteGames ->
                 val validGameIds = remoteGames.mapNotNull { it.id?.toLong() }
                 notificationRepository.deleteExpiredNotifications(validGameIds)
-                
+
+                // Replace the entire cache with the fresh data.
                 database.transaction {
                     database.gameQueries.deleteAll()
                     remoteGames.forEachIndexed { index, game ->
@@ -54,12 +59,21 @@ class GameRepository(
                         )
                     }
                 }
+
                 _dataSource.value = DataSource.NETWORK
-                emit(remoteGames)
+                // Emit the newly updated data from the source of truth (the database).
+                val newCache = database.gameQueries.selectAll().executeAsList().map { it.toDto() }
+                emit(newCache)
             }
         } catch (e: Exception) {
+            // If the network call fails, the flow will either have already emitted a cached value
+            // or it will complete without an emission, which will cause .first() to fail,
+            // which is caught in the ViewModel. This is acceptable behavior.
+            println("API failed, using cached data if available: ${e.message}")
+            // We set the data source to cache to reflect the state if the API call fails.
             _dataSource.value = DataSource.CACHE
-            println("API failed, returning cached DB: ${e.message}")
+            // If we get here on a force-refresh, we should re-throw so the ViewModel knows it failed.
+            if(forceRefresh) throw e
         }
     }
 

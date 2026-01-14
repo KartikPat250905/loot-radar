@@ -1,4 +1,3 @@
-// HomeScreen.kt
 package com.example.freegameradar.ui.screens
 
 import androidx.compose.animation.AnimatedVisibility
@@ -19,6 +18,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -31,12 +31,14 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import com.example.freegameradar.data.state.DataSource
 import com.example.freegameradar.ui.components.AppLoadingScreen
+import com.example.freegameradar.ui.components.DesktopSearchAndRefreshBar
 import com.example.freegameradar.ui.components.GameGrid
-import com.example.freegameradar.ui.components.GameSearchBar
 import com.example.freegameradar.ui.components.GameTypeFilterTabs
+import com.example.freegameradar.ui.components.SearchAndRefreshBar
 import com.example.freegameradar.ui.components.TotalWorthBar
 import com.example.freegameradar.ui.viewmodel.GameViewModel
 
@@ -46,15 +48,30 @@ fun HomeScreen(
     modifier: Modifier = Modifier,
     onBottomBarVisibilityChange: (Boolean) -> Unit
 ) {
-    val gameViewModel = remember { GameViewModel() }
+    val gameViewModel: GameViewModel = viewModel()
     var isLoading by remember { mutableStateOf(true) }
     val games by gameViewModel.games.collectAsState()
+    val isRefreshing by gameViewModel.isRefreshing.collectAsState()
+    val canRefresh by gameViewModel.canRefresh.collectAsState()
+    val remainingCooldown by remember {
+        derivedStateOf { gameViewModel.getRemainingCooldown() }
+    }
+
     var searchText by remember { mutableStateOf("") }
     val dataSource by gameViewModel.dataSource.collectAsState()
     val selectedFilter by gameViewModel.gameTypeFilter.collectAsState()
     val gridState = rememberLazyGridState()
     var isVisible by remember { mutableStateOf(true) }
 
+    val isDesktop = remember {
+        System.getProperty("os.name")?.let { os ->
+            os.contains("Windows", ignoreCase = true) ||
+                    os.contains("Mac", ignoreCase = true) ||
+                    os.contains("Linux", ignoreCase = true)
+        } ?: false
+    }
+
+    // Existing scroll detection logic
     LaunchedEffect(gridState) {
         var previousIndex = gridState.firstVisibleItemIndex
         var previousOffset = gridState.firstVisibleItemScrollOffset
@@ -62,18 +79,15 @@ fun HomeScreen(
         snapshotFlow {
             gridState.firstVisibleItemIndex to gridState.firstVisibleItemScrollOffset
         }.collect { (index, offset) ->
-            // At the very top - always show
             if (index == 0 && offset < 20) {
                 isVisible = true
             } else {
-                // Calculate if scrolling up or down
                 val isScrollingDown = if (index != previousIndex) {
                     index > previousIndex
                 } else {
                     offset > previousOffset
                 }
 
-                // Update visibility based on scroll direction
                 if (isScrollingDown && index > 0) {
                     isVisible = false
                 } else if (!isScrollingDown) {
@@ -134,23 +148,39 @@ fun HomeScreen(
             )
         ) {
             Column {
-                GameSearchBar(
-                    searchText,
-                    onTextChange = {
-                        searchText = it
-                        gameViewModel.updateSearch(it)
-                    }
-                )
+                if (isDesktop) {
+                    DesktopSearchAndRefreshBar(
+                        searchText = searchText,
+                        onSearchChange = { gameViewModel.updateSearch(it) },
+                        isRefreshing = isRefreshing,
+                        canRefresh = canRefresh,
+                        remainingSeconds = remainingCooldown,
+                        onRefreshClick = { gameViewModel.refreshGames() }
+                    )
+                } else {
+                    SearchAndRefreshBar(
+                        searchText = searchText,
+                        onSearchChange = { gameViewModel.updateSearch(it) },
+                        isRefreshing = isRefreshing,
+                        canRefresh = canRefresh,
+                        remainingSeconds = remainingCooldown,
+                        onRefreshClick = { gameViewModel.refreshGames() }
+                    )
+                }
+
                 GameTypeFilterTabs(
                     selectedFilter = selectedFilter,
                     onFilterSelected = { gameViewModel.updateFilter(it) }
                 )
+
                 TotalWorthBar(
                     games = games,
                     dataSource = dataSource
                 )
             }
         }
+
+        // Existing game grid
         Box(contentAlignment = Alignment.Center, modifier = Modifier.weight(1f)) {
             if (isLoading) {
                 AppLoadingScreen(fullScreen = false)

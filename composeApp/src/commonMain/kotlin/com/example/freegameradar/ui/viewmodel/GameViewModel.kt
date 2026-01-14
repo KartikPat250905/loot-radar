@@ -1,39 +1,37 @@
 package com.example.freegameradar.ui.viewmodel
 
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.example.freegameradar.data.models.GameDto
 import com.example.freegameradar.data.remote.ApiService
 import com.example.freegameradar.data.repository.GameRepository
 import com.example.freegameradar.data.state.DataSource
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.cancel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
-
+import kotlin.math.max
 
 data class GameFilters(
     val platforms: Set<String> = emptySet(),
     val types: Set<String> = emptySet(),
 
-)
+    )
 
 class GameViewModel(
     private val repository: GameRepository = GameRepository(ApiService())
-) {
+) : ViewModel() {
     private val _filters = MutableStateFlow(GameFilters())
     val filters: StateFlow<GameFilters> = _filters
-    private val viewModelScope = CoroutineScope(
-        SupervisorJob() + Dispatchers.Default
-    )
 
     private val _gameTypeFilter = MutableStateFlow(GameTypeFilter.ALL)
-    val gameTypeFilter: StateFlow<GameTypeFilter> = _gameTypeFilter
+    val gameTypeFilter: StateFlow<GameTypeFilter> = _gameTypeFilter.asStateFlow()
 
 
     val dataSource: StateFlow<DataSource> = repository.dataSource
@@ -75,6 +73,37 @@ class GameViewModel(
             emptyList()
         )
 
+    // Refresh state management
+    private val _isRefreshing = MutableStateFlow(false)
+    val isRefreshing: StateFlow<Boolean> = _isRefreshing.asStateFlow()
+
+    private val _lastRefreshTime = MutableStateFlow(0L)
+    val lastRefreshTime: StateFlow<Long> = _lastRefreshTime.asStateFlow()
+
+    private val _canRefresh = MutableStateFlow(true)
+    val canRefresh: StateFlow<Boolean> = _canRefresh.asStateFlow()
+
+    // Cooldown period: 30 seconds (adjust as needed)
+    private val REFRESH_COOLDOWN_MS = 30_000L
+
+    init {
+        // Start cooldown timer
+        viewModelScope.launch {
+            _lastRefreshTime.collect { lastRefresh ->
+                if (lastRefresh > 0) {
+                    val elapsed = System.currentTimeMillis() - lastRefresh
+                    _canRefresh.value = elapsed >= REFRESH_COOLDOWN_MS
+
+                    // Update every second to show countdown
+                    if (elapsed < REFRESH_COOLDOWN_MS) {
+                        delay(1000)
+                        _lastRefreshTime.value = lastRefresh // Trigger recheck
+                    }
+                }
+            }
+        }
+    }
+
     fun loadGames() {
         viewModelScope.launch {
             repository.getFreeGames()
@@ -85,6 +114,39 @@ class GameViewModel(
                     _allGames.value = gameList
                 }
         }
+    }
+
+    fun refreshGames() {
+        // Prevent refresh if still in cooldown
+        if (!_canRefresh.value || _isRefreshing.value) {
+            return
+        }
+
+        viewModelScope.launch {
+            _isRefreshing.value = true
+            _canRefresh.value = false
+
+            try {
+                // Force fetch from API (bypass cache)
+                val freshGames = repository.getFreeGames(forceRefresh = true).first()
+                _allGames.value = freshGames
+
+                // Update last refresh time
+                _lastRefreshTime.value = System.currentTimeMillis()
+
+            } catch (e: Exception) {
+                // Handle error (show snackbar, etc.)
+                println("Refresh failed: ${e.message}")
+            } finally {
+                _isRefreshing.value = false
+            }
+        }
+    }
+
+    fun getRemainingCooldown(): Int {
+        val elapsed = System.currentTimeMillis() - _lastRefreshTime.value
+        val remaining = (REFRESH_COOLDOWN_MS - elapsed) / 1000
+        return max(0, remaining.toInt())
     }
 
     fun updateFilter(filter: GameTypeFilter) {
@@ -120,6 +182,6 @@ class GameViewModel(
     }
 
     fun clear() {
-        viewModelScope.cancel()
+        // No-op. viewModelScope is handled by lifecycle.
     }
 }
