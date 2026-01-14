@@ -156,9 +156,8 @@ fun RefreshButton(
 
                         AnimatedContent(
                             targetState = when {
-                                isRefreshing -> "Refreshing..."
                                 !canRefresh -> "Wait ${remainingSeconds}s"
-                                else -> "Refresh"
+                                else -> ""
                             },
                             label = "refresh_text"
                         ) { text ->
@@ -166,11 +165,7 @@ fun RefreshButton(
                                 text = text,
                                 fontWeight = FontWeight.Bold,
                                 fontSize = 14.sp,
-                                color = if (canRefresh && !isRefreshing) {
-                                    Color(0xFF6EE7B7)
-                                } else {
-                                    Color(0xFF6B7280)
-                                },
+                                color =  Color(0xFF6B7280),
                                 letterSpacing = 0.5.sp
                             )
                         }

@@ -35,7 +35,6 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import com.example.freegameradar.data.state.DataSource
 import com.example.freegameradar.ui.components.AppLoadingScreen
-import com.example.freegameradar.ui.components.DesktopSearchAndRefreshBar
 import com.example.freegameradar.ui.components.GameGrid
 import com.example.freegameradar.ui.components.GameTypeFilterTabs
 import com.example.freegameradar.ui.components.SearchAndRefreshBar
@@ -62,14 +61,6 @@ fun HomeScreen(
     val selectedFilter by gameViewModel.gameTypeFilter.collectAsState()
     val gridState = rememberLazyGridState()
     var isVisible by remember { mutableStateOf(true) }
-
-    val isDesktop = remember {
-        System.getProperty("os.name")?.let { os ->
-            os.contains("Windows", ignoreCase = true) ||
-                    os.contains("Mac", ignoreCase = true) ||
-                    os.contains("Linux", ignoreCase = true)
-        } ?: false
-    }
 
     // Existing scroll detection logic
     LaunchedEffect(gridState) {
@@ -148,25 +139,14 @@ fun HomeScreen(
             )
         ) {
             Column {
-                if (isDesktop) {
-                    DesktopSearchAndRefreshBar(
-                        searchText = searchText,
-                        onSearchChange = { gameViewModel.updateSearch(it) },
-                        isRefreshing = isRefreshing,
-                        canRefresh = canRefresh,
-                        remainingSeconds = remainingCooldown,
-                        onRefreshClick = { gameViewModel.refreshGames() }
-                    )
-                } else {
-                    SearchAndRefreshBar(
-                        searchText = searchText,
-                        onSearchChange = { gameViewModel.updateSearch(it) },
-                        isRefreshing = isRefreshing,
-                        canRefresh = canRefresh,
-                        remainingSeconds = remainingCooldown,
-                        onRefreshClick = { gameViewModel.refreshGames() }
-                    )
-                }
+                SearchAndRefreshBar(
+                    searchText = searchText,
+                    onSearchChange = { gameViewModel.updateSearch(it) },
+                    isRefreshing = isRefreshing,
+                    canRefresh = canRefresh,
+                    remainingSeconds = remainingCooldown,
+                    onRefreshClick = { gameViewModel.refreshGames() }
+                )
 
                 GameTypeFilterTabs(
                     selectedFilter = selectedFilter,
