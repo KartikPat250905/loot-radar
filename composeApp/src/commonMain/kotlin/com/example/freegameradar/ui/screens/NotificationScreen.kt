@@ -89,7 +89,7 @@ fun NotificationScreen(
         }
 
         if (isLoading) {
-            AppLoadingScreen(fullScreen = false)
+            AppLoadingScreen(fullScreen = true)
         } else if (notifications.isEmpty()) {
             EmptyNotifications()
         } else {
