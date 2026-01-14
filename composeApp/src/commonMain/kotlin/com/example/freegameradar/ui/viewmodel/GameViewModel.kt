@@ -38,6 +38,7 @@ class GameViewModel(
 
     private var _allGames = MutableStateFlow<List<GameDto>>(emptyList())
     private val _searchQuery = MutableStateFlow("")
+    val searchQuery: StateFlow<String> = _searchQuery.asStateFlow()
 
     val games: StateFlow<List<GameDto>> =
         combine(_allGames, _searchQuery, _filters, _gameTypeFilter) { games, query, filters, typeFilter ->

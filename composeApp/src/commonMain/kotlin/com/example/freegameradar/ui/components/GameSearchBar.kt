@@ -2,8 +2,8 @@ package com.example.freegameradar.ui.components
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.OutlinedTextField
@@ -40,7 +40,7 @@ fun GameSearchAndRefreshBar(
             label = { Text("Search games", color = Color(0xFF6EE7B7)) },
             singleLine = true,
             shape = RoundedCornerShape(14.dp),
-            modifier = Modifier.weight(1f).defaultMinSize(minHeight = 48.dp),
+            modifier = Modifier.weight(1f).height(48.dp),
             colors = OutlinedTextFieldDefaults.colors(
                 focusedBorderColor = Color(0xFF10B981),
                 unfocusedBorderColor = Color(0xFF374151),

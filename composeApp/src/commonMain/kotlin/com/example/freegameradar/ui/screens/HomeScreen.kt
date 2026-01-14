@@ -57,7 +57,7 @@ fun HomeScreen(
         derivedStateOf { gameViewModel.getRemainingCooldown() }
     }
 
-    var searchText by remember { mutableStateOf("") }
+    val searchText by gameViewModel.searchQuery.collectAsState()
     val dataSource by gameViewModel.dataSource.collectAsState()
     val selectedFilter by gameViewModel.gameTypeFilter.collectAsState()
     val gridState = rememberLazyGridState()
