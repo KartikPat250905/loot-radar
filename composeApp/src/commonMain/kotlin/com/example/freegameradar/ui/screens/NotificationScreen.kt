@@ -2,6 +2,7 @@ package com.example.freegameradar.ui.screens
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -20,7 +21,6 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
@@ -28,8 +28,10 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
@@ -66,7 +68,9 @@ fun NotificationScreen(
             )
     ) {
         Row(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 12.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -74,18 +78,14 @@ fun NotificationScreen(
                 text = "Notifications",
                 fontSize = 24.sp,
                 fontWeight = FontWeight.ExtraBold,
-                color = Color(0xFFE5E7EB),
-                modifier = Modifier.padding(16.dp)
+                color = Color(0xFFE5E7EB)
             )
 
-            Button(
-                onClick = {
-                    viewModel.clearAllnotifications()
-                },
-                modifier = Modifier.padding(end = 16.dp)
-            ) {
-                Text("Clear all")
-            }
+            // Themed Clear All Button
+            ThemedClearButton(
+                onClick = { viewModel.clearAllnotifications() },
+                enabled = notifications.isNotEmpty()
+            )
         }
 
         if (isLoading) {
@@ -113,6 +113,78 @@ fun NotificationScreen(
                         }
                     )
                 }
+            }
+        }
+    }
+}
+
+@Composable
+private fun ThemedClearButton(
+    onClick: () -> Unit,
+    enabled: Boolean,
+    modifier: Modifier = Modifier
+) {
+    Box(
+        modifier = modifier
+            .height(44.dp)
+            .width(100.dp)
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(
+                    brush = if (enabled) {
+                        Brush.linearGradient(
+                            colors = listOf(
+                                Color(0xFFEF4444),
+                                Color(0xFFDC2626),
+                                Color(0xFFEF4444)
+                            )
+                        )
+                    } else {
+                        Brush.linearGradient(
+                            colors = listOf(
+                                Color(0xFF374151).copy(alpha = 0.3f),
+                                Color(0xFF1F2937).copy(alpha = 0.3f)
+                            )
+                        )
+                    },
+                    shape = RoundedCornerShape(12.dp)
+                )
+                .padding(if (enabled) 2.dp else 1.dp)
+        ) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(
+                        brush = Brush.verticalGradient(
+                            colors = listOf(
+                                Color(0xFF1B263B),
+                                Color(0xFF0D1B2A)
+                            )
+                        ),
+                        shape = RoundedCornerShape(11.dp)
+                    )
+                    .clip(RoundedCornerShape(11.dp))
+                    .clickable(
+                        enabled = enabled,
+                        onClick = onClick,
+                        interactionSource = remember { MutableInteractionSource() },
+                        indication = null
+                    ),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = "Clear All",
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 13.sp,
+                    color = if (enabled) {
+                        Color(0xFFEF4444)
+                    } else {
+                        Color(0xFF6B7280)
+                    },
+                    letterSpacing = 0.3.sp
+                )
             }
         }
     }
