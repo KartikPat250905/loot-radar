@@ -65,7 +65,11 @@ fun NotificationScreen(
                 )
             )
     ) {
-        Row {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
             Text(
                 text = "Notifications",
                 fontSize = 24.sp,
@@ -77,7 +81,8 @@ fun NotificationScreen(
             Button(
                 onClick = {
                     viewModel.clearAllnotifications()
-                }
+                },
+                modifier = Modifier.padding(end = 16.dp)
             ) {
                 Text("Clear all")
             }
