@@ -96,10 +96,18 @@ async function notifyUsersAboutNewDeals(newDeals) {
     const matchingDealsForUser = newDeals.filter(deal => {
       const dealPlatforms = deal.platforms.split(',').map(p => p.trim().toLowerCase());
       const dealType = deal.type.toLowerCase();
-      const platformMatch = userPlatforms.some(p => dealPlatforms.includes(p));
-      const typeMatch = userTypes.includes(dealType);
+
+      // If no preferences are set, match everything
+      if (userPlatforms.length === 0 && userTypes.length === 0) {
+        return true;
+      }
+
+      const platformMatch = userPlatforms.length === 0 || userPlatforms.some(p => dealPlatforms.includes(p));
+      const typeMatch = userTypes.length === 0 || userTypes.includes(dealType);
+
       return platformMatch && typeMatch;
     });
+
 
     if (matchingDealsForUser.length > 0 && user.notificationTokens && user.notificationTokens.length > 0) {
       // Per your recommendation, we now only send the IDs.
