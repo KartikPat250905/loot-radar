@@ -16,6 +16,32 @@ const messaging = admin.messaging();
 const GAME_API_URL = 'https://www.gamerpower.com/api/giveaways';
 
 /**
+ * Normalizes platform names from the API to match the app's expected format.
+ * @param {string} platformString - The platforms string from the API (e.g., "PC, Epic Games Store")
+ * @returns {Array<string>} - Array of normalized platform names
+ */
+function normalizePlatforms(platformString) {
+  const platformMap = {
+    'epic games store': 'epic-games-store',
+    'nintendo switch': 'switch',
+    'playstation 4': 'ps4',
+    'playstation 5': 'ps5',
+    'xbox one': 'xbox-one',
+    'xbox series x|s': 'xbox-series-xs',
+    'xbox series xs': 'xbox-series-xs',
+    'xbox 360': 'xbox-360',
+    'battle.net': 'battlenet'
+  };
+
+  return platformString
+    .split(',')
+    .map(p => {
+      const normalized = p.trim().toLowerCase();
+      return platformMap[normalized] || normalized;
+    });
+}
+
+/**
  * Efficiently fetches deals, identifies only the new ones, and saves them to Firestore.
  */
 async function importDeals() {
@@ -90,11 +116,13 @@ async function notifyUsersAboutNewDeals(newDeals) {
 
   usersSnapshot.forEach(doc => {
     const user = doc.data();
+    const userId = doc.id;
     const userPlatforms = user.preferredGamePlatforms || [];
     const userTypes = user.preferredGameTypes || [];
 
     const matchingDealsForUser = newDeals.filter(deal => {
-      const dealPlatforms = deal.platforms.split(',').map(p => p.trim().toLowerCase());
+      // Use normalized platforms instead of raw API values
+      const dealPlatforms = normalizePlatforms(deal.platforms);
       const dealType = deal.type.toLowerCase();
 
       // If no preferences are set, match everything
@@ -108,9 +136,9 @@ async function notifyUsersAboutNewDeals(newDeals) {
       return platformMatch && typeMatch;
     });
 
+    console.log(`User ${userId}: Found ${matchingDealsForUser.length} matching deals. Platforms: [${userPlatforms}], Types: [${userTypes}]`);
 
     if (matchingDealsForUser.length > 0 && user.notificationTokens && user.notificationTokens.length > 0) {
-      // Per your recommendation, we now only send the IDs.
       const dealIds = matchingDealsForUser.map(deal => deal.id).join(',');
 
       const message = {
@@ -120,15 +148,47 @@ async function notifyUsersAboutNewDeals(newDeals) {
         tokens: user.notificationTokens,
       };
 
-      allNotifications.push(messaging.sendEachForMulticast(message));
-      // Updated log message for clarity
-      console.log(`Sending notification for ${matchingDealsForUser.length} game(s) to user ${doc.id}.`);
+      console.log(`Preparing to send notification to user ${userId} with ${user.notificationTokens.length} token(s)`);
+
+      allNotifications.push(
+        messaging.sendEachForMulticast(message)
+          .then(response => {
+            console.log(`✓ Notification sent to user ${userId}. Success: ${response.successCount}, Failure: ${response.failureCount}`);
+
+            if (response.failureCount > 0) {
+              response.responses.forEach((resp, idx) => {
+                if (!resp.success) {
+                  console.error(`  ✗ Token ${idx} failed:`, resp.error.code);
+
+                  if (resp.error.code === 'messaging/invalid-registration-token' ||
+                      resp.error.code === 'messaging/registration-token-not-registered') {
+                    console.log(`  → Token ${idx} should be removed from database`);
+                  }
+                }
+              });
+            }
+            return response;
+          })
+          .catch(error => {
+            console.error(`✗ Failed to send notification to user ${userId}:`, error);
+            throw error;
+          })
+      );
+    } else {
+      if (matchingDealsForUser.length === 0) {
+        console.log(`User ${userId}: No matching deals found`);
+      } else if (!user.notificationTokens || user.notificationTokens.length === 0) {
+        console.log(`User ${userId}: No notification tokens available`);
+      }
     }
   });
 
   if (allNotifications.length > 0) {
-    console.log(`Sending notifications to users.`);
+    console.log(`Sending ${allNotifications.length} notification(s) to users...`);
     await Promise.all(allNotifications);
+    console.log('All notifications processed.');
+  } else {
+    console.log('No notifications to send.');
   }
 }
 
@@ -139,7 +199,6 @@ async function main() {
   try {
     const newDeals = await importDeals();
     if (newDeals.length > 0) {
-      // This is now much more efficient, sending one notification per user.
       console.log('Notifying users about new deals...');
       await notifyUsersAboutNewDeals(newDeals);
     }

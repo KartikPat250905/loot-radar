@@ -37,11 +37,14 @@ fun SetupScreen(
         notificationsEnabled = permissionHandler.isNotificationPermissionGranted()
     }
 
+    // Platform values must match the normalized format in the backend
     val platforms = listOf(
         "pc", "steam", "epic-games-store", "ubisoft", "gog", "itchio",
         "ps4", "ps5", "xbox-one", "xbox-series-xs", "switch",
         "android", "ios", "vr", "battlenet", "origin", "drm-free", "xbox-360"
     )
+
+    // Type values must match the API's lowercase type field
     val types = listOf("game", "dlc", "early access")
 
     Column(
