@@ -2,7 +2,14 @@ package com.example.freegameradar.ui.navigation
 
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
@@ -21,7 +28,9 @@ import com.example.freegameradar.ui.viewmodel.SettingsViewModel
 import com.example.freegameradar.ui.viewmodel.SetupViewModel
 import com.example.freegameradar.ui.viewmodel.UserPreferencesViewModel
 import com.example.freegameradar.ui.viewmodel.UserStatsViewModel
+import com.example.freegameradar.util.PermissionRequestResult
 import com.example.freegameradar.util.isNotificationPermissionGranted
+import com.example.freegameradar.util.openAppSettings
 import com.example.freegameradar.util.rememberPermissionRequestLauncher
 
 @Composable
@@ -45,92 +54,79 @@ fun AppNavigation(
             SetupScreen(
                 viewModel = setupViewModel,
                 onNavigateToHome = {
-                    // After setup, decide where to go next.
                     if (permissionGranted) {
-                        navController.navigate(Screen.Home.route) {
-                            popUpTo(Screen.Setup.route) { inclusive = true }
-                        }
+                        navController.navigate(Screen.Home.route) { popUpTo(Screen.Setup.route) { inclusive = true } }
                     } else {
-                        navController.navigate(Screen.NotificationBenefits.route) {
-                            popUpTo(Screen.Setup.route) { inclusive = true }
-                        }
+                        navController.navigate(Screen.NotificationBenefits.route) { popUpTo(Screen.Setup.route) { inclusive = true } }
                     }
                 }
             )
         }
 
         composable(Screen.NotificationBenefits.route) {
-            val requestPermissionLauncher = rememberPermissionRequestLauncher { isGranted ->
-                // This callback is executed after the user responds to the permission dialog.
-                if (isGranted) {
-                    // If permission was granted, navigate to the home screen.
-                    navController.navigate(Screen.Home.route) {
-                        popUpTo(Screen.NotificationBenefits.route) { inclusive = true }
+            var showSettingsDialog by remember { mutableStateOf(false) }
+
+            val requestPermissionLauncher = rememberPermissionRequestLauncher { result ->
+                when (result) {
+                    PermissionRequestResult.GRANTED -> {
+                        navController.navigate(Screen.Home.route) { popUpTo(Screen.NotificationBenefits.route) { inclusive = true } }
+                    }
+                    PermissionRequestResult.PERMANENTLY_DENIED -> {
+                        showSettingsDialog = true
+                    }
+                    PermissionRequestResult.DENIED -> {
+                        // The user denied, but we can ask again. Do nothing and stay on the screen.
                     }
                 }
-                // If permission was NOT granted, do nothing. The user stays on this screen.
+            }
+
+            if (showSettingsDialog) {
+                AlertDialog(
+                    onDismissRequest = { showSettingsDialog = false },
+                    title = { Text("Permission Required") },
+                    text = { Text("To get notifications, you must enable the permission in your phone's settings.") },
+                    confirmButton = {
+                        TextButton(onClick = { openAppSettings() }) {
+                            Text("Open Settings")
+                        }
+                    },
+                    dismissButton = {
+                        TextButton(onClick = { showSettingsDialog = false }) {
+                            Text("Cancel")
+                        }
+                    }
+                )
             }
 
             NotificationPermissionBenefitsScreen(
-                onEnableNotifications = {
-                    // This now calls the launcher that triggers the system dialog.
-                    requestPermissionLauncher()
-                },
+                onEnableNotifications = { requestPermissionLauncher() },
                 onSkip = {
-                    navController.navigate(Screen.Home.route) {
-                        popUpTo(Screen.NotificationBenefits.route) { inclusive = true }
-                    }
+                    navController.navigate(Screen.Home.route) { popUpTo(Screen.NotificationBenefits.route) { inclusive = true } }
                 }
             )
         }
 
         composable(Screen.Home.route) {
-            HomeScreen(
-                navController = navController,
-                modifier = Modifier.padding(innerPadding),
-                onBottomBarVisibilityChange = onBottomBarVisibilityChange
-            )
+            HomeScreen(navController = navController, modifier = Modifier.padding(innerPadding), onBottomBarVisibilityChange = onBottomBarVisibilityChange)
         }
         composable(Screen.Notification.route) {
-            NotificationScreen(
-                viewModel = notificationViewModel,
-                navController = navController,
-                modifier = Modifier.padding(innerPadding)
-            )
+            NotificationScreen(viewModel = notificationViewModel, navController = navController, modifier = Modifier.padding(innerPadding))
         }
         composable(Screen.HotDeals.route) {
-            HotDealsScreen(
-                navController = navController,
-                modifier = Modifier.padding(innerPadding)
-            )
+            HotDealsScreen(navController = navController, modifier = Modifier.padding(innerPadding))
         }
         composable(Screen.Settings.route) {
-            SettingsScreen(
-                viewModel = settingsViewModel,
-                userPreferencesViewModel = userPreferencesViewModel,
-                navController = navController,
-                modifier = Modifier.padding(innerPadding)
-            )
+            SettingsScreen(viewModel = settingsViewModel, userPreferencesViewModel = userPreferencesViewModel, navController = navController, modifier = Modifier.padding(innerPadding))
         }
         composable(Screen.About.route) {
-            AboutScreen(
-                navController = navController
-            )
+            AboutScreen(navController = navController)
         }
         composable(Screen.Stats.route) {
-            StatsScreen(
-                viewModel = userStatsViewModel,
-                modifier = Modifier.padding(innerPadding)
-            )
+            StatsScreen(viewModel = userStatsViewModel, modifier = Modifier.padding(innerPadding))
         }
         composable(Screen.Details.route) { backStackEntry ->
             val gameId = backStackEntry.arguments?.getString("gameId")?.toLongOrNull()
-            GameDetailScreen(
-                navController = navController,
-                gameId = gameId,
-                userStatsViewModel = userStatsViewModel,
-                modifier = Modifier.padding(innerPadding)
-            )
+            GameDetailScreen(navController = navController, gameId = gameId, userStatsViewModel = userStatsViewModel, modifier = Modifier.padding(innerPadding))
         }
     }
 }

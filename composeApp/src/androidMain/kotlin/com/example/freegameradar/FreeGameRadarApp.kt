@@ -1,6 +1,7 @@
 package com.example.freegameradar
 
 import android.app.Application
+import android.content.Context
 import android.util.Log
 import androidx.core.app.NotificationManagerCompat
 import com.example.freegameradar.data.DatabaseDriverFactory
@@ -19,11 +20,14 @@ class FreeGameRadarApp : Application() {
     companion object {
         lateinit var instance: FreeGameRadarApp
             private set
+        lateinit var appContext: Context
+            private set
     }
 
     override fun onCreate() {
         super.onCreate()
         instance = this
+        appContext = applicationContext
 
         // Initialize the database driver and create a single repository instance
         DatabaseDriverFactory.init(this)
