@@ -1,4 +1,5 @@
 package com.example.freegameradar.ui.navigation
+
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
@@ -7,9 +8,10 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import com.example.freegameradar.ui.screens.AboutScreen
-import com.example.freegameradar.ui.screens.HotDealsScreen
 import com.example.freegameradar.ui.screens.GameDetailScreen
 import com.example.freegameradar.ui.screens.HomeScreen
+import com.example.freegameradar.ui.screens.HotDealsScreen
+import com.example.freegameradar.ui.screens.NotificationPermissionBenefitsScreen
 import com.example.freegameradar.ui.screens.NotificationScreen
 import com.example.freegameradar.ui.screens.SettingsScreen
 import com.example.freegameradar.ui.screens.SetupScreen
@@ -19,6 +21,8 @@ import com.example.freegameradar.ui.viewmodel.SettingsViewModel
 import com.example.freegameradar.ui.viewmodel.SetupViewModel
 import com.example.freegameradar.ui.viewmodel.UserPreferencesViewModel
 import com.example.freegameradar.ui.viewmodel.UserStatsViewModel
+import com.example.freegameradar.util.isNotificationPermissionGranted
+import com.example.freegameradar.util.rememberPermissionRequestLauncher
 
 @Composable
 fun AppNavigation(
@@ -37,27 +41,60 @@ fun AppNavigation(
         startDestination = startDestination
     ) {
         composable(Screen.Setup.route) {
+            val permissionGranted = isNotificationPermissionGranted()
             SetupScreen(
                 viewModel = setupViewModel,
-                onNavigateToHome = { 
-                    navController.navigate(Screen.Home.route) { 
-                        popUpTo(Screen.Setup.route) { inclusive = true } 
+                onNavigateToHome = {
+                    // After setup, decide where to go next.
+                    if (permissionGranted) {
+                        navController.navigate(Screen.Home.route) {
+                            popUpTo(Screen.Setup.route) { inclusive = true }
+                        }
+                    } else {
+                        navController.navigate(Screen.NotificationBenefits.route) {
+                            popUpTo(Screen.Setup.route) { inclusive = true }
+                        }
                     }
                 }
             )
         }
+
+        composable(Screen.NotificationBenefits.route) {
+            val requestPermissionLauncher = rememberPermissionRequestLauncher { isGranted ->
+                // This callback is executed after the user responds to the permission dialog.
+                if (isGranted) {
+                    // If permission was granted, navigate to the home screen.
+                    navController.navigate(Screen.Home.route) {
+                        popUpTo(Screen.NotificationBenefits.route) { inclusive = true }
+                    }
+                }
+                // If permission was NOT granted, do nothing. The user stays on this screen.
+            }
+
+            NotificationPermissionBenefitsScreen(
+                onEnableNotifications = {
+                    // This now calls the launcher that triggers the system dialog.
+                    requestPermissionLauncher()
+                },
+                onSkip = {
+                    navController.navigate(Screen.Home.route) {
+                        popUpTo(Screen.NotificationBenefits.route) { inclusive = true }
+                    }
+                }
+            )
+        }
+
         composable(Screen.Home.route) {
             HomeScreen(
                 navController = navController,
                 modifier = Modifier.padding(innerPadding),
                 onBottomBarVisibilityChange = onBottomBarVisibilityChange
-
             )
         }
         composable(Screen.Notification.route) {
             NotificationScreen(
                 viewModel = notificationViewModel,
-                navController = navController, // Pass the NavController
+                navController = navController,
                 modifier = Modifier.padding(innerPadding)
             )
         }
