@@ -40,8 +40,7 @@ import com.example.freegameradar.ui.viewmodel.SetupViewModel
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun App(
-    authViewModel: AuthViewModel,
-    startRoute: String? = null
+    authViewModel: AuthViewModel
 ) {
     ModernDarkTheme { // Theme is now at the root
         val navController = rememberNavController()
@@ -49,65 +48,45 @@ fun App(
         val currentRoute = navBackStackEntry?.destination?.route
         var isBottomBarVisible by remember { mutableStateOf(true) }
 
-        // Remember repositories to prevent re-initialization on recomposition
         val authRepository = remember { AuthRepositoryImpl() }
         val userSettingsRepository: UserSettingsRepository = remember(authRepository) { UserSettingsRepositoryImpl(authRepository) }
 
-        val currentUser by authViewModel.currentUser.collectAsState()
-        val userSettings by userSettingsRepository.getSettings().collectAsState(initial = null)
+        AppContainer { gameRepository, notificationRepository, userStatsRepository ->
+            val notificationViewModel: NotificationViewModel = viewModel { NotificationViewModel(notificationRepository) }
+            val userStatsViewModel: UserStatsViewModel = viewModel { UserStatsViewModel(userStatsRepository, gameRepository) }
+            val settingsViewModel: SettingsViewModel = viewModel { SettingsViewModel(authRepository) }
+            val userPreferencesViewModel: UserPreferencesViewModel = viewModel { UserPreferencesViewModel(userSettingsRepository) }
+            val setupViewModel: SetupViewModel = viewModel { SetupViewModel(userSettingsRepository, authRepository) }
 
-        if (userSettings == null) {
-            AppLoadingScreen()
-        } else {
-            val startDestination = remember(userSettings?.setupComplete) {
-                startRoute ?: if (userSettings?.setupComplete == true) Screen.Home.route else Screen.Setup.route
-            }
-
-            AppContainer { gameRepository, notificationRepository, userStatsRepository ->
-                val notificationViewModel: NotificationViewModel = viewModel { NotificationViewModel(notificationRepository) }
-                val userStatsViewModel: UserStatsViewModel = viewModel { UserStatsViewModel(userStatsRepository, gameRepository) }
-                val settingsViewModel: SettingsViewModel = viewModel { SettingsViewModel(authRepository) }
-                val userPreferencesViewModel: UserPreferencesViewModel = viewModel { UserPreferencesViewModel(userSettingsRepository) }
-                val setupViewModel: SetupViewModel = viewModel { SetupViewModel(userSettingsRepository, authRepository) }
-
-                AuthGate(authViewModel = authViewModel) {
-                    LaunchedEffect(currentUser) {
-                        if (currentUser != null) {
-                            userStatsViewModel.syncClaimedValue()
-                            userSettingsRepository.syncUserSettings()
+            AuthGate(authViewModel = authViewModel) {
+                Scaffold(
+                    topBar = {
+                        if (currentRoute != Screen.Setup.route && currentRoute != Screen.Gate.route) {
+                            TopBar(navController, notificationViewModel)
                         }
-                    }
-
-                    Scaffold(
-                        topBar = {
-                            if (currentRoute != Screen.Setup.route) {
-                                TopBar(navController, notificationViewModel)
-                            }
-                        },
-                        bottomBar = {
-                            AnimatedVisibility(
-                                visible = isBottomBarVisible,
-                                enter = slideInVertically(initialOffsetY = { it }) + expandVertically(expandFrom = Alignment.Bottom),
-                                exit = slideOutVertically(targetOffsetY = { it }) + shrinkVertically(shrinkTowards = Alignment.Bottom)
-                            ) {
-                                if (currentRoute != Screen.Setup.route) {
-                                    BottomNavBar(navController)
-                                }
+                    },
+                    bottomBar = {
+                        AnimatedVisibility(
+                            visible = isBottomBarVisible,
+                            enter = slideInVertically(initialOffsetY = { it }) + expandVertically(expandFrom = Alignment.Bottom),
+                            exit = slideOutVertically(targetOffsetY = { it }) + shrinkVertically(shrinkTowards = Alignment.Bottom)
+                        ) {
+                            if (currentRoute != Screen.Setup.route && currentRoute != Screen.Gate.route) {
+                                BottomNavBar(navController)
                             }
                         }
-                    ) { innerPadding ->
-                        AppNavigation(
-                            navController = navController,
-                            innerPadding = innerPadding,
-                            startDestination = startDestination,
-                            notificationViewModel = notificationViewModel,
-                            userStatsViewModel = userStatsViewModel,
-                            settingsViewModel = settingsViewModel,
-                            userPreferencesViewModel = userPreferencesViewModel,
-                            setupViewModel = setupViewModel,
-                            onBottomBarVisibilityChange = { isBottomBarVisible = it }
-                        )
                     }
+                ) { innerPadding ->
+                    AppNavigation(
+                        navController = navController,
+                        innerPadding = innerPadding,
+                        userPreferencesViewModel = userPreferencesViewModel,
+                        notificationViewModel = notificationViewModel,
+                        userStatsViewModel = userStatsViewModel,
+                        settingsViewModel = settingsViewModel,
+                        setupViewModel = setupViewModel,
+                        onBottomBarVisibilityChange = { isBottomBarVisible = it }
+                    )
                 }
             }
         }

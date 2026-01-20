@@ -5,7 +5,9 @@ import androidx.compose.material.icons.filled.*
 import androidx.compose.ui.graphics.vector.ImageVector
 
 sealed class Screen(val route: String, val label: String, val icon: ImageVector) {
+    object Gate : Screen("gate", "Gate", Icons.Default.Shield) // The new starting point
     object Setup : Screen("setup", "Setup", Icons.Default.Build)
+    object PostSetupCheck : Screen("post_setup_check", "Post-Setup Check", Icons.Default.Check)
     object Home : Screen("home", "Home", Icons.Default.Home)
     object HotDeals : Screen("hot_deals", "Hot Deals", Icons.Default.Star)
     object Notification : Screen("notification", "Notifications", Icons.Default.Notifications)

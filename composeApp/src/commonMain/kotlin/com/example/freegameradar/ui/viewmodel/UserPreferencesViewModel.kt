@@ -15,7 +15,8 @@ data class UserPreferencesUiState(
     val notificationsEnabled: Boolean = false,
     val preferredGamePlatforms: List<String> = emptyList(),
     val preferredGameTypes: List<String> = emptyList(),
-    val setupComplete: Boolean = false
+    val setupComplete: Boolean = false,
+    val isLoaded: Boolean = false // The new flag to track loading state.
 )
 
 class UserPreferencesViewModel(
@@ -32,7 +33,8 @@ class UserPreferencesViewModel(
                     notificationsEnabled = settings.notificationsEnabled,
                     preferredGamePlatforms = settings.preferredGamePlatforms,
                     preferredGameTypes = settings.preferredGameTypes,
-                    setupComplete = settings.setupComplete
+                    setupComplete = settings.setupComplete,
+                    isLoaded = true // Set to true once the settings are loaded.
                 )
             }
             .launchIn(viewModelScope)

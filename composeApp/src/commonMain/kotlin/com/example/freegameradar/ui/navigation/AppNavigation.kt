@@ -6,6 +6,8 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -14,6 +16,7 @@ import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import com.example.freegameradar.ui.components.AppLoadingScreen
 import com.example.freegameradar.ui.screens.AboutScreen
 import com.example.freegameradar.ui.screens.GameDetailScreen
 import com.example.freegameradar.ui.screens.HomeScreen
@@ -37,46 +40,59 @@ import com.example.freegameradar.util.rememberPermissionRequestLauncher
 fun AppNavigation(
     navController: NavHostController,
     innerPadding: PaddingValues,
-    startDestination: String,
+    userPreferencesViewModel: UserPreferencesViewModel, // We need this for the Gate
     notificationViewModel: NotificationViewModel,
     userStatsViewModel: UserStatsViewModel,
     settingsViewModel: SettingsViewModel,
-    userPreferencesViewModel: UserPreferencesViewModel,
     setupViewModel: SetupViewModel,
     onBottomBarVisibilityChange: (Boolean) -> Unit
 ) {
     NavHost(
         navController = navController,
-        startDestination = startDestination
+        startDestination = Screen.Gate.route // The start destination is now fixed.
     ) {
+        composable(Screen.Gate.route) {
+            val preferencesState by userPreferencesViewModel.uiState.collectAsState()
+
+            AppLoadingScreen() // Show a loading screen while we decide where to go.
+
+            LaunchedEffect(preferencesState.isLoaded) {
+                if (preferencesState.isLoaded) {
+                    val destination = if (preferencesState.setupComplete) Screen.Home.route else Screen.Setup.route
+                    navController.navigate(destination) {
+                        popUpTo(Screen.Gate.route) { inclusive = true }
+                    }
+                }
+            }
+        }
+
         composable(Screen.Setup.route) {
-            val permissionGranted = isNotificationPermissionGranted()
             SetupScreen(
                 viewModel = setupViewModel,
                 onNavigateToHome = {
-                    if (permissionGranted) {
-                        navController.navigate(Screen.Home.route) { popUpTo(Screen.Setup.route) { inclusive = true } }
-                    } else {
-                        navController.navigate(Screen.NotificationBenefits.route) { popUpTo(Screen.Setup.route) { inclusive = true } }
+                    navController.navigate(Screen.PostSetupCheck.route) {
+                        popUpTo(Screen.Setup.route) { inclusive = true }
                     }
                 }
             )
         }
 
+        composable(Screen.PostSetupCheck.route) {
+            val permissionGranted = isNotificationPermissionGranted()
+            AppLoadingScreen()
+            LaunchedEffect(Unit) {
+                val destination = if (permissionGranted) Screen.Home.route else Screen.NotificationBenefits.route
+                navController.navigate(destination) { popUpTo(Screen.PostSetupCheck.route) { inclusive = true } }
+            }
+        }
+
         composable(Screen.NotificationBenefits.route) {
             var showSettingsDialog by remember { mutableStateOf(false) }
-
             val requestPermissionLauncher = rememberPermissionRequestLauncher { result ->
                 when (result) {
-                    PermissionRequestResult.GRANTED -> {
-                        navController.navigate(Screen.Home.route) { popUpTo(Screen.NotificationBenefits.route) { inclusive = true } }
-                    }
-                    PermissionRequestResult.PERMANENTLY_DENIED -> {
-                        showSettingsDialog = true
-                    }
-                    PermissionRequestResult.DENIED -> {
-                        // The user denied, but we can ask again. Do nothing and stay on the screen.
-                    }
+                    PermissionRequestResult.GRANTED -> navController.navigate(Screen.Home.route) { popUpTo(Screen.NotificationBenefits.route) { inclusive = true } }
+                    PermissionRequestResult.PERMANENTLY_DENIED -> showSettingsDialog = true
+                    PermissionRequestResult.DENIED -> { /* Do nothing */ }
                 }
             }
 
@@ -85,24 +101,14 @@ fun AppNavigation(
                     onDismissRequest = { showSettingsDialog = false },
                     title = { Text("Permission Required") },
                     text = { Text("To get notifications, you must enable the permission in your phone's settings.") },
-                    confirmButton = {
-                        TextButton(onClick = { openAppSettings() }) {
-                            Text("Open Settings")
-                        }
-                    },
-                    dismissButton = {
-                        TextButton(onClick = { showSettingsDialog = false }) {
-                            Text("Cancel")
-                        }
-                    }
+                    confirmButton = { TextButton(onClick = { openAppSettings() }) { Text("Open Settings") } },
+                    dismissButton = { TextButton(onClick = { showSettingsDialog = false }) { Text("Cancel") } }
                 )
             }
 
             NotificationPermissionBenefitsScreen(
                 onEnableNotifications = { requestPermissionLauncher() },
-                onSkip = {
-                    navController.navigate(Screen.Home.route) { popUpTo(Screen.NotificationBenefits.route) { inclusive = true } }
-                }
+                onSkip = { navController.navigate(Screen.Home.route) { popUpTo(Screen.NotificationBenefits.route) { inclusive = true } } }
             )
         }
 
