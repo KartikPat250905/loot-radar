@@ -162,7 +162,7 @@ fun NotificationPermissionBenefitsScreen(
         BenefitItem(
             emoji = "🎮",
             title = "Never Pay Full Price Again",
-            description = "Epic, Steam, GOG - catch every freebie across all platforms. Your wallet will thank you."
+            description = "Epic, Steam, GOG, and more — catch every freebie across all platforms. Your wallet will thank you."
         )
 
         BenefitItem(
@@ -174,7 +174,7 @@ fun NotificationPermissionBenefitsScreen(
         BenefitItem(
             emoji = "📊",
             title = "Build Your Library",
-            description = "Average users save $200+/year in free games. That'''s multiple AAA titles you didn'''t buy!"
+            description = "Average users save $7000 - $8000/year in free games. That'''s multiple AAA titles you didn'''t buy!"
         )
 
         Spacer(modifier = Modifier.height(40.dp))
