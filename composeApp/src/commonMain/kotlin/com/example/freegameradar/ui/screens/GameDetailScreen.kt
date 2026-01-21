@@ -1,5 +1,8 @@
 package com.example.freegameradar.ui.screens
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -10,11 +13,14 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import coil3.compose.AsyncImage
 import com.example.freegameradar.data.models.GameDto
@@ -58,25 +64,75 @@ fun GameDetailScreen(
         }
     }
 
-    Box(modifier = modifier.fillMaxSize()) {
+    Box(
+        modifier = modifier
+            .fillMaxSize()
+            .background(
+                brush = Brush.verticalGradient(
+                    colors = listOf(
+                        Color(0xFF0D1B2A),
+                        Color(0xFF1B263B),
+                        Color(0xFF0D1B2A)
+                    )
+                )
+            )
+    ) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .verticalScroll(rememberScrollState())
         ) {
-
+            // Hero Image with gradient overlay
             game?.image?.let { imageUrl ->
-                AsyncImage(
-                    model = imageUrl,
-                    contentDescription = game?.title,
+                Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(240.dp),
-                    contentScale = ContentScale.Crop
-                )
+                        .height(280.dp)
+                ) {
+                    AsyncImage(
+                        model = imageUrl,
+                        contentDescription = game?.title,
+                        modifier = Modifier.fillMaxSize(),
+                        contentScale = ContentScale.Crop
+                    )
+
+                    // Gradient overlay
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .background(
+                                brush = Brush.verticalGradient(
+                                    colors = listOf(
+                                        Color.Transparent,
+                                        Color(0x40000000),
+                                        Color(0xCC0D1B2A)
+                                    )
+                                )
+                            )
+                    )
+
+                    // Bottom glow
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(3.dp)
+                            .align(Alignment.BottomCenter)
+                            .background(
+                                brush = Brush.horizontalGradient(
+                                    colors = listOf(
+                                        Color.Transparent,
+                                        Color(0xFF10B981),
+                                        Color(0xFF34D399),
+                                        Color(0xFF10B981),
+                                        Color.Transparent
+                                    )
+                                )
+                            )
+                    )
+                }
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(20.dp))
 
             game?.let { g ->
                 Column(
@@ -84,15 +140,16 @@ fun GameDetailScreen(
                         .fillMaxWidth()
                         .padding(horizontal = 16.dp)
                 ) {
-
                     // Title
                     Text(
                         text = g.title ?: "Unknown Game",
-                        style = MaterialTheme.typography.headlineSmall,
-                        fontWeight = FontWeight.Bold
+                        fontSize = 26.sp,
+                        fontWeight = FontWeight.ExtraBold,
+                        color = Color(0xFFE5E7EB),
+                        letterSpacing = 0.5.sp
                     )
 
-                    Spacer(modifier = Modifier.height(8.dp))
+                    Spacer(modifier = Modifier.height(12.dp))
 
                     // Worth
                     GameWorth(price = g.worth)
@@ -102,82 +159,128 @@ fun GameDetailScreen(
                     // Status
                     Text(
                         text = g.status ?: "Unknown",
-                        color = MaterialTheme.colorScheme.primary
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = Color(0xFF10B981),
+                        letterSpacing = 0.3.sp
                     )
 
-                    Spacer(modifier = Modifier.height(12.dp))
+                    Spacer(modifier = Modifier.height(20.dp))
 
                     // Expiry Information Card
                     if (!g.end_date.isNullOrBlank()) {
-                        Card(
-                            modifier = Modifier.fillMaxWidth(),
-                            colors = CardDefaults.cardColors(
-                                containerColor = MaterialTheme.colorScheme.secondaryContainer
-                            ),
-                            shape = RoundedCornerShape(12.dp)
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .background(
+                                    brush = Brush.linearGradient(
+                                        colors = listOf(
+                                            Color(0xFF10B981).copy(alpha = 0.15f),
+                                            Color(0xFF34D399).copy(alpha = 0.1f)
+                                        )
+                                    ),
+                                    shape = RoundedCornerShape(16.dp)
+                                )
+                                .padding(1.dp)
                         ) {
-                            Column(
-                                modifier = Modifier.padding(16.dp)
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .background(
+                                        color = Color(0xFF1B263B),
+                                        shape = RoundedCornerShape(15.dp)
+                                    )
+                                    .padding(16.dp)
                             ) {
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.SpaceBetween,
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    Column {
+                                Column {
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.SpaceBetween,
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Column {
+                                            Text(
+                                                text = "⏰ Expires",
+                                                fontSize = 12.sp,
+                                                fontWeight = FontWeight.SemiBold,
+                                                color = Color(0xFF6EE7B7),
+                                                letterSpacing = 0.5.sp
+                                            )
+                                            Text(
+                                                text = formatEndDate(g.end_date!!),
+                                                fontSize = 14.sp,
+                                                fontWeight = FontWeight.Medium,
+                                                color = Color(0xFF9CA3AF)
+                                            )
+                                        }
+                                    }
+
+                                    if (timeRemaining != null) {
+                                        Spacer(modifier = Modifier.height(12.dp))
+
+                                        HorizontalDivider(
+                                            color = Color(0xFF374151),
+                                            thickness = 1.dp
+                                        )
+
+                                        Spacer(modifier = Modifier.height(12.dp))
+
                                         Text(
-                                            text = "⏰ Expires",
-                                            style = MaterialTheme.typography.labelMedium,
-                                            color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.7f)
+                                            text = "Time Remaining",
+                                            fontSize = 12.sp,
+                                            fontWeight = FontWeight.SemiBold,
+                                            color = Color(0xFF6EE7B7),
+                                            letterSpacing = 0.5.sp
                                         )
                                         Text(
-                                            text = formatEndDate(g.end_date!!),
-                                            style = MaterialTheme.typography.bodyMedium,
-                                            fontWeight = FontWeight.Medium,
-                                            color = MaterialTheme.colorScheme.onSecondaryContainer
+                                            text = timeRemaining!!,
+                                            fontSize = 20.sp,
+                                            fontWeight = FontWeight.ExtraBold,
+                                            color = if (isExpiringSoon(g.end_date!!)) {
+                                                Color(0xFFEF4444)
+                                            } else {
+                                                Color(0xFF10B981)
+                                            }
                                         )
                                     }
-                                }
-
-                                if (timeRemaining != null) {
-                                    Spacer(modifier = Modifier.height(8.dp))
-                                    HorizontalDivider(color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.2f))
-                                    Spacer(modifier = Modifier.height(8.dp))
-
-                                    Text(
-                                        text = "Time Remaining",
-                                        style = MaterialTheme.typography.labelMedium,
-                                        color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.7f)
-                                    )
-                                    Text(
-                                        text = timeRemaining!!,
-                                        style = MaterialTheme.typography.titleMedium,
-                                        fontWeight = FontWeight.Bold,
-                                        color = if (isExpiringSoon(g.end_date!!)) {
-                                            MaterialTheme.colorScheme.error
-                                        } else {
-                                            MaterialTheme.colorScheme.onSecondaryContainer
-                                        }
-                                    )
                                 }
                             }
                         }
 
-                        Spacer(modifier = Modifier.height(12.dp))
+                        Spacer(modifier = Modifier.height(20.dp))
                     }
 
                     // Platforms
                     Text(
-                        text = "Platforms: ${g.platforms ?: "Unknown"}",
-                        style = MaterialTheme.typography.bodyMedium
+                        text = "Platforms",
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xFF6EE7B7),
+                        letterSpacing = 0.5.sp
+                    )
+                    Text(
+                        text = g.platforms ?: "Unknown",
+                        fontSize = 14.sp,
+                        color = Color(0xFF9CA3AF),
+                        modifier = Modifier.padding(top = 4.dp)
                     )
 
-                    Spacer(modifier = Modifier.height(16.dp))
+                    Spacer(modifier = Modifier.height(20.dp))
 
                     // Description
                     Text(
+                        text = "About",
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xFFE5E7EB),
+                        letterSpacing = 0.5.sp
+                    )
+                    Text(
                         text = g.description ?: "No description available",
-                        style = MaterialTheme.typography.bodyMedium
+                        fontSize = 14.sp,
+                        color = Color(0xFF9CA3AF),
+                        lineHeight = 20.sp,
+                        modifier = Modifier.padding(top = 8.dp)
                     )
 
                     Spacer(modifier = Modifier.height(20.dp))
@@ -185,25 +288,40 @@ fun GameDetailScreen(
                     // Instructions
                     if (!g.instructions.isNullOrBlank()) {
                         Text(
-                            text = "How to get it",
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold
+                            text = "How to Claim",
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color(0xFFE5E7EB),
+                            letterSpacing = 0.5.sp
                         )
 
                         Spacer(modifier = Modifier.height(8.dp))
 
-                        Text(
-                            text = g.instructions!!,
-                            style = MaterialTheme.typography.bodyMedium
-                        )
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .background(
+                                    color = Color(0xFF1B263B).copy(alpha = 0.5f),
+                                    shape = RoundedCornerShape(12.dp)
+                                )
+                                .padding(12.dp)
+                        ) {
+                            Text(
+                                text = g.instructions!!,
+                                fontSize = 14.sp,
+                                color = Color(0xFF9CA3AF),
+                                lineHeight = 20.sp
+                            )
+                        }
                     }
 
-                    Spacer(modifier = Modifier.height(24.dp))
+                    Spacer(modifier = Modifier.height(28.dp))
 
-                    // Giveaway Button
+                    // Claim Button
                     if (!g.open_giveaway_url.isNullOrBlank()) {
-                        Button(
-                            onClick = { 
+                        ThemedClaimButton(
+                            isClaimed = isClaimed,
+                            onClick = {
                                 if (!isClaimed) {
                                     g.id?.let { id ->
                                         val value = g.worth?.replace("$", "")?.toFloatOrNull() ?: 0f
@@ -213,30 +331,12 @@ fun GameDetailScreen(
                                     }
                                 }
                                 uriHandler.openUri(g.open_giveaway_url!!)
-                             },
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = if (isClaimed) MaterialTheme.colorScheme.secondaryContainer else ButtonDefaults.buttonColors().containerColor,
-                            ),
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(52.dp)
-                        ) {
-                            if (isClaimed) {
-                                val greenColor = Color(0xFF4CAF50)
-                                Icon(
-                                    Icons.Default.Check, 
-                                    contentDescription = "Claimed",
-                                    tint = greenColor
-                                )
-                                Spacer(modifier = Modifier.width(8.dp))
-                                Text("Game Claimed", color = greenColor)
-                            } else {
-                                Text("🎁 Claim Game")
-                            }
-                        }
+                            },
+                            modifier = Modifier.fillMaxWidth()
+                        )
                     }
 
-                    Spacer(modifier = Modifier.height(24.dp))
+                    Spacer(modifier = Modifier.height(80.dp))
                 }
             }
         }
@@ -252,15 +352,100 @@ fun GameDetailScreen(
     }
 }
 
+@Composable
+private fun ThemedClaimButton(
+    isClaimed: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Box(
+        modifier = modifier.height(56.dp)
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(
+                    brush = if (isClaimed) {
+                        Brush.linearGradient(
+                            colors = listOf(
+                                Color(0xFF10B981),
+                                Color(0xFF34D399),
+                                Color(0xFF10B981)
+                            )
+                        )
+                    } else {
+                        Brush.linearGradient(
+                            colors = listOf(
+                                Color(0xFF10B981),
+                                Color(0xFF34D399),
+                                Color(0xFF10B981)
+                            )
+                        )
+                    },
+                    shape = RoundedCornerShape(14.dp)
+                )
+                .padding(2.dp)
+        ) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(
+                        brush = Brush.verticalGradient(
+                            colors = listOf(
+                                Color(0xFF1B263B),
+                                Color(0xFF0D1B2A)
+                            )
+                        ),
+                        shape = RoundedCornerShape(13.dp)
+                    )
+                    .clip(RoundedCornerShape(13.dp))
+                    .clickable(
+                        onClick = onClick,
+                        interactionSource = remember { MutableInteractionSource() },
+                        indication = null
+                    ),
+                contentAlignment = Alignment.Center
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.Center
+                ) {
+                    if (isClaimed) {
+                        Icon(
+                            Icons.Default.Check,
+                            contentDescription = "Claimed",
+                            tint = Color(0xFF10B981),
+                            modifier = Modifier.size(20.dp)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            "Game Claimed",
+                            fontSize = 18.sp,
+                            fontWeight = FontWeight.ExtraBold,
+                            color = Color(0xFF10B981),
+                            letterSpacing = 0.5.sp
+                        )
+                    } else {
+                        Text(
+                            "🎁 Claim Game",
+                            fontSize = 18.sp,
+                            fontWeight = FontWeight.ExtraBold,
+                            color = Color(0xFF6EE7B7),
+                            letterSpacing = 0.5.sp
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
 // Helper function to calculate time remaining
 fun calculateTimeRemaining(endDateStr: String): String? {
     return try {
-        // Many APIs return date as "2023-10-27 23:59:00" which doesn't adhere to ISO 8601 strict T separator
-        // We replace space with T to make it ISO compliant for Instant.parse if needed
         val isoDateStr = endDateStr.replace(" ", "T")
-        // Appending Z if timezone is missing, assuming UTC
         val finalDateStr = if (isoDateStr.endsWith("Z")) isoDateStr else "${isoDateStr}Z"
-        
+
         val endInstant = Instant.parse(finalDateStr)
         val now = Clock.System.now()
         val duration = endInstant - now
@@ -281,7 +466,6 @@ fun calculateTimeRemaining(endDateStr: String): String? {
             }
         }
     } catch (e: Exception) {
-        // Fallback or debug print
         println("Error parsing date: $endDateStr -> ${e.message}")
         null
     }
@@ -292,7 +476,7 @@ fun formatEndDate(endDateStr: String): String {
     return try {
         val isoDateStr = endDateStr.replace(" ", "T")
         val finalDateStr = if (isoDateStr.endsWith("Z")) isoDateStr else "${isoDateStr}Z"
-        
+
         val instant = Instant.parse(finalDateStr)
         val localDateTime = instant.toLocalDateTime(TimeZone.UTC)
 
@@ -326,7 +510,7 @@ fun isExpiringSoon(endDateStr: String): Boolean {
     return try {
         val isoDateStr = endDateStr.replace(" ", "T")
         val finalDateStr = if (isoDateStr.endsWith("Z")) isoDateStr else "${isoDateStr}Z"
-        
+
         val endInstant = Instant.parse(finalDateStr)
         val now = Clock.System.now()
         val duration = endInstant - now
