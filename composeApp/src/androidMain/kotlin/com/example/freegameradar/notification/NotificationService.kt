@@ -17,6 +17,7 @@ import coil3.imageLoader
 import coil3.request.ImageRequest
 import coil3.request.SuccessResult
 import com.example.freegameradar.MainActivity
+import com.example.freegameradar.R
 import com.example.freegameradar.data.model.DealNotification
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -62,7 +63,8 @@ class NotificationService(private val context: Context) {
                 val text = "${deal.title} is free right now. Go get your loot!"
 
                 val notification = NotificationCompat.Builder(context, CHANNEL_ID)
-                    .setSmallIcon(android.R.drawable.ic_dialog_info)
+                    .setSmallIcon(R.drawable.ic_notification)
+                    .setColor(context.getColor(R.color.green))
                     .setContentTitle(title)
                     .setContentText(text)
                     .setLargeIcon(bitmap)
@@ -79,7 +81,8 @@ class NotificationService(private val context: Context) {
                 val text = "Found $dealCount new treasures for your game library!"
 
                 val notification = NotificationCompat.Builder(context, CHANNEL_ID)
-                    .setSmallIcon(android.R.drawable.ic_dialog_info)
+                    .setSmallIcon(R.drawable.ic_notification)
+                    .setColor(context.getColor(R.color.green))
                     .setContentTitle(title)
                     .setContentText(text)
                     .setPriority(NotificationCompat.PRIORITY_DEFAULT)
@@ -120,7 +123,7 @@ class NotificationService(private val context: Context) {
                                 bitmap
                             }
                         }
-                        else -> null  // <- This fixes the type mismatch
+                        else -> null
                     }
                 } else {
                     null
