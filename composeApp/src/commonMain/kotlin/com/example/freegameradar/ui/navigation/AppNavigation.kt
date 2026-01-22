@@ -45,7 +45,8 @@ fun AppNavigation(
     userStatsViewModel: UserStatsViewModel,
     settingsViewModel: SettingsViewModel,
     setupViewModel: SetupViewModel,
-    onBottomBarVisibilityChange: (Boolean) -> Unit
+    onBottomBarVisibilityChange: (Boolean) -> Unit,
+    startRoute: String? = null
 ) {
     NavHost(
         navController = navController,
@@ -58,7 +59,11 @@ fun AppNavigation(
 
             LaunchedEffect(preferencesState.isLoaded) {
                 if (preferencesState.isLoaded) {
-                    val destination = if (preferencesState.setupComplete) Screen.Home.route else Screen.Setup.route
+                    val destination = if (startRoute == "notification") {
+                        Screen.Notification.route
+                    } else {
+                        if (preferencesState.setupComplete) Screen.Home.route else Screen.Setup.route
+                    }
                     navController.navigate(destination) {
                         popUpTo(Screen.Gate.route) { inclusive = true }
                     }

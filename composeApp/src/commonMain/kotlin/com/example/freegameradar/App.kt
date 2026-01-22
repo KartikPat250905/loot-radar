@@ -40,7 +40,8 @@ import com.example.freegameradar.ui.viewmodel.SetupViewModel
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun App(
-    authViewModel: AuthViewModel
+    authViewModel: AuthViewModel,
+    startRoute: String? = null
 ) {
     ModernDarkTheme { // Theme is now at the root
         val navController = rememberNavController()
@@ -85,7 +86,8 @@ fun App(
                         userStatsViewModel = userStatsViewModel,
                         settingsViewModel = settingsViewModel,
                         setupViewModel = setupViewModel,
-                        onBottomBarVisibilityChange = { isBottomBarVisible = it }
+                        onBottomBarVisibilityChange = { isBottomBarVisible = it },
+                        startRoute = startRoute
                     )
                 }
             }

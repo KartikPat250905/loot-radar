@@ -36,7 +36,7 @@ class MainActivity : ComponentActivity() {
         val userSettingsRepository = UserSettingsRepositoryImpl(authRepository)
         val authViewModel = AuthViewModel(authRepository)
 
-        // The startRoute is no longer needed here as the Gate screen handles the initial routing.
+        val startRoute = intent.getStringExtra("route")
 
         setContent {
             ModernDarkTheme {
@@ -58,7 +58,8 @@ class MainActivity : ComponentActivity() {
                 }
 
                 App(
-                    authViewModel = authViewModel
+                    authViewModel = authViewModel,
+                    startRoute = startRoute
                 )
             }
         }
