@@ -1,5 +1,6 @@
 package com.example.freegameradar.ui.components
 
+import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
@@ -18,33 +19,47 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun NotificationIcon(unreadCount: Int, onClick: () -> Unit) {
-    val infiniteTransition = rememberInfiniteTransition()
+    val infiniteTransition = rememberInfiniteTransition(label = "notification_pulse")
     val scale by infiniteTransition.animateFloat(
         initialValue = 1f,
-        targetValue = if (unreadCount > 0) 1.2f else 1f,
+        targetValue = if (unreadCount > 0) 1.15f else 1f,
         animationSpec = infiniteRepeatable(
-            animation = tween(500),
-        )
+            animation = tween(600),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "scale"
     )
 
     IconButton(onClick = onClick) {
         BadgedBox(
             badge = {
                 if (unreadCount > 0) {
-                    Badge { Text(unreadCount.toString()) }
+                    Badge(
+                        containerColor = Color(0xFF10B981), // Green badge
+                        contentColor = Color(0xFF0D1B2A) // Dark blue text for contrast
+                    ) {
+                        Text(
+                            text = if (unreadCount > 99) "99+" else unreadCount.toString(),
+                            color = Color(0xFF0D1B2A), // Dark blue
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
                 }
             }
         ) {
             Icon(
                 imageVector = Icons.Default.Notifications,
                 contentDescription = "Notifications",
-                modifier = Modifier.size(24.dp).scale(scale),
-                tint = Color(0xFF9CA3AF)
+                modifier = Modifier
+                    .size(24.dp)
+                    .scale(if (unreadCount > 0) scale else 1f),
+                tint = if (unreadCount > 0) Color(0xFF10B981) else Color(0xFF9CA3AF)
             )
         }
     }
