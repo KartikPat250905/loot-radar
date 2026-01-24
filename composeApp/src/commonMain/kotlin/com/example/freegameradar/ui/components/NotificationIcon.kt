@@ -21,6 +21,7 @@ import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -41,13 +42,14 @@ fun NotificationIcon(unreadCount: Int, onClick: () -> Unit) {
             badge = {
                 if (unreadCount > 0) {
                     Badge(
-                        containerColor = Color(0xFF10B981), // Green badge
-                        contentColor = Color(0xFF0D1B2A) // Dark blue text for contrast
+                        containerColor = Color(0xFFEF4444), // Bright red - highly visible
+                        contentColor = Color.White // White text for maximum contrast
                     ) {
                         Text(
                             text = if (unreadCount > 99) "99+" else unreadCount.toString(),
-                            color = Color(0xFF0D1B2A), // Dark blue
-                            fontWeight = FontWeight.Bold
+                            color = Color.White,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 11.sp
                         )
                     }
                 }
