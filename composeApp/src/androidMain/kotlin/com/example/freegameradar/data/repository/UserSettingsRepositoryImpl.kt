@@ -1,5 +1,6 @@
 package com.example.freegameradar.data.repository
 
+import android.util.Log
 import app.cash.sqldelight.coroutines.asFlow
 import app.cash.sqldelight.coroutines.mapToOneOrDefault
 import com.example.freegameradar.data.GameDatabaseProvider
@@ -30,8 +31,11 @@ actual class UserSettingsRepositoryImpl actual constructor(
 
     override fun getSettings(): Flow<UserSettings> = authRepository.getAuthStateFlow().flatMapLatest { user ->
         if (user == null) {
-            // Unauthenticated: Provide settings from the local cache with notifications off by default.
-            db.getSettings().asFlow().mapToOneOrDefault(User_settings(0, 0L, "", ""), Dispatchers.IO).map { local ->
+            // Unauthenticated: Provide default settings from local cache
+            db.getSettings().asFlow().mapToOneOrDefault(
+                User_settings(0, 0L, "", ""), 
+                Dispatchers.IO
+            ).map { local ->
                 UserSettings(
                     notificationsEnabled = local.notifications_enabled == 1L,
                     preferredGamePlatforms = local.preferred_game_platforms.split(',').filter { it.isNotEmpty() },
@@ -39,7 +43,7 @@ actual class UserSettingsRepositoryImpl actual constructor(
                 )
             }
         } else {
-            // Authenticated: The source of truth is Firestore. We listen to it for real-time updates.
+            // Authenticated (including anonymous): Source of truth is Firestore
             callbackFlow<UserSettings> {
                 val docRef = Firebase.firestore.collection("users").document(user.uid)
 
@@ -57,12 +61,20 @@ actual class UserSettingsRepositoryImpl actual constructor(
                     )
 
                     val remoteSettings = if (snapshot != null && snapshot.exists()) {
-                        snapshot.toObject<UserSettings>() ?: emptySettings
+                        val data = snapshot.data
+                        if (data != null && data.containsKey("setupComplete")) {
+                            // Full user settings exist
+                            snapshot.toObject<UserSettings>() ?: emptySettings
+                        } else {
+                            // Document exists but only has FCM token - return defaults
+                            emptySettings
+                        }
                     } else {
-                        emptySettings // For a new user or if the document doesn't exist.
+                        // New user - no document yet
+                        emptySettings
                     }
 
-                    // Sync the latest settings from Firestore to our local cache.
+                    // Sync to local cache
                     launch(Dispatchers.IO) {
                         db.insertSettings(
                             notifications_enabled = if (remoteSettings.notificationsEnabled) 1L else 0L,
@@ -71,30 +83,34 @@ actual class UserSettingsRepositoryImpl actual constructor(
                         )
                     }
 
-                    // Emit the latest settings to the UI.
                     trySend(remoteSettings)
                 }
 
-                // Remove the listener when the flow is cancelled.
                 awaitClose { subscription.remove() }
             }
         }
     }.flowOn(Dispatchers.IO)
 
-
     override suspend fun syncUserSettings() {
-        // This function is redundant due to the new reactive implementation of getSettings.
+        // Redundant - handled by reactive listener
     }
 
     override suspend fun saveSettings(userSettings: UserSettings) {
         val userId = authRepository.getAuthStateFlow().first()?.uid ?: return
         withContext(Dispatchers.IO) {
             try {
-                // The source of truth is Firestore. We only need to save it here.
-                // The listener in getSettings() will handle updating the cache and UI.
-                Firebase.firestore.collection("users").document(userId).set(userSettings, SetOptions.merge()).await()
+                val settingsData = mapOf(
+                    "notificationsEnabled" to userSettings.notificationsEnabled,
+                    "preferredGamePlatforms" to userSettings.preferredGamePlatforms,
+                    "preferredGameTypes" to userSettings.preferredGameTypes,
+                    "setupComplete" to userSettings.setupComplete
+                )
+                Firebase.firestore.collection("users").document(userId)
+                    .set(settingsData, SetOptions.merge()).await()
+                    
+                Log.d("UserSettingsRepo", "✅ Settings saved for user: $userId")
             } catch (e: Exception) {
-                println("Failed to save settings to Firebase: ${e.message}")
+                Log.e("UserSettingsRepo", "❌ Failed to save settings: ${e.message}", e)
             }
         }
     }
