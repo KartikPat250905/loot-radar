@@ -23,9 +23,11 @@ import com.example.freegameradar.ui.screens.HomeScreen
 import com.example.freegameradar.ui.screens.HotDealsScreen
 import com.example.freegameradar.ui.screens.NotificationPermissionBenefitsScreen
 import com.example.freegameradar.ui.screens.NotificationScreen
+import com.example.freegameradar.ui.screens.RedeemCodeScreen
 import com.example.freegameradar.ui.screens.SettingsScreen
 import com.example.freegameradar.ui.screens.SetupScreen
 import com.example.freegameradar.ui.screens.StatsScreen
+import com.example.freegameradar.ui.screens.SupportScreen
 import com.example.freegameradar.ui.viewmodel.GameViewModel
 import com.example.freegameradar.ui.viewmodel.NotificationViewModel
 import com.example.freegameradar.ui.viewmodel.SettingsViewModel
@@ -145,6 +147,23 @@ fun AppNavigation(
         composable(Screen.Details.route) { backStackEntry ->
             val gameId = backStackEntry.arguments?.getString("gameId")?.toLongOrNull()
             GameDetailScreen(navController = navController, gameId = gameId, userStatsViewModel = userStatsViewModel, modifier = Modifier.padding(innerPadding))
+        }
+
+        composable("support") {
+            SupportScreen(
+                onNavigateToRedeem = { navController.navigate("redeem") },
+                onBack = { navController.popBackStack() }
+            )
+        }
+
+        composable("redeem") {
+            RedeemCodeScreen(
+                onSuccess = {
+                    // Navigate back to settings
+                    navController.popBackStack("settings", inclusive = false)
+                },
+                onBack = { navController.popBackStack() }
+            )
         }
     }
 }

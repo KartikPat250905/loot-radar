@@ -379,7 +379,7 @@ fun AppInfoFooter() {
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = Modifier.fillMaxWidth()
     ) {
-        Text("© 2026 Kartik Patel", fontSize = 12.sp, color = Color(0xFF6B7280))
+        Text("© 2026 FreeGameRadar", fontSize = 12.sp, color = Color(0xFF6B7280))
         Text("Made with ❤️ using Kotlin Multiplatform", fontSize = 12.sp, color = Color(0xFF6B7280))
         Spacer(modifier = Modifier.height(8.dp))
         Text("Game giveaway data powered by GamerPower API", fontSize = 12.sp, color = Color(0xFF6B7280))

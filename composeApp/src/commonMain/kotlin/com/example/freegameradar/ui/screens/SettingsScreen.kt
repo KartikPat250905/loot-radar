@@ -124,7 +124,26 @@ fun SettingsScreen(
             .padding(vertical = 16.dp)
     ) {
         Text("Settings", fontSize = 24.sp, fontWeight = FontWeight.ExtraBold, color = Color(0xFFE5E7EB), modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp))
-        Spacer(modifier = Modifier.height(16.dp))
+        
+        Spacer(Modifier.height(16.dp))
+
+        Box(Modifier.padding(horizontal = 16.dp)) {
+            AdFreeStatusCard()
+        }
+        
+        Spacer(Modifier.height(16.dp))
+        
+        // Support button
+        OutlinedButton(
+            onClick = { navController.navigate("support") },
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)
+        ) {
+            Icon(Icons.Default.Coffee, contentDescription = null)
+            Spacer(Modifier.width(8.dp))
+            Text("☕ Support the Developer")
+        }
+        
+        Spacer(Modifier.height(16.dp))
 
         SettingsSectionHeader(title = "Account")
         if (uiState.user != null && !uiState.isGuest) {
