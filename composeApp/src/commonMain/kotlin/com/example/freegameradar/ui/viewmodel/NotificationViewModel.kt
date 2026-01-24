@@ -19,6 +19,11 @@ class NotificationViewModel(private val notificationRepository: NotificationRepo
     val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
 
     val notifications: StateFlow<List<DealNotification>> = notificationRepository.getAllNotifications()
+        .map { notifications ->
+            notifications.sortedByDescending { notification ->
+                notification.worth.removePrefix("$").toFloatOrNull() ?: 0.0f
+            }
+        }
         .onEach { _isLoading.value = false }
         .stateIn(
             scope = viewModelScope,

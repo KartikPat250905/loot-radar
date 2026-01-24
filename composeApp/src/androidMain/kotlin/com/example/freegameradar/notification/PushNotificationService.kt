@@ -84,16 +84,19 @@ class PushNotificationService : FirebaseMessagingService() {
         }
 
         if (notifications.isNotEmpty()) {
+            val sortedNotifications = notifications.sortedByDescending { notification ->
+                notification.worth.removePrefix("$").toFloatOrNull() ?: 0.0f
+            }
             // Save to local database
             val repository = FreeGameRadarApp.instance.notificationRepository
-            repository.saveNotifications(notifications)
-            Log.d("FCM", "✅ Saved ${notifications.size} notifications to local DB")
+            repository.saveNotifications(sortedNotifications)
+            Log.d("FCM", "✅ Saved ${sortedNotifications.size} notifications to local DB")
 
             // Show system notification
             val notificationService = NotificationService(applicationContext)
             notificationService.createNotificationChannel()
-            notificationService.showNewDealsNotification(notifications)
-            Log.d("FCM", "✅ Displayed system notification for ${notifications.size} deals")
+            notificationService.showNewDealsNotification(sortedNotifications)
+            Log.d("FCM", "✅ Displayed system notification for ${sortedNotifications.size} deals")
         }
     }
 
