@@ -43,7 +43,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import com.example.freegameradar.data.state.DataSource
 import com.example.freegameradar.ui.components.AppLoadingScreen
@@ -56,10 +55,11 @@ import com.example.freegameradar.ui.viewmodel.GameViewModel
 @Composable
 fun HomeScreen(
     navController: NavHostController,
+    gameViewModel: GameViewModel, // ViewModel is now passed as a parameter
     modifier: Modifier = Modifier,
     onBottomBarVisibilityChange: (Boolean) -> Unit
 ) {
-    val gameViewModel: GameViewModel = viewModel()
+    // The ViewModel is no longer instantiated here.
     var isLoading by remember { mutableStateOf(true) }
     val games by gameViewModel.games.collectAsState()
     val isRefreshing by gameViewModel.isRefreshing.collectAsState()

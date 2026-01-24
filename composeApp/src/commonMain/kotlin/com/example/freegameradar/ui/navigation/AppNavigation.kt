@@ -26,6 +26,7 @@ import com.example.freegameradar.ui.screens.NotificationScreen
 import com.example.freegameradar.ui.screens.SettingsScreen
 import com.example.freegameradar.ui.screens.SetupScreen
 import com.example.freegameradar.ui.screens.StatsScreen
+import com.example.freegameradar.ui.viewmodel.GameViewModel
 import com.example.freegameradar.ui.viewmodel.NotificationViewModel
 import com.example.freegameradar.ui.viewmodel.SettingsViewModel
 import com.example.freegameradar.ui.viewmodel.SetupViewModel
@@ -40,7 +41,8 @@ import com.example.freegameradar.util.rememberPermissionRequestLauncher
 fun AppNavigation(
     navController: NavHostController,
     innerPadding: PaddingValues,
-    userPreferencesViewModel: UserPreferencesViewModel, // We need this for the Gate
+    gameViewModel: GameViewModel, // Added
+    userPreferencesViewModel: UserPreferencesViewModel,
     notificationViewModel: NotificationViewModel,
     userStatsViewModel: UserStatsViewModel,
     settingsViewModel: SettingsViewModel,
@@ -118,7 +120,12 @@ fun AppNavigation(
         }
 
         composable(Screen.Home.route) {
-            HomeScreen(navController = navController, modifier = Modifier.padding(innerPadding), onBottomBarVisibilityChange = onBottomBarVisibilityChange)
+            HomeScreen(
+                navController = navController,
+                gameViewModel = gameViewModel, // Passed in
+                modifier = Modifier.padding(innerPadding),
+                onBottomBarVisibilityChange = onBottomBarVisibilityChange
+            )
         }
         composable(Screen.Notification.route) {
             NotificationScreen(viewModel = notificationViewModel, navController = navController, modifier = Modifier.padding(innerPadding))

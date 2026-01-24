@@ -31,6 +31,7 @@ import com.example.freegameradar.ui.navigation.AppNavigation
 import com.example.freegameradar.ui.navigation.Screen
 import com.example.freegameradar.ui.theme.ModernDarkTheme
 import com.example.freegameradar.ui.viewmodel.AuthViewModel
+import com.example.freegameradar.ui.viewmodel.GameViewModel
 import com.example.freegameradar.ui.viewmodel.NotificationViewModel
 import com.example.freegameradar.ui.viewmodel.SettingsViewModel
 import com.example.freegameradar.ui.viewmodel.UserPreferencesViewModel
@@ -53,6 +54,7 @@ fun App(
         val userSettingsRepository: UserSettingsRepository = remember(authRepository) { UserSettingsRepositoryImpl(authRepository) }
 
         AppContainer { gameRepository, notificationRepository, userStatsRepository ->
+            val gameViewModel: GameViewModel = viewModel { GameViewModel() } // Instantiated here
             val notificationViewModel: NotificationViewModel = viewModel { NotificationViewModel(notificationRepository) }
             val userStatsViewModel: UserStatsViewModel = viewModel { UserStatsViewModel(userStatsRepository, gameRepository) }
             val settingsViewModel: SettingsViewModel = viewModel { SettingsViewModel(authRepository) }
@@ -81,6 +83,7 @@ fun App(
                     AppNavigation(
                         navController = navController,
                         innerPadding = innerPadding,
+                        gameViewModel = gameViewModel, // Passed down
                         userPreferencesViewModel = userPreferencesViewModel,
                         notificationViewModel = notificationViewModel,
                         userStatsViewModel = userStatsViewModel,
