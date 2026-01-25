@@ -44,7 +44,7 @@ fun GameItemCard(
                     .fillMaxWidth()
                     .height(140.dp)
             ) {
-                val imageUrl = gameDto.image.orEmpty()
+                val imageUrl = gameDto.thumbnail.orEmpty()
 
                 SubcomposeAsyncImage(
                     model = imageUrl,
@@ -52,7 +52,7 @@ fun GameItemCard(
                     modifier = Modifier
                         .fillMaxSize()
                         .clip(RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp)),
-                    contentScale = ContentScale.Crop,
+                    contentScale = ContentScale.Fit,
                     loading = {
                         Box(
                             modifier = Modifier.fillMaxSize(),
