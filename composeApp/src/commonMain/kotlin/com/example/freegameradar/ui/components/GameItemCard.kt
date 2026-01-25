@@ -28,21 +28,21 @@ fun GameItemCard(
         modifier = Modifier
             .padding(4.dp)
             .fillMaxWidth()
-            .clickable { onClick() },
-        shape = RoundedCornerShape(16.dp),
+            .height(180.dp),
+        shape = RoundedCornerShape(12.dp),
         colors = CardDefaults.cardColors(
             containerColor = Color(0xFF1B263B)
         ),
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
     ) {
         Column(
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxSize()
         ) {
-            // Image with overlay gradient
+            // Image with overlay gradient - Reduced height
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(109.dp)
+                    .height(100.dp) // Reduced from 130.dp to 100.dp
             ) {
                 val imageUrl = gameDto.thumbnail.orEmpty()
 
@@ -51,15 +51,15 @@ fun GameItemCard(
                     contentDescription = gameDto.title.orEmpty(),
                     modifier = Modifier
                         .fillMaxSize()
-                        .clip(RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp)),
-                    contentScale = ContentScale.Fit,
+                        .clip(RoundedCornerShape(topStart = 12.dp, topEnd = 12.dp)),
+                    contentScale = ContentScale.Crop,
                     loading = {
                         Box(
                             modifier = Modifier.fillMaxSize(),
                             contentAlignment = Alignment.Center
                         ) {
                             CircularProgressIndicator(
-                                modifier = Modifier.size(24.dp),
+                                modifier = Modifier.size(20.dp), // Reduced from 24.dp
                                 strokeWidth = 2.dp,
                                 color = Color(0xFF10B981)
                             )
@@ -75,7 +75,7 @@ fun GameItemCard(
                             Text(
                                 "No image",
                                 color = Color(0xFF6B7280),
-                                fontSize = 12.sp
+                                fontSize = 11.sp // Reduced from 12.sp
                             )
                         }
                     }
@@ -85,7 +85,7 @@ fun GameItemCard(
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(60.dp)
+                        .height(50.dp) // Reduced from 60.dp
                         .align(Alignment.BottomCenter)
                         .background(
                             brush = Brush.verticalGradient(
@@ -98,22 +98,23 @@ fun GameItemCard(
                 )
             }
 
-            // Content section
+            // Content section - More compact
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(12.dp)
+                    .weight(1f)
+                    .padding(10.dp), // Reduced from 12.dp
+                verticalArrangement = Arrangement.SpaceBetween
             ) {
                 Text(
                     text = gameDto.title ?: "No title found",
                     color = Color(0xFFE5E7EB),
-                    fontSize = 16.sp,
+                    fontSize = 14.sp, // Reduced from 16.sp
                     fontWeight = FontWeight.SemiBold,
                     maxLines = 2,
-                    overflow = TextOverflow.Ellipsis
+                    overflow = TextOverflow.Ellipsis,
+                    lineHeight = 18.sp // Reduced from 20.sp
                 )
-
-                Spacer(modifier = Modifier.height(6.dp))
 
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -125,15 +126,17 @@ fun GameItemCard(
                         modifier = Modifier
                             .background(
                                 color = Color(0xFF0D1B2A),
-                                shape = RoundedCornerShape(8.dp)
+                                shape = RoundedCornerShape(6.dp) // Reduced from 8.dp
                             )
-                            .padding(horizontal = 10.dp, vertical = 4.dp)
+                            .padding(horizontal = 8.dp, vertical = 3.dp) // Reduced padding
                     ) {
                         Text(
                             text = gameDto.type ?: "Unknown",
                             color = Color(0xFF9CA3AF),
-                            fontSize = 11.sp,
-                            fontWeight = FontWeight.Medium
+                            fontSize = 10.sp, // Reduced from 11.sp
+                            fontWeight = FontWeight.Medium,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
                         )
                     }
 
