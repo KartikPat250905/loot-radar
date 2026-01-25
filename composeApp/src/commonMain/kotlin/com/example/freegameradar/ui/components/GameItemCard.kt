@@ -28,7 +28,8 @@ fun GameItemCard(
         modifier = Modifier
             .padding(4.dp)
             .fillMaxWidth()
-            .height(180.dp),
+            .height(180.dp)
+            .clickable { onClick() }, // ← Added back the clickable modifier
         shape = RoundedCornerShape(12.dp),
         colors = CardDefaults.cardColors(
             containerColor = Color(0xFF1B263B)
@@ -42,7 +43,7 @@ fun GameItemCard(
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(100.dp) // Reduced from 130.dp to 100.dp
+                    .height(100.dp)
             ) {
                 val imageUrl = gameDto.thumbnail.orEmpty()
 
@@ -59,7 +60,7 @@ fun GameItemCard(
                             contentAlignment = Alignment.Center
                         ) {
                             CircularProgressIndicator(
-                                modifier = Modifier.size(20.dp), // Reduced from 24.dp
+                                modifier = Modifier.size(20.dp),
                                 strokeWidth = 2.dp,
                                 color = Color(0xFF10B981)
                             )
@@ -75,7 +76,7 @@ fun GameItemCard(
                             Text(
                                 "No image",
                                 color = Color(0xFF6B7280),
-                                fontSize = 11.sp // Reduced from 12.sp
+                                fontSize = 11.sp
                             )
                         }
                     }
@@ -85,7 +86,7 @@ fun GameItemCard(
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(50.dp) // Reduced from 60.dp
+                        .height(50.dp)
                         .align(Alignment.BottomCenter)
                         .background(
                             brush = Brush.verticalGradient(
@@ -103,17 +104,17 @@ fun GameItemCard(
                 modifier = Modifier
                     .fillMaxWidth()
                     .weight(1f)
-                    .padding(10.dp), // Reduced from 12.dp
+                    .padding(10.dp),
                 verticalArrangement = Arrangement.SpaceBetween
             ) {
                 Text(
                     text = gameDto.title ?: "No title found",
                     color = Color(0xFFE5E7EB),
-                    fontSize = 14.sp, // Reduced from 16.sp
+                    fontSize = 14.sp,
                     fontWeight = FontWeight.SemiBold,
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis,
-                    lineHeight = 18.sp // Reduced from 20.sp
+                    lineHeight = 18.sp
                 )
 
                 Row(
@@ -126,14 +127,14 @@ fun GameItemCard(
                         modifier = Modifier
                             .background(
                                 color = Color(0xFF0D1B2A),
-                                shape = RoundedCornerShape(6.dp) // Reduced from 8.dp
+                                shape = RoundedCornerShape(6.dp)
                             )
-                            .padding(horizontal = 8.dp, vertical = 3.dp) // Reduced padding
+                            .padding(horizontal = 8.dp, vertical = 3.dp)
                     ) {
                         Text(
                             text = gameDto.type ?: "Unknown",
                             color = Color(0xFF9CA3AF),
-                            fontSize = 10.sp, // Reduced from 11.sp
+                            fontSize = 10.sp,
                             fontWeight = FontWeight.Medium,
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis
