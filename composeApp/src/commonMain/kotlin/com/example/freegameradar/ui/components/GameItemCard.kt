@@ -42,7 +42,7 @@ fun GameItemCard(
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(140.dp)
+                    .height(109.dp)
             ) {
                 val imageUrl = gameDto.thumbnail.orEmpty()
 

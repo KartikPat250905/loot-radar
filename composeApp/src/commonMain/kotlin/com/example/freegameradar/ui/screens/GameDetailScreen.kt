@@ -87,13 +87,13 @@ fun GameDetailScreen(
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(280.dp)
+                        .height(190.dp)
                 ) {
                     AsyncImage(
                         model = imageUrl,
                         contentDescription = game?.title,
                         modifier = Modifier.fillMaxSize(),
-                        contentScale = ContentScale.Crop
+                        contentScale = ContentScale.Fit
                     )
 
                     // Gradient overlay
