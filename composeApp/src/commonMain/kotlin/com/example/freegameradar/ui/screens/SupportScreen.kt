@@ -4,8 +4,10 @@ import android.content.Intent
 import android.net.Uri
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.ClickableText
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Coffee
 import androidx.compose.material3.Text
@@ -26,16 +28,16 @@ import androidx.compose.ui.unit.sp
 import com.example.freegameradar.ui.components.BackButton
 import com.example.freegameradar.ui.components.ThemedSupportButton
 
-// Support Screen
 @Composable
 fun SupportScreen(
     onNavigateToRedeem: () -> Unit,
-    onBack: () -> Unit
+    onBack: () -> Unit,
+    modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
 
     Box(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxSize()
             .background(
                 brush = Brush.verticalGradient(
@@ -50,9 +52,11 @@ fun SupportScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(24.dp)
+                .verticalScroll(rememberScrollState())
+                .padding(horizontal = 24.dp)
         ) {
-            Spacer(Modifier.height(60.dp))
+            // Much larger spacer to clear the back button area completely
+            Spacer(Modifier.height(80.dp))
 
             Text(
                 "☕ Support FreeGameRadar",
@@ -74,7 +78,7 @@ fun SupportScreen(
 
             Spacer(Modifier.height(32.dp))
 
-            // Ko-fi Card with theme
+            // Ko-fi Card
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -124,7 +128,6 @@ fun SupportScreen(
 
                         Spacer(Modifier.height(20.dp))
 
-                        // Tiers
                         ThemedTierRow("Coffee Support", "$2.99", "30 days ad-free")
                         Spacer(Modifier.height(12.dp))
                         ThemedTierRow("Big Coffee", "$7.99", "90 days ad-free")
@@ -133,7 +136,6 @@ fun SupportScreen(
 
                         Spacer(Modifier.height(24.dp))
 
-                        // Ko-fi Button
                         ThemedSupportButton(
                             text = "Open Ko-fi",
                             icon = Icons.Default.Coffee,
@@ -176,22 +178,22 @@ fun SupportScreen(
 
             Spacer(Modifier.height(24.dp))
 
-            // Redeem Button
             ThemedSupportButton(
                 text = "Already Have a Code? Redeem Here",
                 onClick = onNavigateToRedeem,
                 isPrimary = false
             )
+
+            Spacer(Modifier.height(80.dp))
         }
 
-        // Back Button
-        Box(
+        // Back Button - MUST be after Column to render on top
+        BackButton(
+            onClick = onBack,
             modifier = Modifier
-                .padding(16.dp)
                 .align(Alignment.TopStart)
-        ) {
-            BackButton(onClick = onBack)
-        }
+                .padding(16.dp)
+        )
     }
 }
 

@@ -152,17 +152,18 @@ fun AppNavigation(
         composable("support") {
             SupportScreen(
                 onNavigateToRedeem = { navController.navigate("redeem") },
-                onBack = { navController.popBackStack() }
+                onBack = { navController.popBackStack() },
+                modifier = Modifier.padding(innerPadding) // ADD THIS
             )
         }
 
         composable("redeem") {
             RedeemCodeScreen(
                 onSuccess = {
-                    // Navigate back to settings
                     navController.popBackStack("settings", inclusive = false)
                 },
-                onBack = { navController.popBackStack() }
+                onBack = { navController.popBackStack() },
+                modifier = Modifier.padding(innerPadding) // ADD THIS
             )
         }
     }
