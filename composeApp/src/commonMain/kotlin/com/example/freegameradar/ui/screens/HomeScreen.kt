@@ -4,10 +4,6 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.expandVertically
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.scaleIn
-import androidx.compose.animation.scaleOut
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
@@ -51,13 +47,15 @@ import com.example.freegameradar.ui.components.GameTypeFilterTabs
 import com.example.freegameradar.ui.components.SearchAndRefreshBar
 import com.example.freegameradar.ui.components.TotalWorthBar
 import com.example.freegameradar.ui.viewmodel.GameViewModel
+import kotlinx.coroutines.flow.collectLatest
 
 @Composable
 fun HomeScreen(
     navController: NavHostController,
     gameViewModel: GameViewModel, // ViewModel is now passed as a parameter
     modifier: Modifier = Modifier,
-    onBottomBarVisibilityChange: (Boolean) -> Unit
+    onBottomBarVisibilityChange: (Boolean) -> Unit,
+    onShowRefreshAd: () -> Unit = {}
 ) {
     // The ViewModel is no longer instantiated here.
     var isLoading by remember { mutableStateOf(true) }
@@ -103,6 +101,12 @@ fun HomeScreen(
 
     LaunchedEffect(isVisible) {
         onBottomBarVisibilityChange(isVisible)
+    }
+
+    LaunchedEffect(Unit) {
+        gameViewModel.showRefreshAd.collectLatest {
+            onShowRefreshAd()
+        }
     }
 
     Column(

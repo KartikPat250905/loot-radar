@@ -33,6 +33,7 @@ kotlin {
             implementation(libs.firebase.firestore.ktx)
             implementation(libs.firebase.messaging.ktx)
             implementation(libs.kotlinx.coroutines.play.services)
+            implementation("com.google.android.gms:play-services-ads:23.5.0")
         }
         commonMain.dependencies {
             implementation(compose.runtime)

@@ -32,6 +32,7 @@ import com.example.freegameradar.util.PermissionRequestResult
 import com.example.freegameradar.util.isNotificationPermissionGranted
 import com.example.freegameradar.util.openAppSettings
 import com.example.freegameradar.util.rememberPermissionRequestLauncher
+import kotlinx.coroutines.flow.collectLatest
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
@@ -40,6 +41,7 @@ fun SettingsScreen(
     userPreferencesViewModel: UserPreferencesViewModel,
     navController: NavHostController,
     modifier: Modifier = Modifier,
+    onShowSettingsAd: () -> Unit = {}
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val preferencesState by userPreferencesViewModel.uiState.collectAsState()
@@ -69,6 +71,13 @@ fun SettingsScreen(
     LaunchedEffect(hasNotificationPermission) {
         if (preferencesState.notificationsEnabled != hasNotificationPermission) {
             userPreferencesViewModel.setNotificationsEnabled(hasNotificationPermission)
+        }
+    }
+
+    LaunchedEffect(Unit) {
+        viewModel.onSettingsScreenOpen()
+        viewModel.showSettingsAd.collectLatest {
+            onShowSettingsAd()
         }
     }
 
@@ -124,15 +133,15 @@ fun SettingsScreen(
             .padding(vertical = 16.dp)
     ) {
         Text("Settings", fontSize = 24.sp, fontWeight = FontWeight.ExtraBold, color = Color(0xFFE5E7EB), modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp))
-        
+
         Spacer(Modifier.height(16.dp))
 
         Box(Modifier.padding(horizontal = 16.dp)) {
             AdFreeStatusCard()
         }
-        
+
         Spacer(Modifier.height(16.dp))
-        
+
         // Support button
         OutlinedButton(
             onClick = { navController.navigate("support") },
@@ -140,7 +149,7 @@ fun SettingsScreen(
         ) {
             Text("☕ Support the Developer")
         }
-        
+
         Spacer(Modifier.height(16.dp))
 
         SettingsSectionHeader(title = "Account")

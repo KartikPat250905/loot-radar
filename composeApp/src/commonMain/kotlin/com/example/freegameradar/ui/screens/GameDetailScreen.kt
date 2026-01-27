@@ -30,6 +30,7 @@ import com.example.freegameradar.ui.components.BackButton
 import com.example.freegameradar.ui.components.GameWorth
 import com.example.freegameradar.ui.viewmodel.UserStatsViewModel
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.isActive
 import kotlinx.datetime.*
 
@@ -38,7 +39,8 @@ fun GameDetailScreen(
     navController: NavHostController,
     gameId: Long?,
     userStatsViewModel: UserStatsViewModel,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onShowGameDetailAd: () -> Unit = {}
 ) {
     var game by remember { mutableStateOf<GameDto?>(null) }
     val repository = remember { GameRepository(ApiService()) }
@@ -49,8 +51,15 @@ fun GameDetailScreen(
 
     // Load selected game based on ID
     LaunchedEffect(gameId) {
+        userStatsViewModel.onGameDetailView()
         repository.getFreeGames().collect { list ->
             game = list.find { it.id == gameId }
+        }
+    }
+
+    LaunchedEffect(Unit) {
+        userStatsViewModel.showGameDetailAd.collectLatest {
+            onShowGameDetailAd()
         }
     }
 

@@ -42,7 +42,10 @@ import com.example.freegameradar.ui.viewmodel.SetupViewModel
 @Composable
 fun App(
     authViewModel: AuthViewModel,
-    startRoute: String? = null
+    startRoute: String? = null,
+    onShowRefreshAd: () -> Unit = {},
+    onShowSettingsAd: () -> Unit = {},
+    onShowGameDetailAd: () -> Unit = {}
 ) {
     ModernDarkTheme { // Theme is now at the root
         val navController = rememberNavController()
@@ -90,7 +93,10 @@ fun App(
                         settingsViewModel = settingsViewModel,
                         setupViewModel = setupViewModel,
                         onBottomBarVisibilityChange = { isBottomBarVisible = it },
-                        startRoute = startRoute
+                        startRoute = startRoute,
+                        onShowRefreshAd = onShowRefreshAd,
+                        onShowSettingsAd = onShowSettingsAd,
+                        onShowGameDetailAd = onShowGameDetailAd
                     )
                 }
             }

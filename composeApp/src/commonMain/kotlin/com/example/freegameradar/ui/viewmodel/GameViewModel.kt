@@ -7,9 +7,12 @@ import com.example.freegameradar.data.remote.ApiService
 import com.example.freegameradar.data.repository.GameRepository
 import com.example.freegameradar.data.state.DataSource
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
@@ -36,6 +39,10 @@ class GameViewModel(
     private var _allGames = MutableStateFlow<List<GameDto>>(emptyList())
     private val _searchQuery = MutableStateFlow("")
     val searchQuery: StateFlow<String> = _searchQuery.asStateFlow()
+
+    private var refreshCount = 0
+    private val _showRefreshAd = MutableSharedFlow<Unit>()
+    val showRefreshAd: SharedFlow<Unit> = _showRefreshAd.asSharedFlow()
 
     val games: StateFlow<List<GameDto>> =
         combine(_allGames, _searchQuery, _filters, _gameTypeFilter) { games, query, filters, typeFilter ->
@@ -158,6 +165,11 @@ class GameViewModel(
 
                 // Update last refresh time (starts cooldown)
                 _lastRefreshTime.value = System.currentTimeMillis()
+
+                refreshCount++
+                if (refreshCount % 5 == 0) {
+                    _showRefreshAd.emit(Unit)
+                }
 
                 println("⏱️ Cooldown started, next refresh available in ${REFRESH_COOLDOWN_MS / 1000}s")
 

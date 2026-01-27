@@ -19,6 +19,8 @@ import kotlinx.coroutines.flow.first
 
 class MainActivity : ComponentActivity() {
 
+    private lateinit var adManager: AdManager
+
     private val requestPermissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestPermission()
     ) { }
@@ -31,6 +33,11 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        adManager = AdManager(this)
+        adManager.loadGameDetailAd()
+        adManager.loadRefreshAd()
+        adManager.loadSettingsAd()
 
         val authRepository = AuthRepositoryImpl()
         val userSettingsRepository = UserSettingsRepositoryImpl(authRepository)
@@ -59,9 +66,25 @@ class MainActivity : ComponentActivity() {
 
                 App(
                     authViewModel = authViewModel,
-                    startRoute = startRoute
+                    startRoute = startRoute,
+                    onShowRefreshAd = ::showRefreshAd,
+                    onShowSettingsAd = ::showSettingsAd,
+                    onShowGameDetailAd = ::showGameDetailAd
                 )
             }
         }
+    }
+
+    // Public methods to show ads
+    fun showGameDetailAd() {
+        adManager.showGameDetailAd(this)
+    }
+
+    fun showRefreshAd() {
+        adManager.showRefreshAd(this)
+    }
+
+    fun showSettingsAd() {
+        adManager.showSettingsAd(this)
     }
 }

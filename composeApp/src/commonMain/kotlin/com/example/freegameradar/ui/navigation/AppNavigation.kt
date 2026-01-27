@@ -50,7 +50,10 @@ fun AppNavigation(
     settingsViewModel: SettingsViewModel,
     setupViewModel: SetupViewModel,
     onBottomBarVisibilityChange: (Boolean) -> Unit,
-    startRoute: String? = null
+    startRoute: String? = null,
+    onShowRefreshAd: () -> Unit = {},
+    onShowSettingsAd: () -> Unit = {},
+    onShowGameDetailAd: () -> Unit = {}
 ) {
     NavHost(
         navController = navController,
@@ -126,7 +129,8 @@ fun AppNavigation(
                 navController = navController,
                 gameViewModel = gameViewModel, // Passed in
                 modifier = Modifier.padding(innerPadding),
-                onBottomBarVisibilityChange = onBottomBarVisibilityChange
+                onBottomBarVisibilityChange = onBottomBarVisibilityChange,
+                onShowRefreshAd = onShowRefreshAd
             )
         }
         composable(Screen.Notification.route) {
@@ -136,7 +140,13 @@ fun AppNavigation(
             HotDealsScreen(navController = navController, modifier = Modifier.padding(innerPadding))
         }
         composable(Screen.Settings.route) {
-            SettingsScreen(viewModel = settingsViewModel, userPreferencesViewModel = userPreferencesViewModel, navController = navController, modifier = Modifier.padding(innerPadding))
+            SettingsScreen(
+                viewModel = settingsViewModel,
+                userPreferencesViewModel = userPreferencesViewModel,
+                navController = navController,
+                modifier = Modifier.padding(innerPadding),
+                onShowSettingsAd = onShowSettingsAd
+            )
         }
         composable(Screen.About.route) {
             AboutScreen(navController = navController)
@@ -146,7 +156,13 @@ fun AppNavigation(
         }
         composable(Screen.Details.route) { backStackEntry ->
             val gameId = backStackEntry.arguments?.getString("gameId")?.toLongOrNull()
-            GameDetailScreen(navController = navController, gameId = gameId, userStatsViewModel = userStatsViewModel, modifier = Modifier.padding(innerPadding))
+            GameDetailScreen(
+                navController = navController,
+                gameId = gameId,
+                userStatsViewModel = userStatsViewModel,
+                modifier = Modifier.padding(innerPadding),
+                onShowGameDetailAd = onShowGameDetailAd
+            )
         }
 
         composable("support") {

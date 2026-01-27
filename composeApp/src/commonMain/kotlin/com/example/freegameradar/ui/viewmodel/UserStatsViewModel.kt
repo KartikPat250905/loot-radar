@@ -5,9 +5,12 @@ import androidx.lifecycle.viewModelScope
 import com.example.freegameradar.data.model.PlatformStat
 import com.example.freegameradar.data.repository.GameRepository
 import com.example.freegameradar.data.repository.UserStatsRepository
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
@@ -25,6 +28,10 @@ class UserStatsViewModel(
 
     private val _filter = MutableStateFlow(GameTypeFilter.ALL)
     val filter: StateFlow<GameTypeFilter> = _filter
+
+    private var gameDetailViewCount = 0
+    private val _showGameDetailAd = MutableSharedFlow<Unit>()
+    val showGameDetailAd: SharedFlow<Unit> = _showGameDetailAd.asSharedFlow()
 
     val claimedValue: StateFlow<Float> = userStatsRepository.getClaimedValue()
         .stateIn(
@@ -119,6 +126,15 @@ class UserStatsViewModel(
         }
     }
 
+    fun onGameDetailView() {
+        gameDetailViewCount++
+        if (gameDetailViewCount % 3 == 0) {
+            viewModelScope.launch {
+                _showGameDetailAd.emit(Unit)
+            }
+        }
+    }
+
     fun updateFilter(filter: GameTypeFilter) {
         _filter.value = filter
     }
@@ -134,7 +150,7 @@ class UserStatsViewModel(
             try {
                 userStatsRepository.addToClaimedValue(gameId, worth)
             } catch (e: Exception) {
-                println("Error adding to claimed value: ${e.message}")
+                println("Error adding to claimed value: ${'$'}{e.message}")
             }
         }
     }

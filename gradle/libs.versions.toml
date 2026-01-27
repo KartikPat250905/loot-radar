@@ -19,6 +19,7 @@ firebase-firestore = "25.0.0"
 firebase-messaging = "24.0.0"
 kotlinx-coroutines-play-services = "1.8.1"
 vico = "1.15.0"
+playServicesAdsApi = "24.9.0"
 
 [libraries]
 androidx-activity-compose = { module = "androidx.activity:activity-compose", version.ref = "androidx-activityCompose" }
@@ -49,6 +50,7 @@ kotlinx-coroutines-play-services = { module = "org.jetbrains.kotlinx:kotlinx-cor
 vico-compose = { module = "com.patrykandpatrick.vico:compose", version.ref = "vico" }
 vico-compose-m3 = { module = "com.patrykandpatrick.vico:compose-m3", version.ref = "vico" }
 vico-core = { module = "com.patrykandpatrick.vico:core", version.ref = "vico" }
+play-services-ads-api = { group = "com.google.android.gms", name = "play-services-ads-api", version.ref = "playServicesAdsApi" }
 
 [plugins]
 androidApplication = { id = "com.android.application", version.ref = "agp" }
