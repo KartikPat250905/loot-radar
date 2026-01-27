@@ -138,8 +138,6 @@ fun SettingsScreen(
             onClick = { navController.navigate("support") },
             modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)
         ) {
-            Icon(Icons.Default.Coffee, contentDescription = null)
-            Spacer(Modifier.width(8.dp))
             Text("☕ Support the Developer")
         }
         
