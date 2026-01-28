@@ -145,7 +145,7 @@ fun AppNavigation(
                 userPreferencesViewModel = userPreferencesViewModel,
                 navController = navController,
                 modifier = Modifier.padding(innerPadding),
-                onShowSettingsAd = onShowSettingsAd
+                onSettingsScreenOpen = onShowSettingsAd
             )
         }
         composable(Screen.About.route) {

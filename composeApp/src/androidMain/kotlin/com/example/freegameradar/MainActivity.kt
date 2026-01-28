@@ -4,6 +4,7 @@ import android.Manifest
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
@@ -55,7 +56,11 @@ class MainActivity : ComponentActivity() {
                             val userSettings = userSettingsRepository.getSettings().first()
                             if (userSettings.notificationsEnabled) {
                                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                                    if (ContextCompat.checkSelfPermission(this@MainActivity, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
+                                    if (ContextCompat.checkSelfPermission(
+                                            this@MainActivity,
+                                            Manifest.permission.POST_NOTIFICATIONS
+                                        ) != PackageManager.PERMISSION_GRANTED
+                                    ) {
                                         askNotificationPermission()
                                     }
                                 }
@@ -77,14 +82,17 @@ class MainActivity : ComponentActivity() {
 
     // Public methods to show ads
     fun showGameDetailAd() {
+        Log.d("MainActivity", "🎬 showGameDetailAd() called")
         adManager.showGameDetailAd(this)
     }
 
     fun showRefreshAd() {
+        Log.d("MainActivity", "🎬 showRefreshAd() called")
         adManager.showRefreshAd(this)
     }
 
     fun showSettingsAd() {
+        Log.d("MainActivity", "🎬 showSettingsAd() called from SettingsScreen callback")
         adManager.showSettingsAd(this)
     }
 }

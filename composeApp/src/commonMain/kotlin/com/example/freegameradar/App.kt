@@ -60,7 +60,7 @@ fun App(
             val gameViewModel: GameViewModel = viewModel { GameViewModel() } // Instantiated here
             val notificationViewModel: NotificationViewModel = viewModel { NotificationViewModel(notificationRepository) }
             val userStatsViewModel: UserStatsViewModel = viewModel { UserStatsViewModel(userStatsRepository, gameRepository) }
-            val settingsViewModel: SettingsViewModel = viewModel { SettingsViewModel(authRepository) }
+            val settingsViewModel: SettingsViewModel = viewModel { SettingsViewModel(authRepository, userSettingsRepository) }
             val userPreferencesViewModel: UserPreferencesViewModel = viewModel { UserPreferencesViewModel(userSettingsRepository) }
             val setupViewModel: SetupViewModel = viewModel { SetupViewModel(userSettingsRepository, authRepository) }
 
