@@ -41,7 +41,7 @@ class SettingsViewModel(
         settingsOpenCount++
         Log.d("SettingsViewModel", "⚙️ Settings opened: count=$settingsOpenCount")
 
-        if (settingsOpenCount % 3 == 0) {
+        if (settingsOpenCount % 8 == 0) {
             Log.d("SettingsViewModel", "🎯 TRIGGERING AD! Count=$settingsOpenCount")
             viewModelScope.launch {
                 _showSettingsAd.send(Unit)

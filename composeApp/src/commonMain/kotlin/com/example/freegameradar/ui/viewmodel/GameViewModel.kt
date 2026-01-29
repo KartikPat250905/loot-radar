@@ -93,7 +93,7 @@ class GameViewModel(
     val remainingCooldown: StateFlow<Int> = _remainingCooldown.asStateFlow()
 
     // Cooldown period: 30 seconds
-    private val REFRESH_COOLDOWN_MS = 30_000L
+    private val REFRESH_COOLDOWN_MS = 10_000L
 
     init {
         // ✅ FIXED: Non-blocking cooldown timer with reactive updates
@@ -167,7 +167,7 @@ class GameViewModel(
                 _lastRefreshTime.value = System.currentTimeMillis()
 
                 refreshCount++
-                if (refreshCount % 5 == 0) {
+                if (refreshCount % 10 == 0) {
                     _showRefreshAd.emit(Unit)
                 }
 

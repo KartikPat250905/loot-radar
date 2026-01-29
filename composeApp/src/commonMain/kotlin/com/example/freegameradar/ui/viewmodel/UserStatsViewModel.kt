@@ -129,7 +129,7 @@ class UserStatsViewModel(
 
     fun onGameDetailView() {
         gameDetailViewCount++
-        if (gameDetailViewCount % 5 == 0) {
+        if (gameDetailViewCount % 6 == 0) {
             viewModelScope.launch {
                 _showGameDetailAd.send(Unit)
             }
