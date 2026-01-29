@@ -12,15 +12,18 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.core.content.ContextCompat
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.freegameradar.data.auth.AuthRepositoryImpl
 import com.example.freegameradar.data.repository.UserSettingsRepositoryImpl
 import com.example.freegameradar.ui.theme.ModernDarkTheme
+import com.example.freegameradar.ui.viewmodel.AdFreeViewModel
 import com.example.freegameradar.ui.viewmodel.AuthViewModel
 import kotlinx.coroutines.flow.first
 
 class MainActivity : ComponentActivity() {
 
     private lateinit var adManager: AdManager
+    private lateinit var adFreeViewModel: AdFreeViewModel
 
     private val requestPermissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestPermission()
@@ -35,23 +38,34 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        adManager = AdManager(this)
-        adManager.loadGameDetailAd()
-        adManager.loadRefreshAd()
-        adManager.loadSettingsAd()
-
         val authRepository = AuthRepositoryImpl()
         val userSettingsRepository = UserSettingsRepositoryImpl(authRepository)
         val authViewModel = AuthViewModel(authRepository)
+
+        // ✅ Initialize AdFreeViewModel
+        adFreeViewModel = AdFreeViewModel(authRepository)
+
+        // ✅ Initialize AdManager with ad-free check
+        adManager = AdManager(this) {
+            !adFreeViewModel.adFreeStatus.value.isAdFree
+        }
+
+        adManager.loadGameDetailAd()
+        adManager.loadRefreshAd()
+        adManager.loadSettingsAd()
 
         val startRoute = intent.getStringExtra("route")
 
         setContent {
             ModernDarkTheme {
                 val currentUser by authViewModel.currentUser.collectAsState()
+                val adFreeStatus by adFreeViewModel.adFreeStatus.collectAsState()
 
+                // ✅ Reload ad-free status when user changes
                 LaunchedEffect(currentUser) {
                     currentUser?.let {
+                        adFreeViewModel.loadAdFreeStatus()
+
                         if (!it.isAnonymous) {
                             val userSettings = userSettingsRepository.getSettings().first()
                             if (userSettings.notificationsEnabled) {
@@ -71,6 +85,7 @@ class MainActivity : ComponentActivity() {
 
                 App(
                     authViewModel = authViewModel,
+                    adFreeViewModel = adFreeViewModel,  // ✅ Pass to App
                     startRoute = startRoute,
                     onShowRefreshAd = ::showRefreshAd,
                     onShowSettingsAd = ::showSettingsAd,

@@ -11,7 +11,10 @@ import com.google.android.gms.ads.MobileAds
 import com.google.android.gms.ads.interstitial.InterstitialAd
 import com.google.android.gms.ads.interstitial.InterstitialAdLoadCallback
 
-class AdManager(private val context: Context) {
+class AdManager(
+    private val context: Context,
+    private val shouldShowAds: () -> Boolean  // ✅ NEW: Callback to check ad-free status
+) {
 
     private val gameDetailAdUnitId = "ca-app-pub-5652022735470762/3505969771"
     private val refreshAdUnitId = "ca-app-pub-5652022735470762/2231921718"
@@ -25,8 +28,19 @@ class AdManager(private val context: Context) {
         MobileAds.initialize(context)
     }
 
+    // ✅ Helper to check if ads should be shown
+    private fun canShowAds(): Boolean {
+        val shouldShow = shouldShowAds()
+        if (!shouldShow) {
+            Log.d("AdManager", "🚫 User is ad-free, skipping ad")
+        }
+        return shouldShow
+    }
+
     // Game Detail Ad
     fun loadGameDetailAd() {
+        if (!canShowAds()) return
+
         val adRequest = AdRequest.Builder().build()
         InterstitialAd.load(
             context,
@@ -63,6 +77,8 @@ class AdManager(private val context: Context) {
     }
 
     fun showGameDetailAd(activity: Activity) {
+        if (!canShowAds()) return
+
         if (gameDetailAd != null) {
             Log.d("AdManager", "Showing game detail ad")
             gameDetailAd?.show(activity)
@@ -75,6 +91,8 @@ class AdManager(private val context: Context) {
 
     // Refresh Ad
     fun loadRefreshAd() {
+        if (!canShowAds()) return
+
         val adRequest = AdRequest.Builder().build()
         InterstitialAd.load(
             context,
@@ -111,6 +129,8 @@ class AdManager(private val context: Context) {
     }
 
     fun showRefreshAd(activity: Activity) {
+        if (!canShowAds()) return
+
         if (refreshAd != null) {
             Log.d("AdManager", "Showing refresh ad")
             refreshAd?.show(activity)
@@ -123,6 +143,8 @@ class AdManager(private val context: Context) {
 
     // Settings Ad
     fun loadSettingsAd() {
+        if (!canShowAds()) return
+
         val adRequest = AdRequest.Builder().build()
         InterstitialAd.load(
             context,
@@ -159,11 +181,12 @@ class AdManager(private val context: Context) {
     }
 
     fun showSettingsAd(activity: Activity) {
+        if (!canShowAds()) return
+
         if (settingsAd != null) {
             Log.d("AdManager", "Showing settings ad")
             settingsAd?.show(activity)
             settingsAd = null
-            // ✅ Reload happens in onAdDismissedFullScreenContent
         } else {
             Log.w("AdManager", "Settings ad not ready yet, loading...")
             loadSettingsAd()

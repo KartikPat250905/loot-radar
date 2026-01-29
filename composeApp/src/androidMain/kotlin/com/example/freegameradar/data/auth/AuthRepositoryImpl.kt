@@ -10,10 +10,13 @@ import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.tasks.await
+import java.util.Date
 
 actual class AuthRepositoryImpl : AuthRepository {
     private val firebaseAuth: FirebaseAuth = FirebaseAuth.getInstance()
     private val firestore = Firebase.firestore
+
+    private val auth = FirebaseAuth.getInstance()
 
     actual override suspend fun login(email: String, password: String): Result<User> {
         return try {
@@ -104,6 +107,29 @@ actual class AuthRepositoryImpl : AuthRepository {
             Result.success(User(authResult?.user?.uid ?: "", authResult?.user?.email ?: "", false))
         } catch (e: Exception) {
             Result.failure(e)
+        }
+    }
+
+    override suspend fun isAdFree(): Boolean {
+        val currentUser = auth.currentUser ?: return false
+
+        return try {
+            val userDoc = firestore.collection("users")
+                .document(currentUser.uid)
+                .get()
+                .await()
+
+            if (!userDoc.exists()) return false
+
+            val adFreeUntil = userDoc.getTimestamp("adFreeUntil")?.toDate()
+            val now = Date()
+
+            // Check if adFreeUntil exists and is in the future
+            adFreeUntil != null && adFreeUntil.after(now)
+
+        } catch (e: Exception) {
+            println("Error checking ad-free status: ${e.message}")
+            false
         }
     }
 }

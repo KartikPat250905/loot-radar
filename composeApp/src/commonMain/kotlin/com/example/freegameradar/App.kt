@@ -30,6 +30,7 @@ import com.example.freegameradar.ui.components.TopBar
 import com.example.freegameradar.ui.navigation.AppNavigation
 import com.example.freegameradar.ui.navigation.Screen
 import com.example.freegameradar.ui.theme.ModernDarkTheme
+import com.example.freegameradar.ui.viewmodel.AdFreeViewModel
 import com.example.freegameradar.ui.viewmodel.AuthViewModel
 import com.example.freegameradar.ui.viewmodel.GameViewModel
 import com.example.freegameradar.ui.viewmodel.NotificationViewModel
@@ -42,6 +43,7 @@ import com.example.freegameradar.ui.viewmodel.SetupViewModel
 @Composable
 fun App(
     authViewModel: AuthViewModel,
+    adFreeViewModel: AdFreeViewModel,
     startRoute: String? = null,
     onShowRefreshAd: () -> Unit = {},
     onShowSettingsAd: () -> Unit = {},
