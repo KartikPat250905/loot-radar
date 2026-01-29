@@ -6,16 +6,15 @@ import com.example.freegameradar.data.models.GameDto
 import com.example.freegameradar.data.remote.ApiService
 import com.example.freegameradar.data.repository.GameRepository
 import com.example.freegameradar.data.state.DataSource
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlin.math.max
@@ -41,8 +40,9 @@ class GameViewModel(
     val searchQuery: StateFlow<String> = _searchQuery.asStateFlow()
 
     private var refreshCount = 0
-    private val _showRefreshAd = MutableSharedFlow<Unit>()
-    val showRefreshAd: SharedFlow<Unit> = _showRefreshAd.asSharedFlow()
+
+    private val _showRefreshAd = Channel<Unit>(Channel.BUFFERED)
+    val showRefreshAd = _showRefreshAd.receiveAsFlow()
 
     val games: StateFlow<List<GameDto>> =
         combine(_allGames, _searchQuery, _filters, _gameTypeFilter) { games, query, filters, typeFilter ->
@@ -168,7 +168,7 @@ class GameViewModel(
 
                 refreshCount++
                 if (refreshCount % 10 == 0) {
-                    _showRefreshAd.emit(Unit)
+                    _showRefreshAd.send(Unit)
                 }
 
                 println("⏱️ Cooldown started, next refresh available in ${REFRESH_COOLDOWN_MS / 1000}s")
