@@ -5,14 +5,13 @@ import androidx.lifecycle.viewModelScope
 import com.example.freegameradar.data.model.PlatformStat
 import com.example.freegameradar.data.repository.GameRepository
 import com.example.freegameradar.data.repository.UserStatsRepository
-import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharedFlow
-import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
@@ -30,8 +29,10 @@ class UserStatsViewModel(
     val filter: StateFlow<GameTypeFilter> = _filter
 
     private var gameDetailViewCount = 0
-    private val _showGameDetailAd = MutableSharedFlow<Unit>()
-    val showGameDetailAd: SharedFlow<Unit> = _showGameDetailAd.asSharedFlow()
+
+    // ✅ FIXED: Use Channel instead of SharedFlow
+    private val _showGameDetailAd = Channel<Unit>(Channel.BUFFERED)
+    val showGameDetailAd = _showGameDetailAd.receiveAsFlow()
 
     val claimedValue: StateFlow<Float> = userStatsRepository.getClaimedValue()
         .stateIn(
@@ -130,7 +131,7 @@ class UserStatsViewModel(
         gameDetailViewCount++
         if (gameDetailViewCount % 3 == 0) {
             viewModelScope.launch {
-                _showGameDetailAd.emit(Unit)
+                _showGameDetailAd.send(Unit)  // ✅ Changed from emit() to send()
             }
         }
     }
@@ -150,7 +151,7 @@ class UserStatsViewModel(
             try {
                 userStatsRepository.addToClaimedValue(gameId, worth)
             } catch (e: Exception) {
-                println("Error adding to claimed value: ${'$'}{e.message}")
+                println("Error adding to claimed value: ${e.message}")
             }
         }
     }
