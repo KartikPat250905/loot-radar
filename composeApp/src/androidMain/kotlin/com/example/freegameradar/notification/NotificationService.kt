@@ -59,8 +59,8 @@ class NotificationService(private val context: Context) {
                 val deal = deals.first()
                 val bitmap = fetchImage(deal.imageUrl)
 
-                val title = "Psst! A free game is hiding nearby!"
-                val text = "${deal.title} is free right now. Go get your loot!"
+                val title = "🎯 Target Acquired: Free Game Detected"
+                val text = "${deal.title} is in range. Claim it before the signal fades!"
 
                 val notification = NotificationCompat.Builder(context, CHANNEL_ID)
                     .setSmallIcon(R.drawable.ic_notification)
@@ -77,8 +77,8 @@ class NotificationService(private val context: Context) {
                 notificationManager.notify(deal.id.toInt(), notification)
 
             } else {
-                val title = "Your radar is buzzing with new loot!"
-                val text = "Found $dealCount new treasures for your game library!"
+                val title = "📡 Radar Storm: $dealCount Free Games!"
+                val text = "Your scanner is lighting up! Open now to claim them all."
 
                 val notification = NotificationCompat.Builder(context, CHANNEL_ID)
                     .setSmallIcon(R.drawable.ic_notification)
