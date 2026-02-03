@@ -12,7 +12,6 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.core.content.ContextCompat
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.freegameradar.data.auth.AuthRepositoryImpl
 import com.example.freegameradar.data.repository.UserSettingsRepositoryImpl
 import com.example.freegameradar.ui.theme.ModernDarkTheme
@@ -26,7 +25,7 @@ class MainActivity : ComponentActivity() {
     private lateinit var adFreeViewModel: AdFreeViewModel
 
     private val requestPermissionLauncher = registerForActivityResult(
-        ActivityResultContracts.RequestPermission()
+        ActivityResultContracts.RequestPermission(),
     ) { }
 
     private fun askNotificationPermission() {
@@ -38,14 +37,13 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
+        // All repositories are now created here, in the Android entry point
         val authRepository = AuthRepositoryImpl()
-        val userSettingsRepository = UserSettingsRepositoryImpl(authRepository)
+        val userSettingsRepository = UserSettingsRepositoryImpl(authRepository, this)
         val authViewModel = AuthViewModel(authRepository)
 
-        // ✅ Initialize AdFreeViewModel
         adFreeViewModel = AdFreeViewModel(authRepository)
 
-        // ✅ Initialize AdManager with ad-free check
         adManager = AdManager(this) {
             !adFreeViewModel.adFreeStatus.value.isAdFree
         }
@@ -59,33 +57,32 @@ class MainActivity : ComponentActivity() {
         setContent {
             ModernDarkTheme {
                 val currentUser by authViewModel.currentUser.collectAsState()
-                val adFreeStatus by adFreeViewModel.adFreeStatus.collectAsState()
 
-                // ✅ Reload ad-free status when user changes
                 LaunchedEffect(currentUser) {
                     currentUser?.let {
+                        userSettingsRepository.syncUserSettings()
                         adFreeViewModel.loadAdFreeStatus()
-
                         if (!it.isAnonymous) {
                             val userSettings = userSettingsRepository.getSettings().first()
-                            if (userSettings.notificationsEnabled) {
-                                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                                    if (ContextCompat.checkSelfPermission(
-                                            this@MainActivity,
-                                            Manifest.permission.POST_NOTIFICATIONS
-                                        ) != PackageManager.PERMISSION_GRANTED
-                                    ) {
-                                        askNotificationPermission()
-                                    }
-                                }
+                            if (userSettings.notificationsEnabled &&
+                                Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+                                ContextCompat.checkSelfPermission(
+                                    this@MainActivity,
+                                    Manifest.permission.POST_NOTIFICATIONS
+                                ) != PackageManager.PERMISSION_GRANTED
+                            ) {
+                                askNotificationPermission()
                             }
                         }
                     }
                 }
 
+                // Pass repository instances to the common App composable
                 App(
                     authViewModel = authViewModel,
-                    adFreeViewModel = adFreeViewModel,  // ✅ Pass to App
+                    adFreeViewModel = adFreeViewModel,
+                    authRepository = authRepository,
+                    userSettingsRepository = userSettingsRepository,
                     startRoute = startRoute,
                     onShowRefreshAd = ::showRefreshAd,
                     onShowSettingsAd = ::showSettingsAd,
@@ -95,18 +92,17 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    // Public methods to show ads
-    fun showGameDetailAd() {
+    private fun showGameDetailAd() {
         Log.d("MainActivity", "🎬 showGameDetailAd() called")
         adManager.showGameDetailAd(this)
     }
 
-    fun showRefreshAd() {
+    private fun showRefreshAd() {
         Log.d("MainActivity", "🎬 showRefreshAd() called")
         adManager.showRefreshAd(this)
     }
 
-    fun showSettingsAd() {
+    private fun showSettingsAd() {
         Log.d("MainActivity", "🎬 showSettingsAd() called from SettingsScreen callback")
         adManager.showSettingsAd(this)
     }

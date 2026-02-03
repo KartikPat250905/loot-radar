@@ -9,7 +9,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -20,11 +19,9 @@ import androidx.compose.ui.Modifier
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
-import com.example.freegameradar.data.auth.AuthRepositoryImpl
+import com.example.freegameradar.data.auth.AuthRepository
 import com.example.freegameradar.data.repository.UserSettingsRepository
-import com.example.freegameradar.data.repository.UserSettingsRepositoryImpl
 import com.example.freegameradar.ui.auth.AuthGate
-import com.example.freegameradar.ui.components.AppLoadingScreen
 import com.example.freegameradar.ui.components.BottomNavBar
 import com.example.freegameradar.ui.components.TopBar
 import com.example.freegameradar.ui.navigation.AppNavigation
@@ -44,6 +41,8 @@ import com.example.freegameradar.ui.viewmodel.SetupViewModel
 fun App(
     authViewModel: AuthViewModel,
     adFreeViewModel: AdFreeViewModel,
+    authRepository: AuthRepository,
+    userSettingsRepository: UserSettingsRepository,
     startRoute: String? = null,
     onShowRefreshAd: () -> Unit = {},
     onShowSettingsAd: () -> Unit = {},
@@ -55,11 +54,8 @@ fun App(
         val currentRoute = navBackStackEntry?.destination?.route
         var isBottomBarVisible by remember { mutableStateOf(true) }
 
-        val authRepository = remember { AuthRepositoryImpl() }
-        val userSettingsRepository: UserSettingsRepository = remember(authRepository) { UserSettingsRepositoryImpl(authRepository) }
-
         AppContainer { gameRepository, notificationRepository, userStatsRepository ->
-            val gameViewModel: GameViewModel = viewModel { GameViewModel() } // Instantiated here
+            val gameViewModel: GameViewModel = viewModel { GameViewModel() }
             val notificationViewModel: NotificationViewModel = viewModel { NotificationViewModel(notificationRepository) }
             val userStatsViewModel: UserStatsViewModel = viewModel { UserStatsViewModel(userStatsRepository, gameRepository) }
             val settingsViewModel: SettingsViewModel = viewModel { SettingsViewModel(authRepository, userSettingsRepository) }
@@ -88,7 +84,7 @@ fun App(
                     AppNavigation(
                         navController = navController,
                         innerPadding = innerPadding,
-                        gameViewModel = gameViewModel, // Passed down
+                        gameViewModel = gameViewModel,
                         userPreferencesViewModel = userPreferencesViewModel,
                         notificationViewModel = notificationViewModel,
                         userStatsViewModel = userStatsViewModel,
