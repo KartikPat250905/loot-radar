@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.example.freegameradar.data.model.PlatformStat
 import com.example.freegameradar.data.repository.GameRepository
 import com.example.freegameradar.data.repository.UserStatsRepository
+import com.example.freegameradar.util.Logger
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -142,6 +143,7 @@ class UserStatsViewModel(
 
     fun syncClaimedValue() {
         viewModelScope.launch {
+            Logger.d("UserStatsViewModel", "Syncing claimed value...")
             userStatsRepository.syncClaimedValue()
         }
     }
@@ -151,7 +153,7 @@ class UserStatsViewModel(
             try {
                 userStatsRepository.addToClaimedValue(gameId, worth)
             } catch (e: Exception) {
-                println("Error adding to claimed value: ${e.message}")
+                Logger.e("UserStatsViewModel", "Error adding to claimed value: ", e)
             }
         }
     }

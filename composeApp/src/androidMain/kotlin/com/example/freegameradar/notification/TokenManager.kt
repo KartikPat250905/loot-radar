@@ -72,15 +72,28 @@ object TokenManager {
         val userDocRef = firestore.collection("users").document(uid)
 
         try {
-            // Use a single set() operation with merge to handle both create and update
-            // This ensures the document exists and adds the token in one atomic operation
-            val tokenData = mapOf(
-                "notificationTokens" to FieldValue.arrayUnion(token)
-            )
+            // ✅ Check if document exists first
+            val snapshot = userDocRef.get().await()
 
-            userDocRef.set(tokenData, SetOptions.merge()).await()
-
-            Log.d("TokenManager", "✅ Token saved to Firestore for user: $uid")
+            if (!snapshot.exists()) {
+                // ✅ NEW DOCUMENT: Create with default settings AND token
+                val initialData = mapOf(
+                    "notificationTokens" to listOf(token),
+                    "setupComplete" to false,
+                    "notificationsEnabled" to false,
+                    "preferredGamePlatforms" to emptyList<String>(),
+                    "preferredGameTypes" to emptyList<String>()
+                )
+                userDocRef.set(initialData).await()
+                Log.d("TokenManager", "✅ Created new user document with default settings for: $uid")
+            } else {
+                // ✅ EXISTING DOCUMENT: Just add token
+                userDocRef.set(
+                    mapOf("notificationTokens" to FieldValue.arrayUnion(token)),
+                    SetOptions.merge()
+                ).await()
+                Log.d("TokenManager", "✅ Token added to existing document for: $uid")
+            }
 
         } catch (e: Exception) {
             Log.e("TokenManager", "❌ Failed to save token for UID: $uid")

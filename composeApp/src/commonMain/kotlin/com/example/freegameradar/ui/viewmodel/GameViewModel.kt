@@ -96,7 +96,6 @@ class GameViewModel(
     private val REFRESH_COOLDOWN_MS = 10_000L
 
     init {
-        // ✅ FIXED: Non-blocking cooldown timer with reactive updates
         viewModelScope.launch {
             while (true) {
                 delay(1000) // Check every second

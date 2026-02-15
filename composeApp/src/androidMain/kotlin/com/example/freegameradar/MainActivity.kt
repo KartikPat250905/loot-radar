@@ -12,10 +12,13 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.core.content.ContextCompat
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.freegameradar.data.auth.AuthRepositoryImpl
 import com.example.freegameradar.data.repository.UserSettingsRepositoryImpl
+import com.example.freegameradar.ui.components.AppLoadingScreen
 import com.example.freegameradar.ui.theme.ModernDarkTheme
 import com.example.freegameradar.ui.viewmodel.AdFreeViewModel
+import com.example.freegameradar.ui.viewmodel.AuthInitViewModel
 import com.example.freegameradar.ui.viewmodel.AuthViewModel
 import kotlinx.coroutines.flow.first
 
@@ -37,7 +40,6 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        // All repositories are now created here, in the Android entry point
         val authRepository = AuthRepositoryImpl()
         val userSettingsRepository = UserSettingsRepositoryImpl(authRepository, this)
         val authViewModel = AuthViewModel(authRepository)
@@ -57,12 +59,23 @@ class MainActivity : ComponentActivity() {
         setContent {
             ModernDarkTheme {
                 val currentUser by authViewModel.currentUser.collectAsState()
+                
+                // ✅ Create init ViewModel
+                val authInitViewModel: AuthInitViewModel = viewModel {
+                    AuthInitViewModel(userSettingsRepository)
+                }
+                val isInitialized by authInitViewModel.isInitialized.collectAsState()
 
+                // ✅ Trigger initialization when user changes
                 LaunchedEffect(currentUser) {
-                    currentUser?.let {
-                        userSettingsRepository.syncUserSettings()
+                    currentUser?.let { user ->
+                        // Start sync
+                        authInitViewModel.initialize()
+                        
+                        // Other setup
                         adFreeViewModel.loadAdFreeStatus()
-                        if (!it.isAnonymous) {
+                        
+                        if (!user.isAnonymous) {
                             val userSettings = userSettingsRepository.getSettings().first()
                             if (userSettings.notificationsEnabled &&
                                 Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
@@ -77,17 +90,21 @@ class MainActivity : ComponentActivity() {
                     }
                 }
 
-                // Pass repository instances to the common App composable
-                App(
-                    authViewModel = authViewModel,
-                    adFreeViewModel = adFreeViewModel,
-                    authRepository = authRepository,
-                    userSettingsRepository = userSettingsRepository,
-                    startRoute = startRoute,
-                    onShowRefreshAd = ::showRefreshAd,
-                    onShowSettingsAd = ::showSettingsAd,
-                    onShowGameDetailAd = ::showGameDetailAd
-                )
+                // ✅ Show loading screen until initialized
+                if (currentUser != null && !isInitialized) {
+                    AppLoadingScreen()
+                } else {
+                    App(
+                        authViewModel = authViewModel,
+                        adFreeViewModel = adFreeViewModel,
+                        authRepository = authRepository,
+                        userSettingsRepository = userSettingsRepository,
+                        startRoute = startRoute,
+                        onShowRefreshAd = ::showRefreshAd,
+                        onShowSettingsAd = ::showSettingsAd,
+                        onShowGameDetailAd = ::showGameDetailAd
+                    )
+                }
             }
         }
     }

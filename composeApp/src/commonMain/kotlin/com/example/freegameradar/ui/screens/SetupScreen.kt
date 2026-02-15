@@ -18,6 +18,7 @@ import androidx.compose.ui.unit.sp
 import com.example.freegameradar.permissions.rememberPermissionHandler
 import com.example.freegameradar.ui.components.FilterChip
 import com.example.freegameradar.ui.viewmodel.SetupViewModel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalLayoutApi::class)
@@ -214,6 +215,7 @@ fun SetupScreen(
                         preferredGamePlatforms = selectedPlatforms,
                         preferredGameTypes = selectedTypes
                     )
+                    delay(500) // Wait for Firestore write to complete
                     onNavigateToHome()
                 }
             },

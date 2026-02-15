@@ -1,5 +1,6 @@
 package com.example.freegameradar.data.auth
 
+import android.util.Log
 import com.example.freegameradar.data.models.User
 import com.google.firebase.auth.AuthResult
 import com.google.firebase.auth.EmailAuthProvider
@@ -21,8 +22,10 @@ actual class AuthRepositoryImpl : AuthRepository {
     actual override suspend fun login(email: String, password: String): Result<User> {
         return try {
             val authResult: AuthResult = firebaseAuth.signInWithEmailAndPassword(email, password).await()
+            Log.d("AuthRepository", "Login successful for user: ${authResult.user?.email}")
             Result.success(User(authResult.user?.uid ?: "", authResult.user?.email ?: "", false))
         } catch (e: Exception) {
+            Log.e("AuthRepository", "Login failed", e)
             Result.failure(e)
         }
     }

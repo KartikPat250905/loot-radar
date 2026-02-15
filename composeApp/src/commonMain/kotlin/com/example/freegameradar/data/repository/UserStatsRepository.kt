@@ -1,6 +1,7 @@
 package com.example.freegameradar.data.repository
 
 import com.example.freegameradar.data.auth.AuthRepository
+import com.example.freegameradar.util.Logger
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.SetOptions
 import com.google.firebase.firestore.ktx.firestore
@@ -43,9 +44,13 @@ class UserStatsRepository(private val authRepository: AuthRepository, private va
         }
     }
 
-    suspend fun syncClaimedValue() = withContext(Dispatchers.IO) {
+   suspend fun syncClaimedValue() = withContext(Dispatchers.IO) {
+        Logger.d("UserStatsRepository", "Starting to sync user stats.")
         try {
-            val uid = authRepository.getAuthStateFlow().first()?.uid ?: return@withContext
+            val uid = authRepository.getAuthStateFlow().first()?.uid ?: run {
+                Logger.d("UserStatsRepository", "User not logged in, aborting sync.")
+                return@withContext
+            }
             val docRef = firestore.collection(USERS_COLLECTION).document(uid)
             val snapshot = docRef.get().await()
 
@@ -55,16 +60,20 @@ class UserStatsRepository(private val authRepository: AuthRepository, private va
 
                 settings[CLAIMED_VALUE_KEY] = remoteValue
                 settings[CLAIMED_GAMES_KEY] = Json.encodeToString(remoteGameIds)
+                Logger.d("UserStatsRepository", "Successfully synced user stats from Firestore.")
             } else {
-                docRef.set(mapOf(
-                    TOTAL_CLAIMED_VALUE_FIELD to 0.0,
-                    CLAIMED_GAME_IDS_FIELD to emptyList<Long>()
-                )).await()
+                Logger.d("UserStatsRepository", "No user stats document found, creating one.")
+                docRef.set(
+                    mapOf(
+                        TOTAL_CLAIMED_VALUE_FIELD to 0.0,
+                        CLAIMED_GAME_IDS_FIELD to emptyList<Long>()
+                    )
+                ).await()
                 settings[CLAIMED_VALUE_KEY] = 0f
                 settings[CLAIMED_GAMES_KEY] = "[]"
             }
         } catch (e: Exception) {
-            println("Failed to sync user stats with Firestore: ${e.message}")
+            Logger.e("UserStatsRepository", "Failed to sync user stats with Firestore: ", e)
         }
     }
 
@@ -78,16 +87,20 @@ class UserStatsRepository(private val authRepository: AuthRepository, private va
                 val claimedGameIds = snapshot.get(CLAIMED_GAME_IDS_FIELD) as? List<Long> ?: emptyList()
 
                 if (claimedGameIds.contains(gameId)) {
+                    Logger.d("UserStatsRepository", "Game ID: $gameId already claimed, no action taken.")
                     return@runTransaction // Game already claimed, do nothing.
                 }
 
                 val currentTotal = snapshot.getDouble(TOTAL_CLAIMED_VALUE_FIELD) ?: 0.0
                 val newCalculatedTotal = currentTotal + worth.toDouble()
 
-                transaction.update(userDocRef, mapOf(
-                    TOTAL_CLAIMED_VALUE_FIELD to newCalculatedTotal,
-                    CLAIMED_GAME_IDS_FIELD to FieldValue.arrayUnion(gameId)
-                ))
+                transaction.update(
+                    userDocRef, mapOf(
+                        TOTAL_CLAIMED_VALUE_FIELD to newCalculatedTotal,
+                        CLAIMED_GAME_IDS_FIELD to FieldValue.arrayUnion(gameId)
+                    )
+                )
+                Logger.d("UserStatsRepository", "Updated claimed value for game ID: $gameId. New total: $newCalculatedTotal")
 
             }.await()
 
@@ -95,7 +108,7 @@ class UserStatsRepository(private val authRepository: AuthRepository, private va
             syncClaimedValue()
 
         } catch (e: Exception) {
-            println("Failed to add claimed value: ${e.message}")
+            Logger.e("UserStatsRepository", "Failed to add claimed value for game ID: $gameId: ", e)
             throw e
         }
     }

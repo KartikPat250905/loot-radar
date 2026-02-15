@@ -13,7 +13,10 @@ import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.firestore.ktx.toObject
 import com.google.firebase.ktx.Firebase
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOn
@@ -23,23 +26,27 @@ import kotlinx.coroutines.withContext
 
 actual class UserSettingsRepositoryImpl actual constructor(
     private val authRepository: AuthRepository,
-    context: Any // Match the expect declaration
+    context: Any
 ) : UserSettingsRepository {
 
-    private val androidContext = context as Context // Cast to Android Context
+    private val androidContext = context as Context
     private val db = GameDatabaseProvider.getDatabase().user_settingsQueries
     private val prefs = androidContext.getSharedPreferences("user_settings", Context.MODE_PRIVATE)
 
+    // ✅ Track initial sync completion
+    private val _hasCompletedInitialSync = MutableStateFlow(false)
+    override val hasCompletedInitialSync: StateFlow<Boolean> = _hasCompletedInitialSync
+
     override fun getSettings(): Flow<UserSettings> = authRepository.getAuthStateFlow().flatMapLatest { user ->
-        // For both authenticated and unauthenticated users, the local SQLDelight cache is the source of truth.
-        // `syncUserSettings` is responsible for populating this cache from Firestore for authenticated users.
         db.getSettings().asFlow().mapToOneOrDefault(
-            // Default settings if DB is empty
             User_settings(0, 0L, "", ""),
             Dispatchers.IO
         ).map { local ->
-            // `setupComplete` is not stored in SQLDelight, so we get it from SharedPreferences.
-            val setupComplete = if (user != null) prefs.getBoolean("setup_complete", false) else false
+            val setupComplete = if (user != null) {
+                prefs.getBoolean("setup_complete", false)
+            } else {
+                false
+            }
             UserSettings(
                 notificationsEnabled = local.notifications_enabled == 1L,
                 preferredGamePlatforms = local.preferred_game_platforms.split(',').filter { it.isNotEmpty() },
@@ -53,49 +60,86 @@ actual class UserSettingsRepositoryImpl actual constructor(
         val user = authRepository.getAuthStateFlow().first()
         if (user == null) {
             Log.d("UserSettingsRepo", "Sync skipped: User not authenticated.")
+            _hasCompletedInitialSync.value = true
             return
         }
 
         withContext(Dispatchers.IO) {
             try {
+                Log.d("UserSettingsRepo", "🔄 Starting sync for user: ${user.uid}")
                 val docRef = Firebase.firestore.collection("users").document(user.uid)
                 val snapshot = docRef.get().await()
+
+                Log.d("UserSettingsRepo", "📄 Document exists: ${snapshot.exists()}")
+                Log.d("UserSettingsRepo", "📄 Raw data: ${snapshot.data}")
 
                 val emptySettings = UserSettings(setupComplete = false)
 
                 val remoteSettings = if (snapshot != null && snapshot.exists()) {
-                    snapshot.toObject<UserSettings>() ?: emptySettings
+                    val data = snapshot.data
+                    if (data != null) {
+                        // ✅ Log each field individually
+                        val setupComplete = data["setupComplete"]
+                        val notificationsEnabled = data["notificationsEnabled"]
+                        val platformsRaw = data["preferredGamePlatforms"]
+                        val typesRaw = data["preferredGameTypes"]
+
+                        Log.d("UserSettingsRepo", "🔍 setupComplete RAW: $setupComplete (type: ${setupComplete?.javaClass?.simpleName})")
+                        Log.d("UserSettingsRepo", "🔍 notificationsEnabled RAW: $notificationsEnabled (type: ${notificationsEnabled?.javaClass?.simpleName})")
+                        Log.d("UserSettingsRepo", "🔍 platforms RAW: $platformsRaw (type: ${platformsRaw?.javaClass?.simpleName})")
+                        Log.d("UserSettingsRepo", "🔍 types RAW: $typesRaw (type: ${typesRaw?.javaClass?.simpleName})")
+
+                        val setupCompleteBool = setupComplete as? Boolean ?: false
+                        val notificationsEnabledBool = notificationsEnabled as? Boolean ?: false
+                        val platforms = (platformsRaw as? List<*>)?.mapNotNull { it as? String } ?: emptyList()
+                        val types = (typesRaw as? List<*>)?.mapNotNull { it as? String } ?: emptyList()
+
+                        Log.d("UserSettingsRepo", "📦 Parsed data: setupComplete=$setupCompleteBool, notif=$notificationsEnabledBool, platforms=$platforms, types=$types")
+
+                        UserSettings(
+                            setupComplete = setupCompleteBool,
+                            notificationsEnabled = notificationsEnabledBool,
+                            preferredGamePlatforms = platforms,
+                            preferredGameTypes = types
+                        )
+                    } else {
+                        Log.d("UserSettingsRepo", "Document exists but data is null")
+                        emptySettings
+                    }
                 } else {
-                    Log.d("UserSettingsRepo", "No remote settings found for user ${user.uid}, using defaults.")
+                    Log.d("UserSettingsRepo", "No remote settings found for user ${user.uid}")
                     emptySettings
                 }
 
-                // Sync remote settings to local caches
+                Log.d("UserSettingsRepo", "💾 Saving to local: setupComplete=${remoteSettings.setupComplete}, notif=${remoteSettings.notificationsEnabled}")
+
+                // Save to local caches
                 db.insertSettings(
                     notifications_enabled = if (remoteSettings.notificationsEnabled) 1L else 0L,
                     preferred_game_platforms = remoteSettings.preferredGamePlatforms.joinToString(","),
                     preferred_game_types = remoteSettings.preferredGameTypes.joinToString(",")
                 )
 
-                // Persist setupComplete flag separately in SharedPreferences
                 prefs.edit().putBoolean("setup_complete", remoteSettings.setupComplete).apply()
 
-                Log.d("UserSettingsRepo", "✅ Settings synced for user: ${user.uid}")
+                Log.d("UserSettingsRepo", "✅ Settings synced - setupComplete=${remoteSettings.setupComplete}")
 
             } catch (e: Exception) {
                 Log.e("UserSettingsRepo", "❌ Failed to sync settings: ${e.message}", e)
+                e.printStackTrace()
+            } finally {
+                _hasCompletedInitialSync.value = true
             }
         }
     }
+
 
     override suspend fun saveSettings(userSettings: UserSettings) {
         val userId = authRepository.getAuthStateFlow().first()?.uid ?: return
         withContext(Dispatchers.IO) {
             try {
-                // Persist setupComplete flag before writing to Firestore
                 prefs.edit().putBoolean("setup_complete", userSettings.setupComplete).apply()
 
-                // Also update local DB immediately for a responsive UI
                 db.insertSettings(
                     notifications_enabled = if (userSettings.notificationsEnabled) 1L else 0L,
                     preferred_game_platforms = userSettings.preferredGamePlatforms.joinToString(","),
@@ -120,7 +164,6 @@ actual class UserSettingsRepositoryImpl actual constructor(
 
     override suspend fun disableAllNotifications() {
         val currentSettings = getSettings().first()
-        // Preserve setupComplete status, only disable notifications
         val disabledSettings = currentSettings.copy(notificationsEnabled = false)
         saveSettings(disabledSettings)
     }
