@@ -127,7 +127,8 @@ fun AppNavigation(
         composable(Screen.Home.route) {
             HomeScreen(
                 navController = navController,
-                gameViewModel = gameViewModel, // Passed in
+                gameViewModel = gameViewModel,
+                userPreferencesViewModel = userPreferencesViewModel,
                 modifier = Modifier.padding(innerPadding),
                 onBottomBarVisibilityChange = onBottomBarVisibilityChange,
                 onShowRefreshAd = onShowRefreshAd

@@ -36,6 +36,7 @@ import com.example.freegameradar.ui.viewmodel.SettingsViewModel
 import com.example.freegameradar.ui.viewmodel.UserPreferencesViewModel
 import com.example.freegameradar.ui.viewmodel.UserStatsViewModel
 import com.example.freegameradar.ui.viewmodel.SetupViewModel
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun App(
@@ -55,10 +56,10 @@ fun App(
         val currentRoute = navBackStackEntry?.destination?.route
         var isBottomBarVisible by remember { mutableStateOf(true) }
 
-        AppContainer { gameRepository, notificationRepository, _ ->  // IGNORE the userStatsRepository from AppContainer
+        AppContainer { gameRepository, notificationRepository, _ ->
             val gameViewModel: GameViewModel = viewModel { GameViewModel() }
             val notificationViewModel: NotificationViewModel = viewModel { NotificationViewModel(notificationRepository) }
-            val userStatsViewModel: UserStatsViewModel = viewModel { UserStatsViewModel(userStatsRepository, gameRepository) }  // USE THE ONE FROM MAINACTIVITY
+            val userStatsViewModel: UserStatsViewModel = viewModel { UserStatsViewModel(userStatsRepository, gameRepository) }
             val settingsViewModel: SettingsViewModel = viewModel { SettingsViewModel(authRepository, userSettingsRepository) }
             val userPreferencesViewModel: UserPreferencesViewModel = viewModel { UserPreferencesViewModel(userSettingsRepository) }
             val setupViewModel: SetupViewModel = viewModel { SetupViewModel(userSettingsRepository, authRepository) }
@@ -77,7 +78,7 @@ fun App(
                             exit = slideOutVertically(targetOffsetY = { it }) + shrinkVertically(shrinkTowards = Alignment.Bottom)
                         ) {
                             if (currentRoute != Screen.Setup.route && currentRoute != Screen.Gate.route) {
-                                BottomNavBar(navController)
+                                BottomNavBar(navController, userPreferencesViewModel)
                             }
                         }
                     }
