@@ -21,6 +21,7 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.example.freegameradar.data.auth.AuthRepository
 import com.example.freegameradar.data.repository.UserSettingsRepository
+import com.example.freegameradar.data.repository.UserStatsRepository
 import com.example.freegameradar.ui.auth.AuthGate
 import com.example.freegameradar.ui.components.BottomNavBar
 import com.example.freegameradar.ui.components.TopBar
@@ -35,7 +36,6 @@ import com.example.freegameradar.ui.viewmodel.SettingsViewModel
 import com.example.freegameradar.ui.viewmodel.UserPreferencesViewModel
 import com.example.freegameradar.ui.viewmodel.UserStatsViewModel
 import com.example.freegameradar.ui.viewmodel.SetupViewModel
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun App(
@@ -43,21 +43,22 @@ fun App(
     adFreeViewModel: AdFreeViewModel,
     authRepository: AuthRepository,
     userSettingsRepository: UserSettingsRepository,
+    userStatsRepository: UserStatsRepository,
     startRoute: String? = null,
     onShowRefreshAd: () -> Unit = {},
     onShowSettingsAd: () -> Unit = {},
     onShowGameDetailAd: () -> Unit = {}
 ) {
-    ModernDarkTheme { // Theme is now at the root
+    ModernDarkTheme {
         val navController = rememberNavController()
         val navBackStackEntry by navController.currentBackStackEntryAsState()
         val currentRoute = navBackStackEntry?.destination?.route
         var isBottomBarVisible by remember { mutableStateOf(true) }
 
-        AppContainer { gameRepository, notificationRepository, userStatsRepository ->
+        AppContainer { gameRepository, notificationRepository, _ ->  // IGNORE the userStatsRepository from AppContainer
             val gameViewModel: GameViewModel = viewModel { GameViewModel() }
             val notificationViewModel: NotificationViewModel = viewModel { NotificationViewModel(notificationRepository) }
-            val userStatsViewModel: UserStatsViewModel = viewModel { UserStatsViewModel(userStatsRepository, gameRepository) }
+            val userStatsViewModel: UserStatsViewModel = viewModel { UserStatsViewModel(userStatsRepository, gameRepository) }  // USE THE ONE FROM MAINACTIVITY
             val settingsViewModel: SettingsViewModel = viewModel { SettingsViewModel(authRepository, userSettingsRepository) }
             val userPreferencesViewModel: UserPreferencesViewModel = viewModel { UserPreferencesViewModel(userSettingsRepository) }
             val setupViewModel: SetupViewModel = viewModel { SetupViewModel(userSettingsRepository, authRepository) }

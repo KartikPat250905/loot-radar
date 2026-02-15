@@ -3,13 +3,16 @@ package com.example.freegameradar.ui.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.freegameradar.data.repository.UserSettingsRepository
+import com.example.freegameradar.data.repository.UserStatsRepository
+import com.example.freegameradar.util.Logger
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
 class AuthInitViewModel(
-    private val userSettingsRepository: UserSettingsRepository
+    private val userSettingsRepository: UserSettingsRepository,
+    private val userStatsRepository: UserStatsRepository
 ) : ViewModel() {
 
     private val _isInitialized = MutableStateFlow(false)
@@ -17,9 +20,20 @@ class AuthInitViewModel(
 
     fun initialize() {
         viewModelScope.launch {
-            // ✅ This blocks until sync completes
-            userSettingsRepository.syncUserSettings()
-            _isInitialized.value = true
+            try {
+                Logger.d("AuthInitViewModel", "🔄 Starting sync...")
+
+                userSettingsRepository.syncUserSettings()
+                Logger.d("AuthInitViewModel", "✅ Settings synced")
+
+                userStatsRepository.syncClaimedValue()
+                Logger.d("AuthInitViewModel", "✅ Stats synced")
+
+                _isInitialized.value = true
+            } catch (e: Exception) {
+                Logger.e("AuthInitViewModel", "❌ Sync failed: ", e)
+                _isInitialized.value = true
+            }
         }
     }
 }

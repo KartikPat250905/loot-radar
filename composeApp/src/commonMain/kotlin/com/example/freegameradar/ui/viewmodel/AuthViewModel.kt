@@ -2,31 +2,46 @@ package com.example.freegameradar.ui.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.freegameradar.data.GameDatabaseProvider
 import com.example.freegameradar.data.auth.AuthRepository
 import com.example.freegameradar.data.auth.AuthState
 import com.example.freegameradar.data.models.User
-import kotlinx.coroutines.flow.MutableStateFlow
+import com.example.freegameradar.data.repository.UserStatsRepository
+import com.example.freegameradar.util.Logger
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
-class AuthViewModel(private val authRepository: AuthRepository) : ViewModel() {
+class AuthViewModel(
+    private val authRepository: AuthRepository,
+    private val userStatsRepository: UserStatsRepository
+) : ViewModel() {
 
-    private val _authState = MutableStateFlow<AuthState>(AuthState.Loading)
-    val authState: StateFlow<AuthState> = _authState.asStateFlow()
+    private val _authState = kotlinx.coroutines.flow.MutableStateFlow<AuthState>(AuthState.Loading)
+    val authState: StateFlow<AuthState> = _authState
 
     val currentUser: StateFlow<User?> = authRepository.getAuthStateFlow()
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = null
+        )
 
     init {
+        checkAuthState()
+    }
+
+    private fun checkAuthState() {
         viewModelScope.launch {
             authRepository.getAuthStateFlow().collect { user ->
                 _authState.value = when {
-                    user != null -> if (user.isAnonymous) AuthState.Guest else AuthState.LoggedIn
-                    else -> AuthState.Error("Not Logged In")
+                    user == null -> AuthState.Error("Not logged in")
+                    user.isAnonymous -> AuthState.Guest
+                    else -> {
+                        Logger.d("AuthViewModel", "User logged in, syncing stats...")
+                        userStatsRepository.syncClaimedValue()
+                        AuthState.LoggedIn
+                    }
                 }
             }
         }
@@ -35,34 +50,33 @@ class AuthViewModel(private val authRepository: AuthRepository) : ViewModel() {
     fun login(email: String, password: String) {
         viewModelScope.launch {
             _authState.value = AuthState.Loading
+            Logger.d("AuthViewModel", "Attempting login...")
             val result = authRepository.login(email, password)
-            result.onFailure {
-                _authState.value = AuthState.Error(it.message ?: "Unknown login error")
+            if (result.isSuccess) {
+                Logger.d("AuthViewModel", "Login successful, syncing stats...")
+                userStatsRepository.syncClaimedValue()
+                // Don't set Success here, let checkAuthState() handle it
+                // The flow will automatically update to LoggedIn
+            } else {
+                Logger.e("AuthViewModel", "Login failed: ${result.exceptionOrNull()?.message}")
+                _authState.value = AuthState.Error(result.exceptionOrNull()?.message ?: "Login failed")
             }
         }
     }
 
-    fun register(email: String, password: String) {
+
+    fun signUp(email: String, password: String) {
         viewModelScope.launch {
             _authState.value = AuthState.Loading
+            Logger.d("AuthViewModel", "Attempting sign up...")
             val result = authRepository.register(email, password)
-            result.onFailure {
-                _authState.value = AuthState.Error(it.message ?: "Unknown registration error")
-            }
-        }
-    }
-
-    fun sendPasswordResetEmail(email: String) {
-        viewModelScope.launch {
-            _authState.value = AuthState.Loading
-            val result = authRepository.sendPasswordResetEmail(email)
-            result.onSuccess {
-                _authState.value = AuthState.Success(
-                    "If your email is registered, you will receive a password reset link. " +
-                            "If you don\'t have an account, please sign up."
-                )
-            }.onFailure {
-                _authState.value = AuthState.Error(it.message ?: "Unknown error")
+            if (result.isSuccess) {
+                Logger.d("AuthViewModel", "Sign up successful, syncing stats...")
+                userStatsRepository.syncClaimedValue()
+                _authState.value = AuthState.Success("Account created successfully!")
+            } else {
+                Logger.e("AuthViewModel", "Sign up failed: ${result.exceptionOrNull()?.message}")
+                _authState.value = AuthState.Error(result.exceptionOrNull()?.message ?: "Sign up failed")
             }
         }
     }
@@ -70,25 +84,24 @@ class AuthViewModel(private val authRepository: AuthRepository) : ViewModel() {
     fun continueAsGuest() {
         viewModelScope.launch {
             _authState.value = AuthState.Loading
-            authRepository.continueAsGuest()
+            Logger.d("AuthViewModel", "Continuing as guest...")
+            val result = authRepository.signInAsGuest()
+            if (result.isSuccess) {
+                _authState.value = AuthState.Guest
+            } else {
+                _authState.value = AuthState.Error(result.exceptionOrNull()?.message ?: "Failed to continue as guest")
+            }
         }
     }
 
-    fun signOut() {
+    fun sendPasswordResetEmail(email: String) {
         viewModelScope.launch {
-            authRepository.signOut()
-            GameDatabaseProvider.clearAllData()
-        }
-    }
-
-    fun deleteAccount() {
-        viewModelScope.launch {
-            _authState.value = AuthState.Loading
-            val result = authRepository.deleteAccount()
-            result.onSuccess {
-                GameDatabaseProvider.clearAllData()
-            }.onFailure {
-                _authState.value = AuthState.Error(it.message ?: "Unknown error during account deletion")
+            Logger.d("AuthViewModel", "Sending password reset email...")
+            val result = authRepository.sendPasswordResetEmail(email)
+            if (result.isSuccess) {
+                _authState.value = AuthState.Success("Password reset email sent!")
+            } else {
+                _authState.value = AuthState.Error(result.exceptionOrNull()?.message ?: "Failed to send reset email")
             }
         }
     }

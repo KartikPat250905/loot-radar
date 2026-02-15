@@ -31,23 +31,30 @@ class UserStatsViewModel(
 
     private var gameDetailViewCount = 0
 
-    // ✅ FIXED: Use Channel instead of SharedFlow
     private val _showGameDetailAd = Channel<Unit>(Channel.BUFFERED)
     val showGameDetailAd = _showGameDetailAd.receiveAsFlow()
 
     val claimedValue: StateFlow<Float> = userStatsRepository.getClaimedValue()
         .stateIn(
             scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(5000),
+            started = SharingStarted.Eagerly,
             initialValue = 0f
         )
 
     val claimedGameIds: StateFlow<List<Long>> = userStatsRepository.getClaimedGameIds()
         .stateIn(
             scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(5000),
+            started = SharingStarted.Eagerly,
             initialValue = emptyList()
         )
+
+    init {
+        viewModelScope.launch {
+            userStatsRepository.getClaimedValue().collect { value ->
+                Logger.d("UserStatsViewModel", "Claimed value updated: $value")
+            }
+        }
+    }
 
     val filteredStats: StateFlow<FilteredStats> = combine(gameRepository.getFreeGames(), filter) { allGames, filter ->
         val filteredGames = when (filter) {
@@ -106,7 +113,6 @@ class UserStatsViewModel(
     private fun extractMainPlatform(platformString: String): String {
         val lower = platformString.lowercase()
 
-        // Priority 1: Specific stores/launchers
         return when {
             lower.contains("epic games store") || lower.contains("epic-games-store") -> "Epic Games"
             lower.contains("steam") -> "Steam"
@@ -116,12 +122,10 @@ class UserStatsViewModel(
             lower.contains("origin") -> "EA Origin"
             lower.contains("battlenet") || lower.contains("battle.net") -> "Battle.net"
 
-            // Priority 2: Console platforms
             lower.contains("ps5") || lower.contains("ps4") -> "PlayStation"
             lower.contains("xbox") -> "Xbox"
             lower.contains("switch") -> "Nintendo Switch"
 
-            // Priority 4: Other platforms
             lower.contains("drm-free") || lower.contains("drm free") -> "DRM-Free"
 
             else -> "Other"

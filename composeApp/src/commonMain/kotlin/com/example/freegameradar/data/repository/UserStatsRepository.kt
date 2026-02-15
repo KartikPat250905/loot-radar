@@ -44,7 +44,7 @@ class UserStatsRepository(private val authRepository: AuthRepository, private va
         }
     }
 
-   suspend fun syncClaimedValue() = withContext(Dispatchers.IO) {
+    suspend fun syncClaimedValue() = withContext(Dispatchers.IO) {
         Logger.d("UserStatsRepository", "Starting to sync user stats.")
         try {
             val uid = authRepository.getAuthStateFlow().first()?.uid ?: run {
@@ -54,19 +54,48 @@ class UserStatsRepository(private val authRepository: AuthRepository, private va
             val docRef = firestore.collection(USERS_COLLECTION).document(uid)
             val snapshot = docRef.get().await()
 
+            val localValue = settings.getFloat(CLAIMED_VALUE_KEY, 0f)
+            val localGameIdsJson = settings.getString(CLAIMED_GAMES_KEY, "[]")
+            val localGameIds = Json.decodeFromString<List<Long>>(localGameIdsJson)
+
+            Logger.d("UserStatsRepository", "Local - Value: $localValue, GameIDs: ${localGameIds.size} items")
+
             if (snapshot.exists()) {
                 val remoteValue = (snapshot.getDouble(TOTAL_CLAIMED_VALUE_FIELD) ?: 0.0).toFloat()
-                val remoteGameIds = snapshot.get(CLAIMED_GAME_IDS_FIELD) as? List<Long> ?: emptyList()
+                val remoteGameIds = (snapshot.get(CLAIMED_GAME_IDS_FIELD) as? List<*>)
+                    ?.mapNotNull {
+                        when (it) {
+                            is Long -> it
+                            is Number -> it.toLong()
+                            else -> null
+                        }
+                    } ?: emptyList()
 
-                settings[CLAIMED_VALUE_KEY] = remoteValue
-                settings[CLAIMED_GAMES_KEY] = Json.encodeToString(remoteGameIds)
-                Logger.d("UserStatsRepository", "Successfully synced user stats from Firestore.")
+                Logger.d("UserStatsRepository", "Remote - Value: $remoteValue, GameIDs: ${remoteGameIds.size} items")
+
+                val mergedGameIds = (localGameIds + remoteGameIds).distinct().sorted()
+                val mergedValue = maxOf(localValue, remoteValue)
+
+                Logger.d("UserStatsRepository", "Merged - Value: $mergedValue, GameIDs: ${mergedGameIds.size} items")
+
+                settings[CLAIMED_VALUE_KEY] = mergedValue
+                settings[CLAIMED_GAMES_KEY] = Json.encodeToString(mergedGameIds)
+
+                docRef.set(
+                    mapOf(
+                        TOTAL_CLAIMED_VALUE_FIELD to mergedValue.toDouble(),
+                        CLAIMED_GAME_IDS_FIELD to mergedGameIds
+                    ),
+                    SetOptions.merge()
+                ).await()
+
+                Logger.d("UserStatsRepository", "Successfully synced user stats.")
             } else {
                 Logger.d("UserStatsRepository", "No user stats document found, creating one.")
                 docRef.set(
                     mapOf(
-                        TOTAL_CLAIMED_VALUE_FIELD to 0.0,
-                        CLAIMED_GAME_IDS_FIELD to emptyList<Long>()
+                        TOTAL_CLAIMED_VALUE_FIELD to localValue.toDouble(),
+                        CLAIMED_GAME_IDS_FIELD to localGameIds
                     )
                 ).await()
                 settings[CLAIMED_VALUE_KEY] = 0f
@@ -78,17 +107,42 @@ class UserStatsRepository(private val authRepository: AuthRepository, private va
     }
 
     suspend fun addToClaimedValue(gameId: Long, worth: Float) = withContext(Dispatchers.IO) {
-        val uid = authRepository.getAuthStateFlow().first()?.uid ?: throw IllegalStateException("User not logged in.")
+        val uid = authRepository.getAuthStateFlow().first()?.uid
+
+        if (uid == null) {
+            val localGameIdsJson = settings.getString(CLAIMED_GAMES_KEY, "[]")
+            val localGameIds = Json.decodeFromString<List<Long>>(localGameIdsJson).toMutableList()
+
+            if (!localGameIds.contains(gameId)) {
+                localGameIds.add(gameId)
+                val currentValue = settings.getFloat(CLAIMED_VALUE_KEY, 0f)
+                val newValue = currentValue + worth
+
+                settings[CLAIMED_VALUE_KEY] = newValue
+                settings[CLAIMED_GAMES_KEY] = Json.encodeToString(localGameIds)
+
+                Logger.d("UserStatsRepository", "Saved claimed game locally. Game ID: $gameId, New total: $newValue")
+            }
+            return@withContext
+        }
+
         val userDocRef = firestore.collection(USERS_COLLECTION).document(uid)
 
         try {
             firestore.runTransaction { transaction ->
                 val snapshot = transaction.get(userDocRef)
-                val claimedGameIds = snapshot.get(CLAIMED_GAME_IDS_FIELD) as? List<Long> ?: emptyList()
+                val claimedGameIds = (snapshot.get(CLAIMED_GAME_IDS_FIELD) as? List<*>)
+                    ?.mapNotNull {
+                        when (it) {
+                            is Long -> it
+                            is Number -> it.toLong()
+                            else -> null
+                        }
+                    } ?: emptyList()
 
                 if (claimedGameIds.contains(gameId)) {
                     Logger.d("UserStatsRepository", "Game ID: $gameId already claimed, no action taken.")
-                    return@runTransaction // Game already claimed, do nothing.
+                    return@runTransaction
                 }
 
                 val currentTotal = snapshot.getDouble(TOTAL_CLAIMED_VALUE_FIELD) ?: 0.0
@@ -104,7 +158,6 @@ class UserStatsRepository(private val authRepository: AuthRepository, private va
 
             }.await()
 
-            // Manually update local cache after successful transaction
             syncClaimedValue()
 
         } catch (e: Exception) {
