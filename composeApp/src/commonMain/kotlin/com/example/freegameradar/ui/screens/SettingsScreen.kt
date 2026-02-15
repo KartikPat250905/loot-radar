@@ -53,35 +53,37 @@ fun SettingsScreen(
     var showNotificationPreferenceDialog by remember { mutableStateOf(false) }
     var showPermissionDeniedDialog by remember { mutableStateOf(false) }
 
-    // We check the actual system permission status here.
-    val hasNotificationPermission = isNotificationPermissionGranted()
+    var permissionGranted by remember { mutableStateOf(false) }
 
-    // This launcher will handle the result of the permission prompt.
+    val currentPermissionState = isNotificationPermissionGranted()
+
+    LaunchedEffect(currentPermissionState) {
+        permissionGranted = currentPermissionState
+    }
+
     val permissionLauncher = rememberPermissionRequestLauncher { result ->
         when (result) {
-            PermissionRequestResult.GRANTED -> userPreferencesViewModel.setNotificationsEnabled(true)
-            PermissionRequestResult.DENIED -> userPreferencesViewModel.setNotificationsEnabled(false)
+            PermissionRequestResult.GRANTED -> {
+                permissionGranted = true
+                userPreferencesViewModel.setNotificationsEnabled(true)
+            }
+            PermissionRequestResult.DENIED -> {
+                permissionGranted = false
+                userPreferencesViewModel.setNotificationsEnabled(false)
+            }
             PermissionRequestResult.PERMANENTLY_DENIED -> {
+                permissionGranted = false
                 userPreferencesViewModel.setNotificationsEnabled(false)
                 showPermissionDeniedDialog = true
             }
         }
     }
 
-    // This ensures our internal state matches the system state.
-    LaunchedEffect(hasNotificationPermission) {
-        if (preferencesState.notificationsEnabled != hasNotificationPermission) {
-            userPreferencesViewModel.setNotificationsEnabled(hasNotificationPermission)
-        }
-    }
-
-    // ✅ FIXED: Increment counter ONCE per screen visit
     LaunchedEffect(key1 = "settings_open_tracker") {
         Log.d("SettingsScreen", "🟢 Screen opened, incrementing counter")
         viewModel.onSettingsScreenOpen()
     }
 
-    // ✅ FIXED: Listen for ad triggers separately
     LaunchedEffect(key1 = "settings_ad_listener") {
         Log.d("SettingsScreen", "👂 Listening for ad triggers")
         viewModel.showSettingsAd.collectLatest {
@@ -90,7 +92,6 @@ fun SettingsScreen(
         }
     }
 
-    // *** These functions were accidentally deleted and are now restored. ***
     fun handleSignOut() {
         navController.navigate(Screen.Home.route) {
             popUpTo(navController.graph.findStartDestination().id) { inclusive = true }
@@ -157,7 +158,6 @@ fun SettingsScreen(
 
         Spacer(Modifier.height(16.dp))
 
-        // Support button
         OutlinedButton(
             onClick = { navController.navigate("support") },
             modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)
@@ -198,37 +198,76 @@ fun SettingsScreen(
             shape = RoundedCornerShape(16.dp),
             colors = CardDefaults.cardColors(containerColor = Color(0xFF1B263B))
         ) {
-            Row(
-                modifier = Modifier.fillMaxWidth().padding(16.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Text(
-                    "Enable Notifications",
-                    color = Color(0xFFE5E7EB),
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Medium
-                )
-                Switch(
-                    checked = preferencesState.notificationsEnabled,
-                    onCheckedChange = {
-                        if (it) {
-                            // If user wants to enable, launch the permission request.
-                            permissionLauncher()
-                        } else {
-                            // If user wants to disable, we can just update our internal state.
-                            userPreferencesViewModel.setNotificationsEnabled(false)
-                        }
-                    },
-                    colors = SwitchDefaults.colors(
-                        checkedThumbColor = Color.White,
-                        checkedTrackColor = Color(0xFF10B981),
-                        checkedBorderColor = Color(0xFF10B981),
-                        uncheckedThumbColor = Color.White,
-                        uncheckedTrackColor = Color(0xFF374151),
-                        uncheckedBorderColor = Color(0xFF4B5563)
+            Column(modifier = Modifier.fillMaxWidth().padding(16.dp)) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Text(
+                        "Enable Notifications",
+                        color = Color(0xFFE5E7EB),
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Medium
                     )
-                )
+                    Switch(
+                        checked = preferencesState.notificationsEnabled,
+                        onCheckedChange = { enabled ->
+                            if (enabled) {
+                                if (permissionGranted) {
+                                    userPreferencesViewModel.setNotificationsEnabled(true)
+                                } else {
+                                    permissionLauncher()
+                                }
+                            } else {
+                                userPreferencesViewModel.setNotificationsEnabled(false)
+                            }
+                        },
+                        colors = SwitchDefaults.colors(
+                            checkedThumbColor = Color.White,
+                            checkedTrackColor = Color(0xFF10B981),
+                            checkedBorderColor = Color(0xFF10B981),
+                            uncheckedThumbColor = Color.White,
+                            uncheckedTrackColor = Color(0xFF374151),
+                            uncheckedBorderColor = Color(0xFF4B5563)
+                        )
+                    )
+                }
+
+                if (preferencesState.notificationsEnabled && !permissionGranted) {
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .background(Color(0x33EF4444), RoundedCornerShape(8.dp))
+                            .padding(12.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            Icons.Default.Warning,
+                            contentDescription = "Warning",
+                            tint = Color(0xFFEF4444),
+                            modifier = Modifier.size(20.dp)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                "Permission Required",
+                                color = Color(0xFFEF4444),
+                                fontSize = 14.sp,
+                                fontWeight = FontWeight.SemiBold
+                            )
+                            Text(
+                                "Notifications are enabled but this device needs permission.",
+                                color = Color(0xFF9CA3AF),
+                                fontSize = 12.sp
+                            )
+                        }
+                        TextButton(onClick = { permissionLauncher() }) {
+                            Text("Grant", color = Color(0xFF10B981), fontSize = 12.sp)
+                        }
+                    }
+                }
             }
         }
 
@@ -251,7 +290,6 @@ fun SettingsScreen(
         Spacer(modifier = Modifier.height(80.dp))
     }
 
-    // Other dialogs remain the same
     if (showUpgradeDialog) {
         var email by remember { mutableStateOf("") }
         var password by remember { mutableStateOf("") }
