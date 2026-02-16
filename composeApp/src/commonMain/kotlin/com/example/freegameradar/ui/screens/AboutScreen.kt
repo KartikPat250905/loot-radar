@@ -238,9 +238,9 @@ fun PrivacyPolicySection() {
             Text("For privacy-related questions, contact:", fontSize = 13.sp, color = Color(0xFF9CA3AF))
             val annotatedEmailText = buildAnnotatedString {
                 append("📧 ")
-                pushStringAnnotation(tag = "EMAIL", annotation = "mailto:freegameradar.app@gmail.com")
+                pushStringAnnotation(tag = "EMAIL", annotation = "mailto:radarlabs.dev@gmail.com")
                 withStyle(style = SpanStyle(color = Color(0xFF10B981), textDecoration = TextDecoration.Underline)) {
-                    append("freegameradar.app@gmail.com")
+                    append("radarlabs.dev@gmail.com")
                 }
                 pop()
             }
@@ -350,9 +350,9 @@ fun ContactSection() {
             Spacer(modifier = Modifier.height(12.dp))
             val annotatedEmailText = buildAnnotatedString {
                 append("📧 Email: ")
-                pushStringAnnotation(tag = "EMAIL", annotation = "mailto:freegameradar.app@gmail.com")
+                pushStringAnnotation(tag = "EMAIL", annotation = "mailto:radarlabs.dev@gmail.com")
                 withStyle(style = SpanStyle(color = Color(0xFF10B981), textDecoration = TextDecoration.Underline)) {
-                    append("freegameradar.app@gmail.com")
+                    append("radarlabs.dev@gmail.com")
                 }
                 pop()
             }

@@ -152,9 +152,9 @@ fun SupportScreen(
 
                         val annotatedString = buildAnnotatedString {
                             append("You'll receive a unique code via email or on kofi within 24 hours. You can mail at ")
-                            pushStringAnnotation("EMAIL", "mailto:freegameradar.app@gmail.com")
+                            pushStringAnnotation("EMAIL", "mailto:radarlabs.dev@gmail.com")
                             withStyle(style = SpanStyle(color = Color(0xFF6EE7B7), textDecoration = TextDecoration.Underline)) {
-                                append("freegameradar.app@gmail.com")
+                                append("radarlabs.dev@gmail.com")
                             }
                             pop()
                             append(" for further inquires.")
