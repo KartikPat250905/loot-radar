@@ -1,9 +1,9 @@
-package com.example.freegameradar.notification
+package com.radarlabs.freegameradar.notification
 
 import android.util.Log
-import com.example.freegameradar.FreeGameRadarApp
-import com.example.freegameradar.data.model.DealNotification
-import com.example.freegameradar.data.remote.ApiService
+import com.radarlabs.freegameradar.FreeGameRadarApp
+import com.radarlabs.freegameradar.data.model.DealNotification
+import com.radarlabs.freegameradar.data.remote.ApiService
 import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage
 import kotlinx.coroutines.CoroutineScope

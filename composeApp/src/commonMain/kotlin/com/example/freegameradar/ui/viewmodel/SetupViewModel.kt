@@ -1,10 +1,10 @@
-package com.example.freegameradar.ui.viewmodel
+package com.radarlabs.freegameradar.ui.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.freegameradar.data.auth.AuthRepository
-import com.example.freegameradar.data.repository.UserSettingsRepository
-import com.example.freegameradar.settings.UserSettings
+import com.radarlabs.freegameradar.data.auth.AuthRepository
+import com.radarlabs.freegameradar.data.repository.UserSettingsRepository
+import com.radarlabs.freegameradar.settings.UserSettings
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow

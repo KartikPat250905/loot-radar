@@ -1,4 +1,4 @@
-package com.example.freegameradar.data
+package com.radarlabs.freegameradar.data
 
 import app.cash.sqldelight.db.SqlDriver
 

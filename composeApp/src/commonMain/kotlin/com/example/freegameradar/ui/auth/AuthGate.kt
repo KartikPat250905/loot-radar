@@ -1,14 +1,14 @@
-package com.example.freegameradar.ui.auth
+package com.radarlabs.freegameradar.ui.auth
 
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import com.example.freegameradar.data.auth.AuthState
-import com.example.freegameradar.ui.components.AppLoadingScreen
-import com.example.freegameradar.ui.screens.AuthScreen
-import com.example.freegameradar.ui.theme.ModernDarkTheme
-import com.example.freegameradar.ui.viewmodel.AuthViewModel
+import com.radarlabs.freegameradar.data.auth.AuthState
+import com.radarlabs.freegameradar.ui.components.AppLoadingScreen
+import com.radarlabs.freegameradar.ui.screens.AuthScreen
+import com.radarlabs.freegameradar.ui.theme.ModernDarkTheme
+import com.radarlabs.freegameradar.ui.viewmodel.AuthViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

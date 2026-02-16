@@ -1,5 +1,5 @@
 // ui/components/SearchAndRefreshBar.kt (BETTER VERSION)
-package com.example.freegameradar.ui.components
+package com.radarlabs.freegameradar.ui.components
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row

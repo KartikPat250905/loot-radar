@@ -1,4 +1,4 @@
-package com.example.freegameradar.ui.screens
+package com.radarlabs.freegameradar.ui.screens
 
 import android.util.Log
 import androidx.compose.animation.AnimatedVisibility
@@ -50,16 +50,16 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
-import com.example.freegameradar.data.state.DataSource
-import com.example.freegameradar.ui.components.AppLoadingScreen
-import com.example.freegameradar.ui.components.GameGrid
-import com.example.freegameradar.ui.components.GameTypeFilterTabs
-import com.example.freegameradar.ui.components.SearchAndRefreshBar
-import com.example.freegameradar.ui.components.TotalWorthBar
-import com.example.freegameradar.ui.navigation.Screen
-import com.example.freegameradar.ui.viewmodel.GameViewModel
-import com.example.freegameradar.ui.viewmodel.UserPreferencesViewModel
-import com.example.freegameradar.util.isNotificationPermissionGranted
+import com.radarlabs.freegameradar.data.state.DataSource
+import com.radarlabs.freegameradar.ui.components.AppLoadingScreen
+import com.radarlabs.freegameradar.ui.components.GameGrid
+import com.radarlabs.freegameradar.ui.components.GameTypeFilterTabs
+import com.radarlabs.freegameradar.ui.components.SearchAndRefreshBar
+import com.radarlabs.freegameradar.ui.components.TotalWorthBar
+import com.radarlabs.freegameradar.ui.navigation.Screen
+import com.radarlabs.freegameradar.ui.viewmodel.GameViewModel
+import com.radarlabs.freegameradar.ui.viewmodel.UserPreferencesViewModel
+import com.radarlabs.freegameradar.util.isNotificationPermissionGranted
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
 

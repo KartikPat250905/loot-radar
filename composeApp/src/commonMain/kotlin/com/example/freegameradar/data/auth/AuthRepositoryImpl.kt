@@ -1,6 +1,6 @@
-package com.example.freegameradar.data.auth
+package com.radarlabs.freegameradar.data.auth
 
-import com.example.freegameradar.data.models.User
+import com.radarlabs.freegameradar.data.models.User
 import kotlinx.coroutines.flow.Flow
 
 expect class AuthRepositoryImpl() : AuthRepository {

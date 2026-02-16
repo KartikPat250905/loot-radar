@@ -1,4 +1,4 @@
-package com.example.freegameradar.ui.components
+package com.radarlabs.freegameradar.ui.components
 
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
@@ -18,8 +18,8 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
-import com.example.freegameradar.ui.navigation.Screen
-import com.example.freegameradar.ui.viewmodel.NotificationViewModel
+import com.radarlabs.freegameradar.ui.navigation.Screen
+import com.radarlabs.freegameradar.ui.viewmodel.NotificationViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

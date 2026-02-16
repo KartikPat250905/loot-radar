@@ -1,6 +1,6 @@
-package com.example.freegameradar.data.repository
+package com.radarlabs.freegameradar.data.repository
 
-import com.example.freegameradar.settings.UserSettings
+import com.radarlabs.freegameradar.settings.UserSettings
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
 

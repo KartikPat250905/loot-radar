@@ -1,4 +1,4 @@
-package com.example.freegameradar.ui.theme
+package com.radarlabs.freegameradar.ui.theme
 import androidx.compose.ui.graphics.Color
 
 val Purple80 = Color(0xFFD0BCFF)

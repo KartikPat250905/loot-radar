@@ -1,4 +1,4 @@
-package com.example.freegameradar.data.auth
+package com.radarlabs.freegameradar.data.auth
 
 import kotlin.coroutines.CoroutineContext
 

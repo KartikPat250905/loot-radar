@@ -1,6 +1,6 @@
-package com.example.freegameradar.data.repository
+package com.radarlabs.freegameradar.data.repository
 
-import com.example.freegameradar.data.auth.AuthRepository
+import com.radarlabs.freegameradar.data.auth.AuthRepository
 
 expect class UserSettingsRepositoryImpl(
     authRepository: AuthRepository,

@@ -1,4 +1,4 @@
-package com.example.freegameradar.core.image
+package com.radarlabs.freegameradar.core.image
 
 import android.content.Context
 import coil3.ImageLoader

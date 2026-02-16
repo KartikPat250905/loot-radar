@@ -1,4 +1,4 @@
-package com.example.freegameradar.ui.screens
+package com.radarlabs.freegameradar.ui.screens
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -15,9 +15,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.freegameradar.ui.components.PlatformStatsCard
-import com.example.freegameradar.ui.components.TotalClaimedBar
-import com.example.freegameradar.ui.viewmodel.UserStatsViewModel
+import com.radarlabs.freegameradar.ui.components.PlatformStatsCard
+import com.radarlabs.freegameradar.ui.components.TotalClaimedBar
+import com.radarlabs.freegameradar.ui.viewmodel.UserStatsViewModel
 
 @Composable
 fun StatsScreen(viewModel: UserStatsViewModel, modifier: Modifier = Modifier) {

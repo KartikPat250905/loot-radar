@@ -1,12 +1,12 @@
-package com.example.freegameradar.ui.screens
+package com.radarlabs.freegameradar.ui.screens
 
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.ui.Modifier
-import com.example.freegameradar.data.auth.AuthState
-import com.example.freegameradar.ui.viewmodel.AuthViewModel
+import com.radarlabs.freegameradar.data.auth.AuthState
+import com.radarlabs.freegameradar.ui.viewmodel.AuthViewModel
 
 @Composable
 fun AuthEntryScreen(

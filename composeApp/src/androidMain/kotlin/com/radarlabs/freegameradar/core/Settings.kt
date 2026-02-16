@@ -1,7 +1,7 @@
-package com.example.freegameradar.core
+package com.radarlabs.freegameradar.core
 
 import android.content.Context
-import com.example.freegameradar.FreeGameRadarApp
+import com.radarlabs.freegameradar.FreeGameRadarApp
 import com.russhwolf.settings.ObservableSettings
 import com.russhwolf.settings.SharedPreferencesSettings
 

@@ -1,4 +1,4 @@
-package com.example.freegameradar.ui.components
+package com.radarlabs.freegameradar.ui.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -15,7 +15,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.freegameradar.data.model.PlatformStat
+import com.radarlabs.freegameradar.data.model.PlatformStat
 import androidx.compose.foundation.Canvas
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight

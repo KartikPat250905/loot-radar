@@ -1,15 +1,13 @@
-package com.example.freegameradar.data.repository
+package com.radarlabs.freegameradar.data.repository
 
-import com.example.freegameradar.data.auth.AuthRepository
-import com.example.freegameradar.util.Logger
+import com.radarlabs.freegameradar.data.auth.AuthRepository
+import com.radarlabs.freegameradar.util.Logger
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.SetOptions
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
 import com.russhwolf.settings.ObservableSettings
 import com.russhwolf.settings.coroutines.FlowSettings
-import com.russhwolf.settings.coroutines.getFloatFlow
-import com.russhwolf.settings.coroutines.getStringFlow
 import com.russhwolf.settings.coroutines.toFlowSettings
 import com.russhwolf.settings.set
 import kotlinx.coroutines.Dispatchers

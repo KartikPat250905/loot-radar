@@ -1,7 +1,7 @@
-package com.example.freegameradar.data.mappers
+package com.radarlabs.freegameradar.data.mappers
 
-import com.example.freegameradar.db.Games
-import com.example.freegameradar.data.models.GameDto
+import com.radarlabs.freegameradar.db.Games
+import com.radarlabs.freegameradar.data.models.GameDto
 
 fun Games.toDto(): GameDto =
     GameDto(

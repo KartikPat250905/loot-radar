@@ -1,4 +1,4 @@
-package com.example.freegameradar
+package com.radarlabs.freegameradar
 
 import android.Manifest
 import android.content.pm.PackageManager
@@ -13,14 +13,14 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.core.content.ContextCompat
-import com.example.freegameradar.data.auth.AuthRepositoryImpl
-import com.example.freegameradar.data.repository.UserSettingsRepositoryImpl
-import com.example.freegameradar.data.repository.UserStatsRepository
-import com.example.freegameradar.ui.components.AppLoadingScreen
-import com.example.freegameradar.ui.theme.ModernDarkTheme
-import com.example.freegameradar.ui.viewmodel.AdFreeViewModel
-import com.example.freegameradar.ui.viewmodel.AuthInitViewModel
-import com.example.freegameradar.ui.viewmodel.AuthViewModel
+import com.radarlabs.freegameradar.data.auth.AuthRepositoryImpl
+import com.radarlabs.freegameradar.data.repository.UserSettingsRepositoryImpl
+import com.radarlabs.freegameradar.data.repository.UserStatsRepository
+import com.radarlabs.freegameradar.ui.components.AppLoadingScreen
+import com.radarlabs.freegameradar.ui.theme.ModernDarkTheme
+import com.radarlabs.freegameradar.ui.viewmodel.AdFreeViewModel
+import com.radarlabs.freegameradar.ui.viewmodel.AuthInitViewModel
+import com.radarlabs.freegameradar.ui.viewmodel.AuthViewModel
 import com.russhwolf.settings.SharedPreferencesSettings
 import kotlinx.coroutines.flow.first
 

@@ -1,4 +1,4 @@
-package com.example.freegameradar.settings
+package com.radarlabs.freegameradar.settings
 
 import com.google.firebase.firestore.Exclude
 import kotlinx.serialization.Serializable

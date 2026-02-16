@@ -1,4 +1,4 @@
-package com.example.freegameradar.ui.screens
+package com.radarlabs.freegameradar.ui.screens
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box

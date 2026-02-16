@@ -1,4 +1,4 @@
-package com.example.freegameradar.ui.components
+package com.radarlabs.freegameradar.ui.components
 
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
@@ -17,8 +17,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.freegameradar.data.models.GameDto
-import com.example.freegameradar.data.state.DataSource
+import com.radarlabs.freegameradar.data.models.GameDto
+import com.radarlabs.freegameradar.data.state.DataSource
 import kotlin.math.round
 
 @Composable

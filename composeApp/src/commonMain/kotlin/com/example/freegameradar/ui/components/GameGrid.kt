@@ -1,4 +1,4 @@
-package com.example.freegameradar.ui.components
+package com.radarlabs.freegameradar.ui.components
 
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
@@ -11,8 +11,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
-import com.example.freegameradar.data.models.GameDto
-import com.example.freegameradar.ui.navigation.Screen
+import com.radarlabs.freegameradar.data.models.GameDto
+import com.radarlabs.freegameradar.ui.navigation.Screen
 
 @Composable
 fun GameGrid(

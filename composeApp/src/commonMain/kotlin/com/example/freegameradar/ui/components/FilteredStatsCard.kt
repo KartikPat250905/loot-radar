@@ -1,4 +1,4 @@
-package com.example.freegameradar.ui.components
+package com.radarlabs.freegameradar.ui.components
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -13,7 +13,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.example.freegameradar.ui.viewmodel.FilteredStats
+import com.radarlabs.freegameradar.ui.viewmodel.FilteredStats
 
 @Composable
 fun FilteredStatsCard(filteredStats: FilteredStats) {

@@ -1,4 +1,4 @@
-package com.example.freegameradar.ui.components.settings
+package com.radarlabs.freegameradar.ui.components.settings
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row

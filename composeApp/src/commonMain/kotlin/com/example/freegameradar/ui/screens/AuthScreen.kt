@@ -1,4 +1,4 @@
-package com.example.freegameradar.ui.screens
+package com.radarlabs.freegameradar.ui.screens
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -6,7 +6,7 @@ import androidx.compose.runtime.getValue
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import com.example.freegameradar.ui.viewmodel.AuthViewModel
+import com.radarlabs.freegameradar.ui.viewmodel.AuthViewModel
 
 
 @Composable

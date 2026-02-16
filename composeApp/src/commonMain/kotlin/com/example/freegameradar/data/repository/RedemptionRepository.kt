@@ -1,4 +1,4 @@
-package com.example.freegameradar.data.repository
+package com.radarlabs.freegameradar.data.repository
 
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FieldValue

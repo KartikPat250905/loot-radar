@@ -1,4 +1,4 @@
-package com.example.freegameradar.ui.components
+package com.radarlabs.freegameradar.ui.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -25,7 +25,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImage
-import com.example.freegameradar.data.models.GameDto
+import com.radarlabs.freegameradar.data.models.GameDto
 
 @Composable
 fun HotDealCard(game: GameDto, onClick: () -> Unit) {

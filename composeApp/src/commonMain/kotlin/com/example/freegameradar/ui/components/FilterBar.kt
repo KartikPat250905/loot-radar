@@ -1,4 +1,4 @@
-package com.example.freegameradar.ui.components
+package com.radarlabs.freegameradar.ui.components
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.expandVertically
@@ -44,7 +44,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.freegameradar.ui.viewmodel.GameViewModel
+import com.radarlabs.freegameradar.ui.viewmodel.GameViewModel
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable

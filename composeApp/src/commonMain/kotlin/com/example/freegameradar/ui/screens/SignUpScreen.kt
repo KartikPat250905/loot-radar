@@ -1,4 +1,4 @@
-package com.example.freegameradar.ui.screens
+package com.radarlabs.freegameradar.ui.screens
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -21,8 +21,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.freegameradar.data.auth.AuthState
-import com.example.freegameradar.ui.viewmodel.AuthViewModel
+import com.radarlabs.freegameradar.data.auth.AuthState
+import com.radarlabs.freegameradar.ui.viewmodel.AuthViewModel
 
 @Composable
 fun SignUpScreen(

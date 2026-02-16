@@ -1,4 +1,4 @@
-package com.example.freegameradar.ui.screens
+package com.radarlabs.freegameradar.ui.screens
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -15,9 +15,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.freegameradar.permissions.rememberPermissionHandler
-import com.example.freegameradar.ui.components.FilterChip
-import com.example.freegameradar.ui.viewmodel.SetupViewModel
+import com.radarlabs.freegameradar.permissions.rememberPermissionHandler
+import com.radarlabs.freegameradar.ui.components.FilterChip
+import com.radarlabs.freegameradar.ui.viewmodel.SetupViewModel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 

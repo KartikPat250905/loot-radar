@@ -1,8 +1,7 @@
-package com.example.freegameradar.data
+package com.radarlabs.freegameradar.data
 
-import com.example.freegameradar.db.GameDatabase
+import com.radarlabs.freegameradar.db.GameDatabase
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.IO
 import kotlinx.coroutines.withContext
 
 object GameDatabaseProvider {

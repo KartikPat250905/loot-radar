@@ -1,4 +1,4 @@
-package com.example.freegameradar.data.remote
+package com.radarlabs.freegameradar.data.remote
 
 import io.ktor.client.HttpClient
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation

@@ -1,10 +1,10 @@
-package com.example.freegameradar.data.repository
+package com.radarlabs.freegameradar.data.repository
 
 import app.cash.sqldelight.coroutines.asFlow
 import app.cash.sqldelight.coroutines.mapToList
 import app.cash.sqldelight.coroutines.mapToOne
-import com.example.freegameradar.data.model.DealNotification
-import com.example.freegameradar.db.GameDatabase
+import com.radarlabs.freegameradar.data.model.DealNotification
+import com.radarlabs.freegameradar.db.GameDatabase
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 import kotlinx.coroutines.flow.Flow

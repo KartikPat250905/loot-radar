@@ -1,4 +1,4 @@
-package com.example.freegameradar.ui.components.settings
+package com.radarlabs.freegameradar.ui.components.settings
 
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme

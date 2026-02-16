@@ -1,13 +1,13 @@
-package com.example.freegameradar.data.repository
+package com.radarlabs.freegameradar.data.repository
 
 import android.content.Context
 import android.util.Log
 import app.cash.sqldelight.coroutines.asFlow
 import app.cash.sqldelight.coroutines.mapToOneOrDefault
-import com.example.freegameradar.data.GameDatabaseProvider
-import com.example.freegameradar.data.auth.AuthRepository
-import com.example.freegameradar.db.User_settings
-import com.example.freegameradar.settings.UserSettings
+import com.radarlabs.freegameradar.data.GameDatabaseProvider
+import com.radarlabs.freegameradar.data.auth.AuthRepository
+import com.radarlabs.freegameradar.db.User_settings
+import com.radarlabs.freegameradar.settings.UserSettings
 import com.google.firebase.firestore.SetOptions
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.firestore.ktx.toObject

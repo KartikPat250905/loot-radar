@@ -1,4 +1,4 @@
-package com.example.freegameradar.notification
+package com.radarlabs.freegameradar.notification
 
 import android.util.Log
 import com.google.firebase.auth.FirebaseAuth

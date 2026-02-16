@@ -1,4 +1,4 @@
-package com.example.freegameradar.core
+package com.radarlabs.freegameradar.core
 
 import com.russhwolf.settings.Settings
 import com.russhwolf.settings.boolean

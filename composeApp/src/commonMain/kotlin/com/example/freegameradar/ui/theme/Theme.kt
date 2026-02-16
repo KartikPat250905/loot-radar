@@ -1,4 +1,4 @@
-package com.example.freegameradar.ui.theme
+package com.radarlabs.freegameradar.ui.theme
 
 import android.app.Activity
 import androidx.compose.material3.*

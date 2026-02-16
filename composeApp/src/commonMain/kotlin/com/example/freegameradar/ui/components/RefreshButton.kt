@@ -1,5 +1,5 @@
 // ui/components/RefreshButton.kt
-package com.example.freegameradar.ui.components
+package com.radarlabs.freegameradar.ui.components
 
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.core.LinearEasing

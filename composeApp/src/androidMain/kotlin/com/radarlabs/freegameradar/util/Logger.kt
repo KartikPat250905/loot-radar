@@ -1,4 +1,4 @@
-package com.example.freegameradar.util
+package com.radarlabs.freegameradar.util
 
 import android.util.Log
 

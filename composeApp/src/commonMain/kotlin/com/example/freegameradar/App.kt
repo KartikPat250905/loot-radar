@@ -1,4 +1,4 @@
-package com.example.freegameradar
+package com.radarlabs.freegameradar
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.expandVertically
@@ -19,23 +19,23 @@ import androidx.compose.ui.Modifier
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
-import com.example.freegameradar.data.auth.AuthRepository
-import com.example.freegameradar.data.repository.UserSettingsRepository
-import com.example.freegameradar.data.repository.UserStatsRepository
-import com.example.freegameradar.ui.auth.AuthGate
-import com.example.freegameradar.ui.components.BottomNavBar
-import com.example.freegameradar.ui.components.TopBar
-import com.example.freegameradar.ui.navigation.AppNavigation
-import com.example.freegameradar.ui.navigation.Screen
-import com.example.freegameradar.ui.theme.ModernDarkTheme
-import com.example.freegameradar.ui.viewmodel.AdFreeViewModel
-import com.example.freegameradar.ui.viewmodel.AuthViewModel
-import com.example.freegameradar.ui.viewmodel.GameViewModel
-import com.example.freegameradar.ui.viewmodel.NotificationViewModel
-import com.example.freegameradar.ui.viewmodel.SettingsViewModel
-import com.example.freegameradar.ui.viewmodel.UserPreferencesViewModel
-import com.example.freegameradar.ui.viewmodel.UserStatsViewModel
-import com.example.freegameradar.ui.viewmodel.SetupViewModel
+import com.radarlabs.freegameradar.data.auth.AuthRepository
+import com.radarlabs.freegameradar.data.repository.UserSettingsRepository
+import com.radarlabs.freegameradar.data.repository.UserStatsRepository
+import com.radarlabs.freegameradar.ui.auth.AuthGate
+import com.radarlabs.freegameradar.ui.components.BottomNavBar
+import com.radarlabs.freegameradar.ui.components.TopBar
+import com.radarlabs.freegameradar.ui.navigation.AppNavigation
+import com.radarlabs.freegameradar.ui.navigation.Screen
+import com.radarlabs.freegameradar.ui.theme.ModernDarkTheme
+import com.radarlabs.freegameradar.ui.viewmodel.AdFreeViewModel
+import com.radarlabs.freegameradar.ui.viewmodel.AuthViewModel
+import com.radarlabs.freegameradar.ui.viewmodel.GameViewModel
+import com.radarlabs.freegameradar.ui.viewmodel.NotificationViewModel
+import com.radarlabs.freegameradar.ui.viewmodel.SettingsViewModel
+import com.radarlabs.freegameradar.ui.viewmodel.UserPreferencesViewModel
+import com.radarlabs.freegameradar.ui.viewmodel.UserStatsViewModel
+import com.radarlabs.freegameradar.ui.viewmodel.SetupViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

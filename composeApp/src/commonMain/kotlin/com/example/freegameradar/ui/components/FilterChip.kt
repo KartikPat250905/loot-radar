@@ -1,4 +1,4 @@
-package com.example.freegameradar.ui.components
+package com.radarlabs.freegameradar.ui.components
 
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme

@@ -1,18 +1,18 @@
-package com.example.freegameradar
+package com.radarlabs.freegameradar
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import coil3.annotation.ExperimentalCoilApi
 import coil3.compose.setSingletonImageLoaderFactory
-import com.example.freegameradar.core.createSettings
-import com.example.freegameradar.core.image.AppImageLoader
-import com.example.freegameradar.data.DatabaseDriverFactory
-import com.example.freegameradar.data.auth.AuthRepositoryImpl
-import com.example.freegameradar.data.remote.ApiService
-import com.example.freegameradar.data.repository.GameRepository
-import com.example.freegameradar.data.repository.NotificationRepository
-import com.example.freegameradar.data.repository.UserStatsRepository
-import com.example.freegameradar.db.GameDatabase
+import com.radarlabs.freegameradar.core.createSettings
+import com.radarlabs.freegameradar.core.image.AppImageLoader
+import com.radarlabs.freegameradar.data.DatabaseDriverFactory
+import com.radarlabs.freegameradar.data.auth.AuthRepositoryImpl
+import com.radarlabs.freegameradar.data.remote.ApiService
+import com.radarlabs.freegameradar.data.repository.GameRepository
+import com.radarlabs.freegameradar.data.repository.NotificationRepository
+import com.radarlabs.freegameradar.data.repository.UserStatsRepository
+import com.radarlabs.freegameradar.db.GameDatabase
 
 @OptIn(ExperimentalCoilApi::class)
 @Composable

@@ -1,5 +1,6 @@
-package com.example.freegameradar.util
+package com.radarlabs.freegameradar.util
 
+import android.Manifest
 import android.app.Activity
 import android.content.Intent
 import android.content.pm.PackageManager
@@ -10,14 +11,14 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalContext
 import androidx.core.content.ContextCompat
-import com.example.freegameradar.FreeGameRadarApp
+import com.radarlabs.freegameradar.FreeGameRadarApp
 
 @Composable
 actual fun isNotificationPermissionGranted(): Boolean {
     val context = LocalContext.current
     return ContextCompat.checkSelfPermission(
         context,
-        android.Manifest.permission.POST_NOTIFICATIONS
+        Manifest.permission.POST_NOTIFICATIONS
     ) == PackageManager.PERMISSION_GRANTED
 }
 
@@ -33,7 +34,7 @@ actual fun rememberPermissionRequestLauncher(onResult: (result: PermissionReques
             val result = when {
                 isGranted -> PermissionRequestResult.GRANTED
                 // If permission is denied and we should NOT show a rationale, it means the user has permanently denied it.
-                activity?.shouldShowRequestPermissionRationale(android.Manifest.permission.POST_NOTIFICATIONS) == false -> {
+                activity?.shouldShowRequestPermissionRationale(Manifest.permission.POST_NOTIFICATIONS) == false -> {
                     PermissionRequestResult.PERMANENTLY_DENIED
                 }
                 else -> {
@@ -45,7 +46,7 @@ actual fun rememberPermissionRequestLauncher(onResult: (result: PermissionReques
         }
     )
 
-    return { launcher.launch(android.Manifest.permission.POST_NOTIFICATIONS) }
+    return { launcher.launch(Manifest.permission.POST_NOTIFICATIONS) }
 }
 
 /**

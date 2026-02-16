@@ -1,4 +1,4 @@
-package com.example.freegameradar.data.model
+package com.radarlabs.freegameradar.data.model
 
 data class DealNotification(
     val id: Long,

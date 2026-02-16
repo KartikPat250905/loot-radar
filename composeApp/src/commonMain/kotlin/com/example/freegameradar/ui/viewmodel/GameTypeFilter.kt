@@ -1,4 +1,4 @@
-package com.example.freegameradar.ui.viewmodel
+package com.radarlabs.freegameradar.ui.viewmodel
 
 enum class GameTypeFilter {
     ALL,

@@ -1,4 +1,4 @@
-package com.example.freegameradar.ui.screens
+package com.radarlabs.freegameradar.ui.screens
 
 import android.util.Log
 import androidx.compose.foundation.background
@@ -23,16 +23,16 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
-import com.example.freegameradar.ui.components.FilterChip
-import com.example.freegameradar.ui.components.settings.SettingsItem
-import com.example.freegameradar.ui.components.settings.SettingsSectionHeader
-import com.example.freegameradar.ui.navigation.Screen
-import com.example.freegameradar.ui.viewmodel.SettingsViewModel
-import com.example.freegameradar.ui.viewmodel.UserPreferencesViewModel
-import com.example.freegameradar.util.PermissionRequestResult
-import com.example.freegameradar.util.isNotificationPermissionGranted
-import com.example.freegameradar.util.openAppSettings
-import com.example.freegameradar.util.rememberPermissionRequestLauncher
+import com.radarlabs.freegameradar.ui.components.FilterChip
+import com.radarlabs.freegameradar.ui.components.settings.SettingsItem
+import com.radarlabs.freegameradar.ui.components.settings.SettingsSectionHeader
+import com.radarlabs.freegameradar.ui.navigation.Screen
+import com.radarlabs.freegameradar.ui.viewmodel.SettingsViewModel
+import com.radarlabs.freegameradar.ui.viewmodel.UserPreferencesViewModel
+import com.radarlabs.freegameradar.util.PermissionRequestResult
+import com.radarlabs.freegameradar.util.isNotificationPermissionGranted
+import com.radarlabs.freegameradar.util.openAppSettings
+import com.radarlabs.freegameradar.util.rememberPermissionRequestLauncher
 import kotlinx.coroutines.flow.collectLatest
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)

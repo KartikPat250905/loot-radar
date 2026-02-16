@@ -1,4 +1,4 @@
-package com.example.freegameradar.ui.screens
+package com.radarlabs.freegameradar.ui.screens
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -14,9 +14,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.freegameradar.data.repository.validateAndRedeemCode
-import com.example.freegameradar.ui.components.BackButton
-import com.example.freegameradar.ui.components.ThemedSupportButton
+import com.radarlabs.freegameradar.data.repository.validateAndRedeemCode
+import com.radarlabs.freegameradar.ui.components.BackButton
+import com.radarlabs.freegameradar.ui.components.ThemedSupportButton
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)

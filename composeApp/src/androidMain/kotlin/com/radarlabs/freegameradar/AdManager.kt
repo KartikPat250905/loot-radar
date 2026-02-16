@@ -1,4 +1,4 @@
-package com.example.freegameradar
+package com.radarlabs.freegameradar
 
 import android.app.Activity
 import android.content.Context

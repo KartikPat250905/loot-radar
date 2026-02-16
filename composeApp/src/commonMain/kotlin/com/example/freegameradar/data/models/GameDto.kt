@@ -1,4 +1,4 @@
-package com.example.freegameradar.data.models
+package com.radarlabs.freegameradar.data.models
 
 import kotlinx.serialization.Serializable
 

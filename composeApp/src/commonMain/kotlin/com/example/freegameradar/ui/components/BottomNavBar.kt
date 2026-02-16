@@ -1,4 +1,4 @@
-package com.example.freegameradar.ui.components
+package com.radarlabs.freegameradar.ui.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
@@ -26,9 +26,9 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
-import com.example.freegameradar.ui.navigation.Screen
-import com.example.freegameradar.ui.viewmodel.UserPreferencesViewModel
-import com.example.freegameradar.util.isNotificationPermissionGranted
+import com.radarlabs.freegameradar.ui.navigation.Screen
+import com.radarlabs.freegameradar.ui.viewmodel.UserPreferencesViewModel
+import com.radarlabs.freegameradar.util.isNotificationPermissionGranted
 
 @Composable
 fun BottomNavBar(

@@ -1,8 +1,8 @@
-package com.example.freegameradar.ui.viewmodel
+package com.radarlabs.freegameradar.ui.viewmodel
 
-import com.example.freegameradar.data.models.GameDto
-import com.example.freegameradar.data.remote.ApiService
-import com.example.freegameradar.data.repository.GameRepository
+import com.radarlabs.freegameradar.data.models.GameDto
+import com.radarlabs.freegameradar.data.remote.ApiService
+import com.radarlabs.freegameradar.data.repository.GameRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob

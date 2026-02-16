@@ -1,5 +1,5 @@
 // HotDealsScreen.kt
-package com.example.freegameradar.ui.screens
+package com.radarlabs.freegameradar.ui.screens
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.interaction.collectIsDraggedAsState
@@ -24,9 +24,9 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
-import com.example.freegameradar.ui.components.HeroBanner
-import com.example.freegameradar.ui.components.HotDealCard
-import com.example.freegameradar.ui.viewmodel.HotDealsViewModel
+import com.radarlabs.freegameradar.ui.components.HeroBanner
+import com.radarlabs.freegameradar.ui.components.HotDealCard
+import com.radarlabs.freegameradar.ui.viewmodel.HotDealsViewModel
 import kotlinx.coroutines.delay
 
 @Composable

@@ -1,4 +1,4 @@
-package com.example.freegameradar.notification
+package com.radarlabs.freegameradar.notification
 
 import android.app.NotificationChannel
 import android.app.NotificationManager
@@ -16,9 +16,9 @@ import coil3.DrawableImage
 import coil3.imageLoader
 import coil3.request.ImageRequest
 import coil3.request.SuccessResult
-import com.example.freegameradar.MainActivity
-import com.example.freegameradar.R
-import com.example.freegameradar.data.model.DealNotification
+import com.radarlabs.freegameradar.MainActivity
+import com.radarlabs.freegameradar.R
+import com.radarlabs.freegameradar.data.model.DealNotification
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch

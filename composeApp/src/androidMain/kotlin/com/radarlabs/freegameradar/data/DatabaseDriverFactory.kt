@@ -1,9 +1,9 @@
-package com.example.freegameradar.data
+package com.radarlabs.freegameradar.data
 
 import android.content.Context
 import app.cash.sqldelight.db.SqlDriver
 import app.cash.sqldelight.driver.android.AndroidSqliteDriver
-import com.example.freegameradar.db.GameDatabase
+import com.radarlabs.freegameradar.db.GameDatabase
 
 actual object DatabaseDriverFactory {
     private lateinit var context: Context

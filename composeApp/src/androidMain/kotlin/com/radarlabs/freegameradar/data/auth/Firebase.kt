@@ -1,4 +1,4 @@
-package com.example.freegameradar.data.auth
+package com.radarlabs.freegameradar.data.auth
 
 import com.google.firebase.auth.ktx.auth
 import com.google.firebase.ktx.Firebase

@@ -1,10 +1,10 @@
-package com.example.freegameradar.data.repository
+package com.radarlabs.freegameradar.data.repository
 
-import com.example.freegameradar.data.GameDatabaseProvider
-import com.example.freegameradar.data.mappers.toDto
-import com.example.freegameradar.data.models.GameDto
-import com.example.freegameradar.data.remote.ApiService
-import com.example.freegameradar.data.state.DataSource
+import com.radarlabs.freegameradar.data.GameDatabaseProvider
+import com.radarlabs.freegameradar.data.mappers.toDto
+import com.radarlabs.freegameradar.data.models.GameDto
+import com.radarlabs.freegameradar.data.remote.ApiService
+import com.radarlabs.freegameradar.data.state.DataSource
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow

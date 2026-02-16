@@ -1,4 +1,4 @@
-package com.example.freegameradar.ui.navigation
+package com.radarlabs.freegameradar.ui.navigation
 
 import android.util.Log
 import androidx.compose.foundation.background
@@ -23,28 +23,28 @@ import androidx.compose.ui.graphics.Color
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
-import com.example.freegameradar.ui.components.AppLoadingScreen
-import com.example.freegameradar.ui.screens.AboutScreen
-import com.example.freegameradar.ui.screens.GameDetailScreen
-import com.example.freegameradar.ui.screens.HomeScreen
-import com.example.freegameradar.ui.screens.HotDealsScreen
-import com.example.freegameradar.ui.screens.NotificationPermissionBenefitsScreen
-import com.example.freegameradar.ui.screens.NotificationScreen
-import com.example.freegameradar.ui.screens.RedeemCodeScreen
-import com.example.freegameradar.ui.screens.SettingsScreen
-import com.example.freegameradar.ui.screens.SetupScreen
-import com.example.freegameradar.ui.screens.StatsScreen
-import com.example.freegameradar.ui.screens.SupportScreen
-import com.example.freegameradar.ui.viewmodel.GameViewModel
-import com.example.freegameradar.ui.viewmodel.NotificationViewModel
-import com.example.freegameradar.ui.viewmodel.SettingsViewModel
-import com.example.freegameradar.ui.viewmodel.SetupViewModel
-import com.example.freegameradar.ui.viewmodel.UserPreferencesViewModel
-import com.example.freegameradar.ui.viewmodel.UserStatsViewModel
-import com.example.freegameradar.util.PermissionRequestResult
-import com.example.freegameradar.util.isNotificationPermissionGranted
-import com.example.freegameradar.util.openAppSettings
-import com.example.freegameradar.util.rememberPermissionRequestLauncher
+import com.radarlabs.freegameradar.ui.components.AppLoadingScreen
+import com.radarlabs.freegameradar.ui.screens.AboutScreen
+import com.radarlabs.freegameradar.ui.screens.GameDetailScreen
+import com.radarlabs.freegameradar.ui.screens.HomeScreen
+import com.radarlabs.freegameradar.ui.screens.HotDealsScreen
+import com.radarlabs.freegameradar.ui.screens.NotificationPermissionBenefitsScreen
+import com.radarlabs.freegameradar.ui.screens.NotificationScreen
+import com.radarlabs.freegameradar.ui.screens.RedeemCodeScreen
+import com.radarlabs.freegameradar.ui.screens.SettingsScreen
+import com.radarlabs.freegameradar.ui.screens.SetupScreen
+import com.radarlabs.freegameradar.ui.screens.StatsScreen
+import com.radarlabs.freegameradar.ui.screens.SupportScreen
+import com.radarlabs.freegameradar.ui.viewmodel.GameViewModel
+import com.radarlabs.freegameradar.ui.viewmodel.NotificationViewModel
+import com.radarlabs.freegameradar.ui.viewmodel.SettingsViewModel
+import com.radarlabs.freegameradar.ui.viewmodel.SetupViewModel
+import com.radarlabs.freegameradar.ui.viewmodel.UserPreferencesViewModel
+import com.radarlabs.freegameradar.ui.viewmodel.UserStatsViewModel
+import com.radarlabs.freegameradar.util.PermissionRequestResult
+import com.radarlabs.freegameradar.util.isNotificationPermissionGranted
+import com.radarlabs.freegameradar.util.openAppSettings
+import com.radarlabs.freegameradar.util.rememberPermissionRequestLauncher
 import kotlinx.coroutines.delay
 
 @Composable

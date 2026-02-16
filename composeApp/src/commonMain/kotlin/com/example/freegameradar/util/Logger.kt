@@ -1,4 +1,4 @@
-package com.example.freegameradar.util
+package com.radarlabs.freegameradar.util
 
 expect object Logger {
     fun d(tag: String, message: String)

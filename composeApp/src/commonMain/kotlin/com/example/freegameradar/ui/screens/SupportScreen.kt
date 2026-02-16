@@ -1,4 +1,4 @@
-package com.example.freegameradar.ui.screens
+package com.radarlabs.freegameradar.ui.screens
 
 import android.content.Intent
 import android.net.Uri
@@ -25,8 +25,8 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.freegameradar.ui.components.BackButton
-import com.example.freegameradar.ui.components.ThemedSupportButton
+import com.radarlabs.freegameradar.ui.components.BackButton
+import com.radarlabs.freegameradar.ui.components.ThemedSupportButton
 
 @Composable
 fun SupportScreen(

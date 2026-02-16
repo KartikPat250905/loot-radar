@@ -1,7 +1,7 @@
-package com.example.freegameradar.data.auth
+package com.radarlabs.freegameradar.data.auth
 
 import android.util.Log
-import com.example.freegameradar.data.models.User
+import com.radarlabs.freegameradar.data.models.User
 import com.google.firebase.auth.AuthResult
 import com.google.firebase.auth.EmailAuthProvider
 import com.google.firebase.auth.FirebaseAuth

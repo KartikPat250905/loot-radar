@@ -1,4 +1,4 @@
-package com.example.freegameradar.permissions
+package com.radarlabs.freegameradar.permissions
 
 import androidx.compose.runtime.Composable
 

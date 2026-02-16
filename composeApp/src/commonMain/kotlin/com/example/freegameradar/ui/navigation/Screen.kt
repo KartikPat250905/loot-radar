@@ -1,4 +1,4 @@
-package com.example.freegameradar.ui.navigation
+package com.radarlabs.freegameradar.ui.navigation
 
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*

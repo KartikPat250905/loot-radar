@@ -1,6 +1,6 @@
-package com.example.freegameradar.data.remote
+package com.radarlabs.freegameradar.data.remote
 
-import com.example.freegameradar.data.models.GameDto
+import com.radarlabs.freegameradar.data.models.GameDto
 import io.ktor.client.call.body
 import io.ktor.client.request.get
 import io.ktor.client.request.parameter
