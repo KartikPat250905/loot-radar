@@ -74,7 +74,7 @@ class UserStatsViewModel(
         var totalWorth = 0.0
 
         filteredGames.forEach { game ->
-            val worth = game.worth?.replace("$", "")?.replace("N/A", "0")?.toDoubleOrNull() ?: 0.0
+            val worth = parsePriceToDouble(game.worth)
             totalWorth += worth
         }
 
@@ -97,7 +97,7 @@ class UserStatsViewModel(
             val platformCounts = mutableMapOf<String, MutableList<Double>>()
 
             baseGames.forEach { game ->
-                val worth = game.worth?.replace("$", "")?.replace("N/A", "0")?.toDoubleOrNull() ?: 0.0
+                val worth = parsePriceToDouble(game.worth)
 
                 val mainPlatform = extractMainPlatform(game.platforms ?: "Unknown")
                 platformCounts.getOrPut(mainPlatform) { mutableListOf() }.add(worth)
@@ -139,6 +139,32 @@ class UserStatsViewModel(
         }
     }
 
+    private fun parsePriceToDouble(priceString: String?): Double {
+        if (priceString.isNullOrBlank()) return 0.0
+
+        return priceString
+            .replace("$", "")
+            .replace("N/A", "0")
+            .replace("Free", "0")
+            .trim()
+            .toDoubleOrNull()
+            ?.coerceAtLeast(0.0)
+            ?: 0.0
+    }
+
+    private fun parsePriceToFloat(priceString: String?): Float {
+        if (priceString.isNullOrBlank()) return 0f
+
+        return priceString
+            .replace("$", "")
+            .replace("N/A", "0")
+            .replace("Free", "0")
+            .trim()
+            .toFloatOrNull()
+            ?.coerceAtLeast(0f)
+            ?: 0f
+    }
+
     fun onGameDetailView() {
         gameDetailViewCount++
         if (gameDetailViewCount % 6 == 0) {
@@ -159,10 +185,11 @@ class UserStatsViewModel(
         }
     }
 
-    fun addToClaimedValue(gameId: Long, worth: Float) {
+    fun addToClaimedValue(gameId: Long, worthString: String?) {
         viewModelScope.launch {
             try {
-                userStatsRepository.addToClaimedValue(gameId, worth)
+                val validWorth = parsePriceToFloat(worthString)
+                userStatsRepository.addToClaimedValue(gameId, validWorth)
             } catch (e: Exception) {
                 Logger.e("UserStatsViewModel", "Error adding to claimed value: ", e)
             }

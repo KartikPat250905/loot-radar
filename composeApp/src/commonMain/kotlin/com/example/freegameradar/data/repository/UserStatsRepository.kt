@@ -203,6 +203,9 @@ class UserStatsRepository(private val authRepository: AuthRepository, private va
         val uid = authRepository.getAuthStateFlow().first()?.uid
         val currentTimestamp = System.currentTimeMillis()
 
+        // Ensure worth is valid (0 or positive)
+        val validWorth = worth.coerceAtLeast(0f)
+
         if (uid == null) {
             val localGamesWithTimestampsJson = settings.getString(CLAIMED_GAMES_WITH_TIMESTAMPS_KEY, "{}")
             val localGamesWithTimestamps = try {
@@ -215,12 +218,12 @@ class UserStatsRepository(private val authRepository: AuthRepository, private va
             if (!localGamesWithTimestamps.containsKey(gameId)) {
                 localGamesWithTimestamps[gameId] = currentTimestamp
                 val currentValue = settings.getFloat(CLAIMED_VALUE_KEY, 0f)
-                val newValue = currentValue + worth
+                val newValue = currentValue + validWorth
 
                 settings[CLAIMED_VALUE_KEY] = newValue
                 settings[CLAIMED_GAMES_WITH_TIMESTAMPS_KEY] = Json.encodeToString(localGamesWithTimestamps)
 
-                Logger.d("UserStatsRepository", "Saved claimed game locally. Game ID: $gameId, New total: $newValue")
+                Logger.d("UserStatsRepository", "Saved claimed game locally. Game ID: $gameId, Worth: $validWorth, New total: $newValue")
             }
             return@withContext
         }
@@ -245,7 +248,7 @@ class UserStatsRepository(private val authRepository: AuthRepository, private va
                 }
 
                 val currentTotal = snapshot.getDouble(TOTAL_CLAIMED_VALUE_FIELD) ?: 0.0
-                val newCalculatedTotal = currentTotal + worth.toDouble()
+                val newCalculatedTotal = currentTotal + validWorth.toDouble()
 
                 transaction.update(
                     userDocRef, mapOf(
@@ -254,7 +257,7 @@ class UserStatsRepository(private val authRepository: AuthRepository, private va
                         "$CLAIMED_GAMES_WITH_TIMESTAMPS_FIELD.$gameId" to currentTimestamp
                     )
                 )
-                Logger.d("UserStatsRepository", "Updated claimed value for game ID: $gameId. New total: $newCalculatedTotal")
+                Logger.d("UserStatsRepository", "Updated claimed value for game ID: $gameId. Worth: $validWorth, New total: $newCalculatedTotal")
 
             }.await()
 

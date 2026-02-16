@@ -333,10 +333,8 @@ fun GameDetailScreen(
                             onClick = {
                                 if (!isClaimed) {
                                     g.id?.let { id ->
-                                        val value = g.worth?.replace("$", "")?.toFloatOrNull() ?: 0f
-                                        if (value > 0f) {
-                                            userStatsViewModel.addToClaimedValue(id, value)
-                                        }
+                                        // Pass the worth string directly - ViewModel will handle parsing
+                                        userStatsViewModel.addToClaimedValue(id, g.worth)
                                     }
                                 }
                                 uriHandler.openUri(g.open_giveaway_url!!)
