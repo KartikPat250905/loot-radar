@@ -21,10 +21,6 @@ data class FilteredStats(
     val totalWorth: Double,
 )
 
-enum class GameTypeFilter {
-    ALL, GAMES, DLC, EARLY_ACCESS
-}
-
 class UserStatsViewModel(
     private val userStatsRepository: UserStatsRepository,
     private val gameRepository: GameRepository

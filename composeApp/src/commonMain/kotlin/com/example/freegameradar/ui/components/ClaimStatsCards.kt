@@ -31,13 +31,11 @@ fun ClaimStatsCards(
         modifier = modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        // Streak Card
         StreakCard(
             currentStreak = stats.currentStreak,
             longestStreak = stats.longestStreak
         )
 
-        // Activity Overview Card
         ActivityOverviewCard(
             totalClaims = stats.totalClaims,
             thisWeek = stats.claimsThisWeek,
@@ -45,7 +43,6 @@ fun ClaimStatsCards(
             last7Days = stats.last7DaysClaims
         )
 
-        // Milestones Card
         MilestonesCard(
             totalClaims = stats.totalClaims,
             daysActive = stats.daysWithClaims
@@ -91,7 +88,6 @@ private fun StreakCard(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceEvenly
             ) {
-                // Current Streak
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.spacedBy(8.dp)
@@ -116,7 +112,6 @@ private fun StreakCard(
                     )
                 }
 
-                // Divider
                 Box(
                     modifier = Modifier
                         .width(1.dp)
@@ -125,7 +120,6 @@ private fun StreakCard(
                         .background(Color(0xFF374151))
                 )
 
-                // Longest Streak
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.spacedBy(8.dp)
@@ -201,7 +195,6 @@ private fun ActivityOverviewCard(
                     letterSpacing = 0.5.sp
                 )
 
-                // Stats Grid
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceEvenly
@@ -213,7 +206,6 @@ private fun ActivityOverviewCard(
 
                 Spacer(modifier = Modifier.height(4.dp))
 
-                // Mini bar chart for last 7 days
                 Text(
                     text = "Last 7 Days",
                     fontSize = 13.sp,
@@ -265,12 +257,12 @@ private fun MilestonesCard(
     daysActive: Int
 ) {
     val milestones = listOf(
-        Milestone("First Claim", 1, "🎯"),
-        Milestone("Getting Started", 5, "🌱"),
-        Milestone("Collector", 10, "📦"),
-        Milestone("Enthusiast", 25, "⭐"),
-        Milestone("Expert", 50, "💎"),
-        Milestone("Legend", 100, "👑")
+        Milestone("First Ping", 1, "📡"),
+        Milestone("On Radar", 5, "📶"),
+        Milestone("Sweep Mode", 10, "🎯"),
+        Milestone("Lock-On", 25, "🔒"),
+        Milestone("Full Sweep", 50, "⚡"),
+        Milestone("Radar King", 100, "👑")
     )
 
     val nextMilestone = milestones.firstOrNull { it.target > totalClaims }
@@ -313,7 +305,7 @@ private fun MilestonesCard(
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 Text(
-                    text = "🏆 Your Progress",
+                    text = "🏆 Radar Ranks",
                     fontSize = 18.sp,
                     fontWeight = FontWeight.ExtraBold,
                     color = Color(0xFFE5E7EB),
@@ -326,14 +318,24 @@ private fun MilestonesCard(
                     ) {
                         Row(
                             modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Text(
-                                text = "${nextMilestone.emoji} ${nextMilestone.name}",
-                                fontSize = 14.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = Color(0xFFE5E7EB)
-                            )
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(6.dp)
+                            ) {
+                                Text(
+                                    text = nextMilestone.emoji,
+                                    fontSize = 20.sp
+                                )
+                                Text(
+                                    text = nextMilestone.name,
+                                    fontSize = 14.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color(0xFFE5E7EB)
+                                )
+                            }
                             Text(
                                 text = "$totalClaims / ${nextMilestone.target}",
                                 fontSize = 14.sp,
@@ -355,59 +357,86 @@ private fun MilestonesCard(
                 } else {
                     Column(
                         horizontalAlignment = Alignment.CenterHorizontally,
-                        modifier = Modifier.fillMaxWidth()
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         Text(
                             text = "👑",
                             fontSize = 48.sp
                         )
                         Text(
-                            text = "All Milestones Complete!",
+                            text = "Radar King Status!",
                             fontSize = 16.sp,
                             fontWeight = FontWeight.Bold,
                             color = Color(0xFF10B981)
+                        )
+                        Text(
+                            text = "Nothing escapes you",
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Medium,
+                            color = Color(0xFF9CA3AF)
                         )
                     }
                 }
 
                 Spacer(modifier = Modifier.height(4.dp))
 
-                // Achievement badges with names
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceEvenly
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    milestones.take(6).forEach { milestone ->
-                        val achieved = totalClaims >= milestone.target
-                        Column(
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            verticalArrangement = Arrangement.spacedBy(2.dp),
-                            modifier = Modifier.weight(1f)
+                    milestones.chunked(3).forEach { rowMilestones ->
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween
                         ) {
-                            Text(
-                                text = milestone.emoji,
-                                fontSize = 20.sp,
-                                color = if (achieved) Color.White else Color(0xFF6B7280)
-                            )
-                            Text(
-                                text = "${milestone.target}",
-                                fontSize = 9.sp,
-                                fontWeight = if (achieved) FontWeight.Bold else FontWeight.Normal,
-                                color = if (achieved) Color(0xFF10B981) else Color(0xFF6B7280)
-                            )
-                            Text(
-                                text = milestone.name.split(" ").first(),
-                                fontSize = 8.sp,
-                                fontWeight = FontWeight.Medium,
-                                color = if (achieved) Color(0xFF9CA3AF) else Color(0xFF4B5563),
-                                textAlign = TextAlign.Center,
-                                maxLines = 1
-                            )
+                            rowMilestones.forEach { milestone ->
+                                val achieved = totalClaims >= milestone.target
+                                MilestoneItem(
+                                    milestone = milestone,
+                                    achieved = achieved,
+                                    modifier = Modifier.weight(1f)
+                                )
+                            }
                         }
                     }
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun MilestoneItem(
+    milestone: Milestone,
+    achieved: Boolean,
+    modifier: Modifier = Modifier
+) {
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(4.dp),
+        modifier = modifier
+    ) {
+        Text(
+            text = milestone.emoji,
+            fontSize = 24.sp,
+            color = if (achieved) Color.White else Color(0xFF4B5563)
+        )
+        Text(
+            text = "${milestone.target}",
+            fontSize = 11.sp,
+            fontWeight = if (achieved) FontWeight.Bold else FontWeight.Normal,
+            color = if (achieved) Color(0xFF10B981) else Color(0xFF6B7280)
+        )
+        Text(
+            text = milestone.name,
+            fontSize = 9.sp,
+            fontWeight = FontWeight.Medium,
+            color = if (achieved) Color(0xFF9CA3AF) else Color(0xFF4B5563),
+            textAlign = TextAlign.Center,
+            maxLines = 2,
+            lineHeight = 11.sp,
+            modifier = Modifier.widthIn(max = 70.dp)
+        )
     }
 }
 
@@ -465,7 +494,6 @@ private fun calculateStats(claimedGamesWithTimestamps: Map<Long, Long>): ClaimSt
         }
         .mapValues { it.value.size }
 
-    // Calculate streaks
     val sortedDates = claimsByDate.keys.sorted()
     var currentStreak = 0
     var longestStreak = 0
@@ -484,7 +512,6 @@ private fun calculateStats(claimedGamesWithTimestamps: Map<Long, Long>): ClaimSt
     }
     longestStreak = maxOf(longestStreak, tempStreak)
 
-    // Current streak
     if (sortedDates.isNotEmpty()) {
         val lastClaimDate = sortedDates.last()
         val daysSinceLastClaim = lastClaimDate.daysUntil(today)
@@ -502,7 +529,6 @@ private fun calculateStats(claimedGamesWithTimestamps: Map<Long, Long>): ClaimSt
         }
     }
 
-    // This week and month
     val weekStart = today.minus(today.dayOfWeek.ordinal, DateTimeUnit.DAY)
     val monthStart = LocalDate(today.year, today.month, 1)
 
@@ -518,7 +544,6 @@ private fun calculateStats(claimedGamesWithTimestamps: Map<Long, Long>): ClaimSt
         date >= monthStart
     }
 
-    // Last 7 days
     val last7Days = (6 downTo 0).map { daysAgo ->
         val date = today.minus(daysAgo, DateTimeUnit.DAY)
         claimsByDate[date] ?: 0
