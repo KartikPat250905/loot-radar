@@ -15,16 +15,14 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.radarlabs.freegameradar.ui.components.PlatformStatsCard
+import com.radarlabs.freegameradar.ui.components.ClaimStatsCards
 import com.radarlabs.freegameradar.ui.components.TotalClaimedBar
 import com.radarlabs.freegameradar.ui.viewmodel.UserStatsViewModel
 
 @Composable
 fun StatsScreen(viewModel: UserStatsViewModel, modifier: Modifier = Modifier) {
     val claimedValue by viewModel.claimedValue.collectAsState()
-    val platformStats by viewModel.platformStats.collectAsState()
-    val selectedFilter by viewModel.filter.collectAsState()
-    val filteredStats by viewModel.filteredStats.collectAsState()
+    val claimedGamesWithTimestamps by viewModel.claimedGamesWithTimestamps.collectAsState()
 
     Column(
         modifier = modifier
@@ -43,7 +41,6 @@ fun StatsScreen(viewModel: UserStatsViewModel, modifier: Modifier = Modifier) {
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Top
     ) {
-        // Header
         Text(
             text = "Your Game Statistics",
             fontSize = 24.sp,
@@ -56,9 +53,12 @@ fun StatsScreen(viewModel: UserStatsViewModel, modifier: Modifier = Modifier) {
 
         TotalClaimedBar(claimedValue = claimedValue)
 
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(24.dp))
 
-        PlatformStatsCard(platformStats = platformStats)
+        ClaimStatsCards(
+            claimedGamesWithTimestamps = claimedGamesWithTimestamps,
+            modifier = Modifier.padding(horizontal = 16.dp)
+        )
 
         Spacer(modifier = Modifier.height(80.dp))
     }

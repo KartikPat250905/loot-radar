@@ -186,7 +186,6 @@ fun AppNavigation(
         }
 
         composable(Screen.Home.route) {
-            Log.d("AppNavigation", "🏠 HOME ROUTE - Displaying home screen")
             HomeScreen(
                 navController = navController,
                 gameViewModel = gameViewModel,
@@ -198,17 +197,14 @@ fun AppNavigation(
         }
 
         composable(Screen.Notification.route) {
-            Log.d("AppNavigation", "🔔 NOTIFICATION ROUTE - Displaying notification screen")
             NotificationScreen(viewModel = notificationViewModel, navController = navController, modifier = Modifier.padding(innerPadding))
         }
 
         composable(Screen.HotDeals.route) {
-            Log.d("AppNavigation", "🔥 HOT_DEALS ROUTE - Displaying hot deals screen")
             HotDealsScreen(navController = navController, modifier = Modifier.padding(innerPadding))
         }
 
         composable(Screen.Settings.route) {
-            Log.d("AppNavigation", "⚙️ SETTINGS ROUTE - Displaying settings screen")
             SettingsScreen(
                 viewModel = settingsViewModel,
                 userPreferencesViewModel = userPreferencesViewModel,
@@ -219,18 +215,15 @@ fun AppNavigation(
         }
 
         composable(Screen.About.route) {
-            Log.d("AppNavigation", "ℹ️ ABOUT ROUTE - Displaying about screen")
             AboutScreen(navController = navController)
         }
 
         composable(Screen.Stats.route) {
-            Log.d("AppNavigation", "📊 STATS ROUTE - Displaying stats screen")
             StatsScreen(viewModel = userStatsViewModel, modifier = Modifier.padding(innerPadding))
         }
 
         composable(Screen.Details.route) { backStackEntry ->
             val gameId = backStackEntry.arguments?.getString("gameId")?.toLongOrNull()
-            Log.d("AppNavigation", "🎮 DETAILS ROUTE - Displaying game detail for gameId: $gameId")
             GameDetailScreen(
                 navController = navController,
                 gameId = gameId,
@@ -241,7 +234,6 @@ fun AppNavigation(
         }
 
         composable("support") {
-            Log.d("AppNavigation", "💬 SUPPORT ROUTE - Displaying support screen")
             SupportScreen(
                 onNavigateToRedeem = { navController.navigate("redeem") },
                 onBack = { navController.popBackStack() },
@@ -250,7 +242,6 @@ fun AppNavigation(
         }
 
         composable("redeem") {
-            Log.d("AppNavigation", "🎁 REDEEM ROUTE - Displaying redeem code screen")
             RedeemCodeScreen(
                 onSuccess = {
                     navController.popBackStack("settings", inclusive = false)
