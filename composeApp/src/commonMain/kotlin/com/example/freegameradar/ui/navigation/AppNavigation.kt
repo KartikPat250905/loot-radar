@@ -1,6 +1,10 @@
 package com.example.freegameradar.ui.navigation
 
+import android.util.Log
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Text
@@ -12,7 +16,10 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -38,12 +45,13 @@ import com.example.freegameradar.util.PermissionRequestResult
 import com.example.freegameradar.util.isNotificationPermissionGranted
 import com.example.freegameradar.util.openAppSettings
 import com.example.freegameradar.util.rememberPermissionRequestLauncher
+import kotlinx.coroutines.delay
 
 @Composable
 fun AppNavigation(
     navController: NavHostController,
     innerPadding: PaddingValues,
-    gameViewModel: GameViewModel, // Added
+    gameViewModel: GameViewModel,
     userPreferencesViewModel: UserPreferencesViewModel,
     notificationViewModel: NotificationViewModel,
     userStatsViewModel: UserStatsViewModel,
@@ -57,20 +65,40 @@ fun AppNavigation(
 ) {
     NavHost(
         navController = navController,
-        startDestination = Screen.Gate.route // The start destination is now fixed.
+        startDestination = Screen.Gate.route
     ) {
         composable(Screen.Gate.route) {
+            Log.d("AppNavigation", "🚪 GATE ROUTE - Loading preferences")
             val preferencesState by userPreferencesViewModel.uiState.collectAsState()
 
-            AppLoadingScreen() // Show a loading screen while we decide where to go.
+            // Full screen loading with proper background
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(
+                        brush = Brush.verticalGradient(
+                            colors = listOf(
+                                Color(0xFF0D1B2A),
+                                Color(0xFF1B263B),
+                                Color(0xFF0D1B2A)
+                            )
+                        )
+                    ),
+                contentAlignment = Alignment.Center
+            ) {
+                AppLoadingScreen(fullScreen = true)
+            }
 
             LaunchedEffect(preferencesState.isLoaded) {
                 if (preferencesState.isLoaded) {
+                    // Small delay to ensure smooth transition
+                    delay(150)
                     val destination = if (startRoute == "notification") {
                         Screen.Notification.route
                     } else {
                         if (preferencesState.setupComplete) Screen.Home.route else Screen.Setup.route
                     }
+                    Log.d("AppNavigation", "🚪 GATE ROUTE - Navigating to: $destination (setupComplete=${preferencesState.setupComplete}, startRoute=$startRoute)")
                     navController.navigate(destination) {
                         popUpTo(Screen.Gate.route) { inclusive = true }
                     }
@@ -79,9 +107,11 @@ fun AppNavigation(
         }
 
         composable(Screen.Setup.route) {
+            Log.d("AppNavigation", "⚙️ SETUP ROUTE - Showing setup screen")
             SetupScreen(
                 viewModel = setupViewModel,
                 onNavigateToHome = {
+                    Log.d("AppNavigation", "⚙️ SETUP ROUTE - Setup complete, navigating to PostSetupCheck")
                     navController.navigate(Screen.PostSetupCheck.route) {
                         popUpTo(Screen.Setup.route) { inclusive = true }
                     }
@@ -90,19 +120,45 @@ fun AppNavigation(
         }
 
         composable(Screen.PostSetupCheck.route) {
+            Log.d("AppNavigation", "✅ POST_SETUP_CHECK ROUTE - Checking notification permission")
             val permissionGranted = isNotificationPermissionGranted()
-            AppLoadingScreen()
+
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(
+                        brush = Brush.verticalGradient(
+                            colors = listOf(
+                                Color(0xFF0D1B2A),
+                                Color(0xFF1B263B),
+                                Color(0xFF0D1B2A)
+                            )
+                        )
+                    ),
+                contentAlignment = Alignment.Center
+            ) {
+                AppLoadingScreen(fullScreen = true)
+            }
+
             LaunchedEffect(Unit) {
+                delay(150)
                 val destination = if (permissionGranted) Screen.Home.route else Screen.NotificationBenefits.route
-                navController.navigate(destination) { popUpTo(Screen.PostSetupCheck.route) { inclusive = true } }
+                Log.d("AppNavigation", "✅ POST_SETUP_CHECK ROUTE - Permission granted: $permissionGranted, navigating to: $destination")
+                navController.navigate(destination) {
+                    popUpTo(Screen.PostSetupCheck.route) { inclusive = true }
+                }
             }
         }
 
         composable(Screen.NotificationBenefits.route) {
+            Log.d("AppNavigation", "🔔 NOTIFICATION_BENEFITS ROUTE - Showing notification benefits screen")
             var showSettingsDialog by remember { mutableStateOf(false) }
             val requestPermissionLauncher = rememberPermissionRequestLauncher { result ->
+                Log.d("AppNavigation", "🔔 NOTIFICATION_BENEFITS ROUTE - Permission result: $result")
                 when (result) {
-                    PermissionRequestResult.GRANTED -> navController.navigate(Screen.Home.route) { popUpTo(Screen.NotificationBenefits.route) { inclusive = true } }
+                    PermissionRequestResult.GRANTED -> navController.navigate(Screen.Home.route) {
+                        popUpTo(Screen.NotificationBenefits.route) { inclusive = true }
+                    }
                     PermissionRequestResult.PERMANENTLY_DENIED -> showSettingsDialog = true
                     PermissionRequestResult.DENIED -> { /* Do nothing */ }
                 }
@@ -120,11 +176,17 @@ fun AppNavigation(
 
             NotificationPermissionBenefitsScreen(
                 onEnableNotifications = { requestPermissionLauncher() },
-                onSkip = { navController.navigate(Screen.Home.route) { popUpTo(Screen.NotificationBenefits.route) { inclusive = true } } }
+                onSkip = {
+                    Log.d("AppNavigation", "🔔 NOTIFICATION_BENEFITS ROUTE - User skipped, navigating to Home")
+                    navController.navigate(Screen.Home.route) {
+                        popUpTo(Screen.NotificationBenefits.route) { inclusive = true }
+                    }
+                }
             )
         }
 
         composable(Screen.Home.route) {
+            Log.d("AppNavigation", "🏠 HOME ROUTE - Displaying home screen")
             HomeScreen(
                 navController = navController,
                 gameViewModel = gameViewModel,
@@ -134,13 +196,19 @@ fun AppNavigation(
                 onShowRefreshAd = onShowRefreshAd
             )
         }
+
         composable(Screen.Notification.route) {
+            Log.d("AppNavigation", "🔔 NOTIFICATION ROUTE - Displaying notification screen")
             NotificationScreen(viewModel = notificationViewModel, navController = navController, modifier = Modifier.padding(innerPadding))
         }
+
         composable(Screen.HotDeals.route) {
+            Log.d("AppNavigation", "🔥 HOT_DEALS ROUTE - Displaying hot deals screen")
             HotDealsScreen(navController = navController, modifier = Modifier.padding(innerPadding))
         }
+
         composable(Screen.Settings.route) {
+            Log.d("AppNavigation", "⚙️ SETTINGS ROUTE - Displaying settings screen")
             SettingsScreen(
                 viewModel = settingsViewModel,
                 userPreferencesViewModel = userPreferencesViewModel,
@@ -149,14 +217,20 @@ fun AppNavigation(
                 onSettingsScreenOpen = onShowSettingsAd
             )
         }
+
         composable(Screen.About.route) {
+            Log.d("AppNavigation", "ℹ️ ABOUT ROUTE - Displaying about screen")
             AboutScreen(navController = navController)
         }
+
         composable(Screen.Stats.route) {
+            Log.d("AppNavigation", "📊 STATS ROUTE - Displaying stats screen")
             StatsScreen(viewModel = userStatsViewModel, modifier = Modifier.padding(innerPadding))
         }
+
         composable(Screen.Details.route) { backStackEntry ->
             val gameId = backStackEntry.arguments?.getString("gameId")?.toLongOrNull()
+            Log.d("AppNavigation", "🎮 DETAILS ROUTE - Displaying game detail for gameId: $gameId")
             GameDetailScreen(
                 navController = navController,
                 gameId = gameId,
@@ -167,20 +241,22 @@ fun AppNavigation(
         }
 
         composable("support") {
+            Log.d("AppNavigation", "💬 SUPPORT ROUTE - Displaying support screen")
             SupportScreen(
                 onNavigateToRedeem = { navController.navigate("redeem") },
                 onBack = { navController.popBackStack() },
-                modifier = Modifier.padding(innerPadding) // ADD THIS
+                modifier = Modifier.padding(innerPadding)
             )
         }
 
         composable("redeem") {
+            Log.d("AppNavigation", "🎁 REDEEM ROUTE - Displaying redeem code screen")
             RedeemCodeScreen(
                 onSuccess = {
                     navController.popBackStack("settings", inclusive = false)
                 },
                 onBack = { navController.popBackStack() },
-                modifier = Modifier.padding(innerPadding) // ADD THIS
+                modifier = Modifier.padding(innerPadding)
             )
         }
     }
