@@ -1,4 +1,4 @@
-import org.jetbrains.compose.desktop.application.dsl.TargetFormat
+import com.android.build.api.dsl.ApplicationExtension
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import java.util.Properties
 import java.io.FileInputStream
@@ -34,7 +34,6 @@ kotlin {
             implementation(libs.ktor.client.okhttp)
             implementation(kotlin("reflect"))
             implementation(libs.sqldelight.android.driver)
-            // Import the Firebase BoM
             implementation(platform("com.google.firebase:firebase-bom:33.1.0"))
             implementation(platform("io.opentelemetry:opentelemetry-bom:1.18.0"))
             implementation("com.google.firebase:firebase-auth-ktx")
@@ -55,11 +54,9 @@ kotlin {
             implementation(libs.androidx.lifecycle.viewmodel)
             implementation(libs.androidx.lifecycle.runtime.compose)
             implementation(libs.navigation.compose)
-
             implementation(libs.ktor.client.core)
             implementation(libs.ktor.client.content.negotiation)
             implementation(libs.ktor.serialization.kotlinx.json)
-
             implementation(libs.coil.compose)
             implementation(libs.coil.network.ktor)
             implementation(libs.kotlinx.datetime)
@@ -67,7 +64,6 @@ kotlin {
             implementation(libs.sqldelight.coroutines.extensions)
             implementation(libs.multiplatform.settings)
             implementation(libs.multiplatform.settings.coroutines)
-
             implementation(libs.vico.compose)
             implementation(libs.vico.compose.m3)
             implementation(libs.vico.core)
@@ -75,7 +71,7 @@ kotlin {
     }
 }
 
-android {
+extensions.configure<ApplicationExtension> {
     namespace = "com.radarlabs.freegameradar"
     compileSdk = libs.versions.android.compileSdk.get().toInt()
 
@@ -89,24 +85,19 @@ android {
 
     signingConfigs {
         create("release") {
-            storeFile = file(keystoreProperties["storeFile"] as String)
-            storePassword = keystoreProperties["storePassword"] as String
-            keyAlias = keystoreProperties["keyAlias"] as String
-            keyPassword = keystoreProperties["keyPassword"] as String
-        }
-    }
-
-    packaging {
-        resources {
-            excludes += "/META-INF/{AL2.0,LGPL2.1}"
+            if (keystorePropertiesFile.exists()) {
+                storeFile = file(keystoreProperties["storeFile"] as String)
+                storePassword = keystoreProperties["storePassword"] as String
+                keyAlias = keystoreProperties["keyAlias"] as String
+                keyPassword = keystoreProperties["keyPassword"] as String
+            }
         }
     }
 
     buildTypes {
-        getByName("release") {
+        release {
             isMinifyEnabled = true
             isShrinkResources = true
-            isDebuggable = false
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
@@ -115,15 +106,9 @@ android {
         }
     }
 
-    bundle {
-        language {
-            enableSplit = true
-        }
-        density {
-            enableSplit = true
-        }
-        abi {
-            enableSplit = true
+    packaging {
+        resources {
+            excludes += "/META-INF/{AL2.0,LGPL2.1}"
         }
     }
 
