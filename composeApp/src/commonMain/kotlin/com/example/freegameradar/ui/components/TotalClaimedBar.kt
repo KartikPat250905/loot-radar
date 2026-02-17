@@ -42,7 +42,7 @@ fun TotalClaimedBar(
             .padding(horizontal = 16.dp, vertical = 12.dp)
             .scale(scale)
     ) {
-        // Outer glow effect
+        // Outer glow effect - NEON GREEN
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -50,7 +50,7 @@ fun TotalClaimedBar(
                 .background(
                     brush = Brush.radialGradient(
                         colors = listOf(
-                            Color(0x44FF6B35), // Orange glow
+                            Color(0x4410B981), // Neon green glow
                             Color.Transparent
                         ),
                         radius = 800f
@@ -75,16 +75,15 @@ fun TotalClaimedBar(
                 )
                 .padding(1.5.dp) // Border width
         ) {
-            // Inner gradient border effect
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
                     .background(
                         brush = Brush.linearGradient(
                             colors = listOf(
-                                Color(0xFFFF6B35), // Vibrant orange
-                                Color(0xFFF7931E), // Golden orange
-                                Color(0xFFFF6B35)
+                                Color(0xFF10B981), // Vibrant neon green
+                                Color(0xFF34D399), // Bright emerald green
+                                Color(0xFF10B981)  // Vibrant neon green
                             )
                         ),
                         shape = RoundedCornerShape(19.dp)
@@ -114,22 +113,22 @@ fun TotalClaimedBar(
                         Text(
                             text = "TOTAL CLAIMED VALUE",
                             style = MaterialTheme.typography.labelSmall,
-                            color = Color(0xFFFDB777),
+                            color = Color(0xFF6EE7B7), // Light mint green
                             letterSpacing = 2.sp,
                             fontWeight = FontWeight.Medium
                         )
 
                         Spacer(modifier = Modifier.height(8.dp))
 
-                        // Price display with gradient
+                        // Price display with gradient - NEON GREEN
                         val priceText = buildAnnotatedString {
                             withStyle(
                                 style = SpanStyle(
                                     brush = Brush.linearGradient(
                                         colors = listOf(
-                                            Color(0xFFFF6B35),
-                                            Color(0xFFF7931E),
-                                            Color(0xFFFDB777)
+                                            Color(0xFF10B981), // Neon green
+                                            Color(0xFF34D399), // Bright emerald
+                                            Color(0xFF6EE7B7)  // Light mint
                                         )
                                     ),
                                     fontWeight = FontWeight.ExtraBold,
@@ -150,7 +149,7 @@ fun TotalClaimedBar(
                         Text(
                             text = "Money saved on claimed games",
                             style = MaterialTheme.typography.labelSmall,
-                            color = Color(0xFFFDB777).copy(alpha = 0.8f),
+                            color = Color(0xFF6EE7B7).copy(alpha = 0.8f), // Light mint green
                             letterSpacing = 1.2.sp,
                             fontWeight = FontWeight.Normal
                         )
