@@ -3,6 +3,7 @@ package com.radarlabs.freegameradar.ui.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.radarlabs.freegameradar.data.models.GameDto
+import com.radarlabs.freegameradar.data.models.WorthDto
 import com.radarlabs.freegameradar.data.remote.ApiService
 import com.radarlabs.freegameradar.data.repository.GameRepository
 import com.radarlabs.freegameradar.data.state.DataSource
@@ -27,6 +28,7 @@ data class GameFilters(
 class GameViewModel(
     private val repository: GameRepository = GameRepository(ApiService())
 ) : ViewModel() {
+
     private val _filters = MutableStateFlow(GameFilters())
     val filters: StateFlow<GameFilters> = _filters
 
@@ -35,7 +37,11 @@ class GameViewModel(
 
     val dataSource: StateFlow<DataSource> = repository.dataSource
 
-    private var _allGames = MutableStateFlow<List<GameDto>>(emptyList())
+    val totalWorth: StateFlow<WorthDto?> = repository.totalWorth
+
+    private val _allGames = MutableStateFlow<List<GameDto>>(emptyList())
+    val allGames: StateFlow<List<GameDto>> = _allGames.asStateFlow()
+
     private val _searchQuery = MutableStateFlow("")
     val searchQuery: StateFlow<String> = _searchQuery.asStateFlow()
 
@@ -74,11 +80,10 @@ class GameViewModel(
             }
         }.stateIn(
             scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(5_000),
+            started = SharingStarted.Eagerly,
             initialValue = emptyList()
         )
 
-    // Refresh state management
     private val _isRefreshing = MutableStateFlow(false)
     val isRefreshing: StateFlow<Boolean> = _isRefreshing.asStateFlow()
 
@@ -88,17 +93,15 @@ class GameViewModel(
     private val _canRefresh = MutableStateFlow(true)
     val canRefresh: StateFlow<Boolean> = _canRefresh.asStateFlow()
 
-    // ✅ NEW: Reactive remaining cooldown
     private val _remainingCooldown = MutableStateFlow(0)
     val remainingCooldown: StateFlow<Int> = _remainingCooldown.asStateFlow()
 
-    // Cooldown period: 30 seconds
     private val REFRESH_COOLDOWN_MS = 10_000L
 
     init {
         viewModelScope.launch {
             while (true) {
-                delay(1000) // Check every second
+                delay(1000)
                 val lastRefresh = _lastRefreshTime.value
 
                 if (lastRefresh > 0L) {
@@ -107,7 +110,6 @@ class GameViewModel(
 
                     _canRefresh.value = cooldownExpired
 
-                    // Update remaining seconds for UI
                     if (!cooldownExpired) {
                         val remaining = ((REFRESH_COOLDOWN_MS - elapsed) / 1000).toInt()
                         _remainingCooldown.value = max(0, remaining)
@@ -115,7 +117,6 @@ class GameViewModel(
                         _remainingCooldown.value = 0
                     }
                 } else {
-                    // No refresh has occurred yet
                     _canRefresh.value = true
                     _remainingCooldown.value = 0
                 }
@@ -131,14 +132,17 @@ class GameViewModel(
                     e.printStackTrace()
                 }
                 .collect { gameList ->
-                    _allGames.value = gameList
-                    println("✅ Loaded ${gameList.size} games")
+                    if (gameList.isNotEmpty()) {
+                        _allGames.value = gameList
+                        println("✅ Loaded ${gameList.size} games")
+                    } else {
+                        println("⚠️ Skipped empty game list emission")
+                    }
                 }
         }
     }
 
     fun refreshGames() {
-        // Prevent refresh if still in cooldown or already refreshing
         if (!_canRefresh.value || _isRefreshing.value) {
             println("⚠️ Refresh blocked: canRefresh=${_canRefresh.value}, isRefreshing=${_isRefreshing.value}")
             return
@@ -146,23 +150,24 @@ class GameViewModel(
 
         viewModelScope.launch {
             _isRefreshing.value = true
-
             println("🔄 Starting refresh...")
 
             try {
-                // Force refresh from API
                 repository.getFreeGames(forceRefresh = true)
                     .catch { e ->
                         println("❌ Refresh API error: ${e.message}")
                         e.printStackTrace()
-                        throw e // Re-throw to outer catch
+                        throw e
                     }
                     .collect { freshGames ->
-                        _allGames.value = freshGames
-                        println("✅ Refresh successful: ${freshGames.size} games loaded")
+                        if (freshGames.isNotEmpty()) {
+                            _allGames.value = freshGames
+                            println("✅ Refresh successful: ${freshGames.size} games loaded")
+                        } else {
+                            println("⚠️ Refresh returned empty list, keeping existing games")
+                        }
                     }
 
-                // Update last refresh time (starts cooldown)
                 _lastRefreshTime.value = System.currentTimeMillis()
 
                 refreshCount++
@@ -175,7 +180,6 @@ class GameViewModel(
             } catch (e: Exception) {
                 println("❌ Refresh failed: ${e.message}")
                 e.printStackTrace()
-                // Don't re-enable canRefresh - let cooldown expire naturally
 
             } finally {
                 _isRefreshing.value = false
@@ -184,11 +188,8 @@ class GameViewModel(
         }
     }
 
-    // ✅ DEPRECATED: Use remainingCooldown StateFlow instead
     @Deprecated("Use remainingCooldown StateFlow", ReplaceWith("remainingCooldown.value"))
-    fun getRemainingCooldown(): Int {
-        return _remainingCooldown.value
-    }
+    fun getRemainingCooldown(): Int = _remainingCooldown.value
 
     fun updateFilter(filter: GameTypeFilter) {
         _gameTypeFilter.value = filter
@@ -196,20 +197,13 @@ class GameViewModel(
 
     fun togglePlatform(platform: String) {
         val current = _filters.value.platforms.toMutableSet()
-        if (current.contains(platform))
-            current.remove(platform)
-        else
-            current.add(platform)
+        if (current.contains(platform)) current.remove(platform) else current.add(platform)
         _filters.value = _filters.value.copy(platforms = current)
     }
 
     fun toggleType(type: String) {
         val current = _filters.value.types.toMutableSet()
-        if (current.contains(type)) {
-            current.remove(type)
-        } else {
-            current.add(type)
-        }
+        if (current.contains(type)) current.remove(type) else current.add(type)
         _filters.value = _filters.value.copy(types = current)
     }
 

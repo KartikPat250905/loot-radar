@@ -24,16 +24,23 @@ import kotlin.math.round
 @Composable
 fun TotalWorthBar(
     games: List<GameDto>,
-    dataSource: DataSource
+    dataSource: DataSource,
+    apiWorth: String? = null  // ✅ Real total from GamerPower /worth endpoint
 ) {
-    val total = games.mapNotNull { game ->
-        val priceStr = game.worth?.replace("$", "")?.replace(",", "")?.trim()
-        when {
-            priceStr == null -> 0.0
-            priceStr.equals("N/A", ignoreCase = true) -> 0.0
-            else -> priceStr.toDoubleOrNull() ?: 0.0
-        }
-    }.sum()
+    val total = if (apiWorth != null) {
+        // Use the authoritative API total when no filters are active
+        apiWorth.replace("$", "").toDoubleOrNull() ?: 0.0
+    } else {
+        // Fall back to local sum when filters are active or API worth unavailable
+        games.mapNotNull { game ->
+            val priceStr = game.worth?.replace("$", "")?.replace(",", "")?.trim()
+            when {
+                priceStr == null -> null
+                priceStr.equals("N/A", ignoreCase = true) -> null
+                else -> priceStr.toDoubleOrNull()
+            }
+        }.sum()
+    }
 
     val formattedTotal = "$${round(total * 100) / 100}"
 
@@ -51,24 +58,22 @@ fun TotalWorthBar(
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 6.dp) // ⬇️ was vertical = 12.dp
+            .padding(horizontal = 16.dp, vertical = 6.dp)
             .scale(scale)
     ) {
-        // Outer glow — height reduced
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(60.dp) // ⬇️ was 90.dp
+                .height(60.dp)
                 .background(
                     brush = Brush.radialGradient(
                         colors = listOf(Color(0x4410B981), Color.Transparent),
                         radius = 800f
                     ),
-                    shape = RoundedCornerShape(16.dp) // ⬇️ was 20.dp
+                    shape = RoundedCornerShape(16.dp)
                 )
         )
 
-        // Main card
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -80,7 +85,7 @@ fun TotalWorthBar(
                             Color(0xFF0D1B2A)
                         )
                     ),
-                    shape = RoundedCornerShape(16.dp) // ⬇️ was 20.dp
+                    shape = RoundedCornerShape(16.dp)
                 )
                 .padding(1.5.dp)
         ) {
@@ -95,11 +100,10 @@ fun TotalWorthBar(
                                 Color(0xFF10B981)
                             )
                         ),
-                        shape = RoundedCornerShape(15.dp) // ⬇️ was 19.dp
+                        shape = RoundedCornerShape(15.dp)
                     )
                     .padding(1.5.dp)
             ) {
-                // Content background
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -107,9 +111,9 @@ fun TotalWorthBar(
                             brush = Brush.linearGradient(
                                 colors = listOf(Color(0xFF1B263B), Color(0xFF0D1B2A))
                             ),
-                            shape = RoundedCornerShape(14.dp) // ⬇️ was 18.dp
+                            shape = RoundedCornerShape(14.dp)
                         )
-                        .padding(horizontal = 20.dp, vertical = 8.dp), // ⬇️ was vertical = 16.dp
+                        .padding(horizontal = 20.dp, vertical = 8.dp),
                     contentAlignment = Alignment.Center
                 ) {
                     Row(
@@ -117,19 +121,16 @@ fun TotalWorthBar(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
-                        // Left: label + data source badge
-                        Column(
-                            verticalArrangement = Arrangement.Center
-                        ) {
+                        Column(verticalArrangement = Arrangement.Center) {
                             Text(
                                 text = "FREE GAMES VALUE",
                                 style = MaterialTheme.typography.labelSmall,
                                 color = Color(0xFF6EE7B7),
-                                letterSpacing = 1.5.sp, // ⬇️ was 2.sp
+                                letterSpacing = 1.5.sp,
                                 fontWeight = FontWeight.Medium
                             )
 
-                            Spacer(modifier = Modifier.height(3.dp)) // ⬇️ was 8.dp
+                            Spacer(modifier = Modifier.height(3.dp))
 
                             Row(verticalAlignment = Alignment.CenterVertically) {
                                 val (label, color) = when (dataSource) {
@@ -138,7 +139,7 @@ fun TotalWorthBar(
                                 }
                                 Box(
                                     modifier = Modifier
-                                        .size(6.dp) // ⬇️ was 8.dp
+                                        .size(6.dp)
                                         .background(color, shape = RoundedCornerShape(50))
                                 )
                                 Spacer(modifier = Modifier.width(5.dp))
@@ -152,7 +153,6 @@ fun TotalWorthBar(
                             }
                         }
 
-                        // Right: price (big number, right-aligned)
                         val priceText = buildAnnotatedString {
                             withStyle(
                                 style = SpanStyle(
@@ -164,7 +164,7 @@ fun TotalWorthBar(
                                         )
                                     ),
                                     fontWeight = FontWeight.ExtraBold,
-                                    fontSize = 28.sp // ⬇️ was 36.sp
+                                    fontSize = 28.sp
                                 )
                             ) {
                                 append(formattedTotal)

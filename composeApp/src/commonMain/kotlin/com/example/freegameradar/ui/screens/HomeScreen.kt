@@ -57,6 +57,7 @@ import com.radarlabs.freegameradar.ui.components.GameTypeFilterTabs
 import com.radarlabs.freegameradar.ui.components.SearchAndRefreshBar
 import com.radarlabs.freegameradar.ui.components.TotalWorthBar
 import com.radarlabs.freegameradar.ui.navigation.Screen
+import com.radarlabs.freegameradar.ui.viewmodel.GameTypeFilter
 import com.radarlabs.freegameradar.ui.viewmodel.GameViewModel
 import com.radarlabs.freegameradar.ui.viewmodel.UserPreferencesViewModel
 import com.radarlabs.freegameradar.util.isNotificationPermissionGranted
@@ -81,15 +82,23 @@ fun HomeScreen(
     val canRefresh by gameViewModel.canRefresh.collectAsState()
     val remainingCooldown by gameViewModel.remainingCooldown.collectAsState()
     val preferencesState by userPreferencesViewModel.uiState.collectAsState()
-
     val searchText by gameViewModel.searchQuery.collectAsState()
     val dataSource by gameViewModel.dataSource.collectAsState()
     val selectedFilter by gameViewModel.gameTypeFilter.collectAsState()
+    val totalWorth by gameViewModel.totalWorth.collectAsState()  // ✅ NEW
+
     val gridState = rememberLazyGridState()
     var isVisible by remember { mutableStateOf(true) }
 
     val permissionState = isNotificationPermissionGranted()
     var showPermissionDialog by remember { mutableStateOf(false) }
+
+    // ✅ Only use API total when no filters or search are active
+    val apiWorthForBar = if (selectedFilter == GameTypeFilter.ALL && searchText.isBlank()) {
+        totalWorth?.worthEstimationUsd
+    } else {
+        null // falls back to local sum of the filtered games list
+    }
 
     Log.d("HomeScreen", "🔄 RECOMPOSE - games=${games.size}, dataSource=$dataSource, isRefreshing=$isRefreshing")
 
@@ -262,14 +271,17 @@ fun HomeScreen(
 
                     TotalWorthBar(
                         games = games,
-                        dataSource = dataSource
+                        dataSource = dataSource,
+                        apiWorth = apiWorthForBar  // ✅ API total or null for filtered view
                     )
                 }
             }
 
             Box(
                 contentAlignment = Alignment.Center,
-                modifier = Modifier.weight(1f).fillMaxSize()
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxSize()
             ) {
                 when {
                     games.isEmpty() && dataSource == DataSource.CACHE -> {
@@ -301,7 +313,9 @@ fun HomeScreen(
                         contentAlignment = Alignment.Center
                     ) {
                         Card(
-                            modifier = Modifier.wrapContentSize().padding(32.dp),
+                            modifier = Modifier
+                                .wrapContentSize()
+                                .padding(32.dp),
                             colors = CardDefaults.cardColors(containerColor = Color(0xFF1B263B)),
                             elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
                         ) {
