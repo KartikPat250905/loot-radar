@@ -1,20 +1,15 @@
 package com.radarlabs.freegameradar.ui.screens
 
 import android.util.Log
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.core.Spring
-import androidx.compose.animation.core.spring
-import androidx.compose.animation.expandVertically
-import androidx.compose.animation.shrinkVertically
-import androidx.compose.animation.slideInVertically
-import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.wrapContentSize
@@ -28,25 +23,32 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.rememberTopAppBarState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
@@ -63,11 +65,13 @@ import com.radarlabs.freegameradar.ui.viewmodel.UserPreferencesViewModel
 import com.radarlabs.freegameradar.util.isNotificationPermissionGranted
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
+import kotlin.math.roundToInt
 
 private object PermissionPromptTracker {
     var hasShownThisSession = false
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
     navController: NavHostController,
@@ -86,20 +90,43 @@ fun HomeScreen(
     val dataSource by gameViewModel.dataSource.collectAsState()
     val selectedFilter by gameViewModel.gameTypeFilter.collectAsState()
     val totalWorth by gameViewModel.totalWorth.collectAsState()
-
     val gridState = rememberLazyGridState()
-    var isVisible by remember { mutableStateOf(true) }
-
-    val permissionState = isNotificationPermissionGranted()
-    var showPermissionDialog by remember { mutableStateOf(false) }
 
     val apiWorthForBar = if (selectedFilter == GameTypeFilter.ALL && searchText.isBlank()) {
         totalWorth?.worthEstimationUsd
-    } else {
-        null
+    } else null
+
+    val density = LocalDensity.current
+
+    // ✅ Measured at runtime — no hardcoded height
+    var topBarHeightPx by remember { mutableIntStateOf(0) }
+
+    val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior(
+        state = rememberTopAppBarState()
+    )
+
+    // ✅ Update limit whenever real height is measured
+    LaunchedEffect(topBarHeightPx) {
+        if (topBarHeightPx > 0) {
+            scrollBehavior.state.heightOffsetLimit = -topBarHeightPx.toFloat()
+        }
     }
 
-    Log.d("HomeScreen", "🔄 RECOMPOSE - games=${games.size}, dataSource=$dataSource, isRefreshing=$isRefreshing")
+    // ✅ Offset in pixels directly — used for both bar position AND grid padding
+    val topBarOffsetPx = scrollBehavior.state.heightOffset.roundToInt()
+    val topBarOffsetDp = with(density) { topBarOffsetPx.toDp() }
+
+    // ✅ Grid top padding = real height + animated offset (shrinks to 0 as bar hides)
+    val gridTopPaddingPx = (topBarHeightPx + topBarOffsetPx).coerceAtLeast(0)
+    val gridTopPaddingDp = with(density) { gridTopPaddingPx.toDp() }
+
+    val isTopBarVisible = topBarOffsetPx > -(topBarHeightPx / 2)
+    LaunchedEffect(isTopBarVisible) {
+        onBottomBarVisibilityChange(isTopBarVisible)
+    }
+
+    val permissionState = isNotificationPermissionGranted()
+    var showPermissionDialog by remember { mutableStateOf(false) }
 
     LaunchedEffect(preferencesState.isLoaded, preferencesState.notificationsEnabled, permissionState) {
         if (preferencesState.isLoaded &&
@@ -158,7 +185,11 @@ fun HomeScreen(
                     colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF60A5FA)),
                     shape = RoundedCornerShape(8.dp)
                 ) {
-                    Text(text = "Go to Settings", color = Color.White, fontWeight = FontWeight.SemiBold)
+                    Text(
+                        text = "Go to Settings",
+                        color = Color.White,
+                        fontWeight = FontWeight.SemiBold
+                    )
                 }
             },
             dismissButton = {
@@ -171,55 +202,8 @@ fun HomeScreen(
         )
     }
 
-    LaunchedEffect(gridState) {
-        var previousIndex = gridState.firstVisibleItemIndex
-        var previousOffset = gridState.firstVisibleItemScrollOffset
-
-        snapshotFlow {
-            Triple(
-                gridState.firstVisibleItemIndex,
-                gridState.firstVisibleItemScrollOffset,
-                gridState.canScrollForward || gridState.canScrollBackward
-            )
-        }.collect { (index, offset, hasScrollableContent) ->
-
-            // ✅ Not enough items to scroll — always keep top bar visible
-            if (!hasScrollableContent) {
-                isVisible = true
-                previousIndex = index
-                previousOffset = offset
-                return@collect
-            }
-
-            if (index == 0 && offset < 20) {
-                isVisible = true
-            } else {
-                val isScrollingDown = if (index != previousIndex) {
-                    index > previousIndex
-                } else {
-                    offset > previousOffset
-                }
-
-                if (isScrollingDown && index > 0) {
-                    isVisible = false
-                } else if (!isScrollingDown) {
-                    isVisible = true
-                }
-            }
-
-            previousIndex = index
-            previousOffset = offset
-        }
-    }
-
-    LaunchedEffect(isVisible) {
-        onBottomBarVisibilityChange(isVisible)
-    }
-
     LaunchedEffect(Unit) {
-        gameViewModel.showRefreshAd.collectLatest {
-            onShowRefreshAd()
-        }
+        gameViewModel.showRefreshAd.collectLatest { onShowRefreshAd() }
     }
 
     Box(
@@ -234,138 +218,120 @@ fun HomeScreen(
                     )
                 )
             )
+            .nestedScroll(scrollBehavior.nestedScrollConnection)
     ) {
-        Column(
-            modifier = Modifier.fillMaxSize(),
-            horizontalAlignment = Alignment.CenterHorizontally
+        // ✅ Grid top padding tracks the bar in real time — no dead space ever
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(top = gridTopPaddingDp),
+            contentAlignment = Alignment.Center
         ) {
-            AnimatedVisibility(
-                visible = isVisible,
-                enter = slideInVertically(
-                    animationSpec = spring(
-                        dampingRatio = Spring.DampingRatioNoBouncy,
-                        stiffness = Spring.StiffnessMedium
-                    ),
-                    initialOffsetY = { -it }
-                ) + expandVertically(
-                    animationSpec = spring(
-                        dampingRatio = Spring.DampingRatioNoBouncy,
-                        stiffness = Spring.StiffnessMedium
-                    ),
-                    expandFrom = Alignment.Top
-                ),
-                exit = slideOutVertically(
-                    animationSpec = spring(
-                        dampingRatio = Spring.DampingRatioNoBouncy,
-                        stiffness = Spring.StiffnessMedium
-                    ),
-                    targetOffsetY = { -it }
-                ) + shrinkVertically(
-                    animationSpec = spring(
-                        dampingRatio = Spring.DampingRatioNoBouncy,
-                        stiffness = Spring.StiffnessMedium
-                    ),
-                    shrinkTowards = Alignment.Top
-                )
-            ) {
-                Column {
-                    SearchAndRefreshBar(
-                        searchText = searchText,
-                        onSearchChange = { gameViewModel.updateSearch(it) },
-                        isRefreshing = isRefreshing,
-                        canRefresh = canRefresh,
-                        remainingSeconds = remainingCooldown,
-                        onRefreshClick = { gameViewModel.refreshGames() }
+            when {
+                games.isEmpty() && dataSource == DataSource.CACHE -> {
+                    Log.d("HomeScreen", "📺 RENDERING: Cache empty message")
+                    Text(
+                        text = "😿 No freebies found!\nCache is empty and new data couldn't load.\nCheck your internet connection and try again.",
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.padding(16.dp),
+                        fontSize = 18.sp,
+                        color = Color(0xFF9CA3AF)
                     )
-
-                    GameTypeFilterTabs(
-                        selectedFilter = selectedFilter,
-                        onFilterSelected = { gameViewModel.updateFilter(it) }
-                    )
-
-                    TotalWorthBar(
-                        games = games,
-                        dataSource = dataSource,
-                        apiWorth = apiWorthForBar
+                }
+                games.isEmpty() -> {
+                    Log.d("HomeScreen", "📺 RENDERING: Loading with AppLoadingScreen")
+                    AppLoadingScreen(fullScreen = false)
+                }
+                else -> {
+                    Log.d("HomeScreen", "📺 RENDERING: Game grid with ${games.size} games")
+                    GameGrid(
+                        gameList = games,
+                        navController = navController,
+                        gridState = gridState,
+                        bottomContentPadding = 88.dp
                     )
                 }
             }
 
-            Box(
-                contentAlignment = Alignment.Center,
-                modifier = Modifier
-                    .weight(1f)
-                    .fillMaxSize()
-            ) {
-                when {
-                    games.isEmpty() && dataSource == DataSource.CACHE -> {
-                        Log.d("HomeScreen", "📺 RENDERING: Cache empty message")
-                        Text(
-                            text = "😿 No freebies found!\nCache is empty and new data couldn't load.\nCheck your internet connection and try again.",
-                            textAlign = TextAlign.Center,
-                            modifier = Modifier.padding(16.dp),
-                            fontSize = 18.sp,
-                            color = Color(0xFF9CA3AF)
-                        )
-                    }
-                    games.isEmpty() -> {
-                        Log.d("HomeScreen", "📺 RENDERING: Loading with AppLoadingScreen")
-                        AppLoadingScreen(fullScreen = false)
-                    }
-                    else -> {
-                        Log.d("HomeScreen", "📺 RENDERING: Game grid with ${games.size} games")
-                        GameGrid(
-                            gameList = games,
-                            navController = navController,
-                            gridState = gridState,
-                            bottomContentPadding = 200.dp
-                        )
-                    }
-                }
-
-                if (isRefreshing) {
-                    Log.d("HomeScreen", "📺 RENDERING: Refresh overlay")
-                    Box(
+            if (isRefreshing) {
+                Log.d("HomeScreen", "📺 RENDERING: Refresh overlay")
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(Color.Black.copy(alpha = 0.6f)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Card(
                         modifier = Modifier
-                            .fillMaxSize()
-                            .background(Color.Black.copy(alpha = 0.6f)),
-                        contentAlignment = Alignment.Center
+                            .wrapContentSize()
+                            .padding(32.dp),
+                        colors = CardDefaults.cardColors(containerColor = Color(0xFF1B263B)),
+                        elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
                     ) {
-                        Card(
-                            modifier = Modifier
-                                .wrapContentSize()
-                                .padding(32.dp),
-                            colors = CardDefaults.cardColors(containerColor = Color(0xFF1B263B)),
-                            elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
+                        Column(
+                            modifier = Modifier.padding(32.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.Center
                         ) {
-                            Column(
-                                modifier = Modifier.padding(32.dp),
-                                horizontalAlignment = Alignment.CenterHorizontally,
-                                verticalArrangement = Arrangement.Center
-                            ) {
-                                CircularProgressIndicator(
-                                    modifier = Modifier.size(56.dp),
-                                    color = Color(0xFF60A5FA),
-                                    strokeWidth = 4.dp
-                                )
-                                Spacer(modifier = Modifier.height(16.dp))
-                                Text(
-                                    text = "Refreshing games...",
-                                    style = MaterialTheme.typography.titleMedium,
-                                    color = Color.White
-                                )
-                                Spacer(modifier = Modifier.height(4.dp))
-                                Text(
-                                    text = "Fetching latest deals",
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = Color(0xFF9CA3AF)
-                                )
-                            }
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(56.dp),
+                                color = Color(0xFF60A5FA),
+                                strokeWidth = 4.dp
+                            )
+                            Spacer(modifier = Modifier.height(16.dp))
+                            Text(
+                                text = "Refreshing games...",
+                                style = MaterialTheme.typography.titleMedium,
+                                color = Color.White
+                            )
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Text(
+                                text = "Fetching latest deals",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = Color(0xFF9CA3AF)
+                            )
                         }
                     }
                 }
             }
         }
+
+        // ✅ Top bar measured at runtime, offset pixel-perfectly with scroll
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .onGloballyPositioned { coords ->
+                    // ✅ Capture real height once laid out
+                    if (coords.size.height != topBarHeightPx) {
+                        topBarHeightPx = coords.size.height
+                    }
+                }
+                .offset { IntOffset(x = 0, y = topBarOffsetPx) }
+                .background(Color(0xFF0D1B2A))
+        ) {
+            SearchAndRefreshBar(
+                searchText = searchText,
+                onSearchChange = { gameViewModel.updateSearch(it) },
+                isRefreshing = isRefreshing,
+                canRefresh = canRefresh,
+                remainingSeconds = remainingCooldown,
+                onRefreshClick = { gameViewModel.refreshGames() }
+            )
+            GameTypeFilterTabs(
+                selectedFilter = selectedFilter,
+                onFilterSelected = { gameViewModel.updateFilter(it) }
+            )
+            TotalWorthBar(
+                games = games,
+                dataSource = dataSource,
+                apiWorth = apiWorthForBar
+            )
+        }
+    }
+
+    LaunchedEffect(selectedFilter, searchText) {
+        gridState.scrollToItem(0)
+        scrollBehavior.state.heightOffset = 0f
     }
 
     LaunchedEffect(Unit) {
@@ -374,8 +340,6 @@ fun HomeScreen(
     }
 
     DisposableEffect(Unit) {
-        onDispose {
-            gameViewModel.clear()
-        }
+        onDispose { gameViewModel.clear() }
     }
 }

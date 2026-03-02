@@ -9,6 +9,7 @@ import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import com.radarlabs.freegameradar.data.models.GameDto
@@ -19,7 +20,7 @@ fun GameGrid(
     gameList: List<GameDto>,
     navController: NavHostController,
     gridState: LazyGridState = rememberLazyGridState(),
-    bottomContentPadding: androidx.compose.ui.unit.Dp = 80.dp,
+    bottomContentPadding: Dp = 88.dp,
 ) {
     LazyVerticalGrid(
         state = gridState,

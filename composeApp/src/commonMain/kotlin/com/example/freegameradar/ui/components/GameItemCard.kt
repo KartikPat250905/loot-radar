@@ -28,8 +28,7 @@ fun GameItemCard(
         modifier = Modifier
             .padding(4.dp)
             .fillMaxWidth()
-            .height(180.dp)
-            .clickable { onClick() }, // ← Added back the clickable modifier
+            .clickable { onClick() },
         shape = RoundedCornerShape(12.dp),
         colors = CardDefaults.cardColors(
             containerColor = Color(0xFF1B263B)
@@ -37,18 +36,15 @@ fun GameItemCard(
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
     ) {
         Column(
-            modifier = Modifier.fillMaxSize()
+            modifier = Modifier.fillMaxWidth()
         ) {
-            // Image with overlay gradient - Reduced height
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(100.dp)
+                    .height(110.dp)
             ) {
-                val imageUrl = gameDto.thumbnail.orEmpty()
-
                 SubcomposeAsyncImage(
-                    model = imageUrl,
+                    model = gameDto.thumbnail.orEmpty(),
                     contentDescription = gameDto.title.orEmpty(),
                     modifier = Modifier
                         .fillMaxSize()
@@ -74,7 +70,7 @@ fun GameItemCard(
                             contentAlignment = Alignment.Center
                         ) {
                             Text(
-                                "No image",
+                                text = "No image",
                                 color = Color(0xFF6B7280),
                                 fontSize = 11.sp
                             )
@@ -82,7 +78,6 @@ fun GameItemCard(
                     }
                 )
 
-                // Subtle gradient overlay at bottom
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -99,13 +94,11 @@ fun GameItemCard(
                 )
             }
 
-            // Content section - More compact
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .weight(1f)
                     .padding(10.dp),
-                verticalArrangement = Arrangement.SpaceBetween
+                verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 Text(
                     text = gameDto.title ?: "No title found",
@@ -122,7 +115,6 @@ fun GameItemCard(
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    // Game type badge
                     Box(
                         modifier = Modifier
                             .background(
@@ -141,7 +133,6 @@ fun GameItemCard(
                         )
                     }
 
-                    // Worth with subtle accent
                     GameWorth(gameDto.worth)
                 }
             }
