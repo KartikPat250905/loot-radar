@@ -140,7 +140,7 @@ fun SettingsScreen(
                 )
             )
             .verticalScroll(rememberScrollState())
-            .padding(vertical = 16.dp)
+            .padding(top = 16.dp)
     ) {
         Text(
             "Settings",
@@ -160,7 +160,9 @@ fun SettingsScreen(
 
         OutlinedButton(
             onClick = { navController.navigate("support") },
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp)
         ) {
             Text("☕ Support the Developer")
         }
@@ -194,11 +196,16 @@ fun SettingsScreen(
         SettingsSectionHeader(title = "Notifications")
 
         Card(
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 8.dp),
             shape = RoundedCornerShape(16.dp),
             colors = CardDefaults.cardColors(containerColor = Color(0xFF1B263B))
         ) {
-            Column(modifier = Modifier.fillMaxWidth().padding(16.dp)) {
+            Column(modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp)
+            ) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically,
@@ -286,8 +293,6 @@ fun SettingsScreen(
             subtitle = "View app information and credits",
             onClick = { navController.navigate(Screen.About.route) }
         )
-
-        Spacer(modifier = Modifier.height(80.dp))
     }
 
     if (showUpgradeDialog) {
@@ -593,7 +598,9 @@ fun SettingsScreen(
 @Composable
 fun PreferenceSummaryCard(platforms: List<String>, types: List<String>, onEditClick: () -> Unit) {
     Card(
-        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp),
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(containerColor = Color(0xFF1B263B)),
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
