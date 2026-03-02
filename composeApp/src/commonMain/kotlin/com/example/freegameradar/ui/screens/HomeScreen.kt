@@ -85,7 +85,7 @@ fun HomeScreen(
     val searchText by gameViewModel.searchQuery.collectAsState()
     val dataSource by gameViewModel.dataSource.collectAsState()
     val selectedFilter by gameViewModel.gameTypeFilter.collectAsState()
-    val totalWorth by gameViewModel.totalWorth.collectAsState()  // ✅ NEW
+    val totalWorth by gameViewModel.totalWorth.collectAsState()
 
     val gridState = rememberLazyGridState()
     var isVisible by remember { mutableStateOf(true) }
@@ -93,11 +93,10 @@ fun HomeScreen(
     val permissionState = isNotificationPermissionGranted()
     var showPermissionDialog by remember { mutableStateOf(false) }
 
-    // ✅ Only use API total when no filters or search are active
     val apiWorthForBar = if (selectedFilter == GameTypeFilter.ALL && searchText.isBlank()) {
         totalWorth?.worthEstimationUsd
     } else {
-        null // falls back to local sum of the filtered games list
+        null
     }
 
     Log.d("HomeScreen", "🔄 RECOMPOSE - games=${games.size}, dataSource=$dataSource, isRefreshing=$isRefreshing")
@@ -106,7 +105,8 @@ fun HomeScreen(
         if (preferencesState.isLoaded &&
             preferencesState.notificationsEnabled &&
             !permissionState &&
-            !PermissionPromptTracker.hasShownThisSession) {
+            !PermissionPromptTracker.hasShownThisSession
+        ) {
             delay(500)
             PermissionPromptTracker.hasShownThisSession = true
             showPermissionDialog = true
@@ -176,8 +176,21 @@ fun HomeScreen(
         var previousOffset = gridState.firstVisibleItemScrollOffset
 
         snapshotFlow {
-            gridState.firstVisibleItemIndex to gridState.firstVisibleItemScrollOffset
-        }.collect { (index, offset) ->
+            Triple(
+                gridState.firstVisibleItemIndex,
+                gridState.firstVisibleItemScrollOffset,
+                gridState.canScrollForward || gridState.canScrollBackward
+            )
+        }.collect { (index, offset, hasScrollableContent) ->
+
+            // ✅ Not enough items to scroll — always keep top bar visible
+            if (!hasScrollableContent) {
+                isVisible = true
+                previousIndex = index
+                previousOffset = offset
+                return@collect
+            }
+
             if (index == 0 && offset < 20) {
                 isVisible = true
             } else {
@@ -193,6 +206,7 @@ fun HomeScreen(
                     isVisible = true
                 }
             }
+
             previousIndex = index
             previousOffset = offset
         }
@@ -272,7 +286,7 @@ fun HomeScreen(
                     TotalWorthBar(
                         games = games,
                         dataSource = dataSource,
-                        apiWorth = apiWorthForBar  // ✅ API total or null for filtered view
+                        apiWorth = apiWorthForBar
                     )
                 }
             }
@@ -300,7 +314,12 @@ fun HomeScreen(
                     }
                     else -> {
                         Log.d("HomeScreen", "📺 RENDERING: Game grid with ${games.size} games")
-                        GameGrid(games, navController, gridState = gridState)
+                        GameGrid(
+                            gameList = games,
+                            navController = navController,
+                            gridState = gridState,
+                            bottomContentPadding = 200.dp
+                        )
                     }
                 }
 

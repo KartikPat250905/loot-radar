@@ -19,12 +19,18 @@ fun GameGrid(
     gameList: List<GameDto>,
     navController: NavHostController,
     gridState: LazyGridState = rememberLazyGridState(),
+    bottomContentPadding: androidx.compose.ui.unit.Dp = 80.dp,
 ) {
     LazyVerticalGrid(
         state = gridState,
-        columns = GridCells.Fixed(2), // 2 items per row
+        columns = GridCells.Fixed(2),
         modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(8.dp)
+        contentPadding = PaddingValues(
+            start = 8.dp,
+            end = 8.dp,
+            top = 8.dp,
+            bottom = bottomContentPadding
+        )
     ) {
         items(gameList) { game ->
             GameItemCard(gameDto = game) {
