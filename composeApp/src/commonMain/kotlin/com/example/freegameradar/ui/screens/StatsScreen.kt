@@ -59,7 +59,5 @@ fun StatsScreen(viewModel: UserStatsViewModel, modifier: Modifier = Modifier) {
             claimedGamesWithTimestamps = claimedGamesWithTimestamps,
             modifier = Modifier.padding(horizontal = 16.dp)
         )
-
-        Spacer(modifier = Modifier.height(80.dp))
     }
 }
