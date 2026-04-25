@@ -2,6 +2,7 @@
 package com.radarlabs.freegameradar.ui.screens
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.collectIsDraggedAsState
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
@@ -12,7 +13,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
-import androidx.compose.material3.TabRowDefaults.tabIndicatorOffset
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
@@ -21,6 +21,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
@@ -42,7 +43,7 @@ fun HotDealsScreen(
     val trending by vm.trending.collectAsState()
 
     var tabIndex by rememberSaveable { mutableStateOf(0) }
-    val tabs = listOf("Featured", "Highest Value", "Expiring", "Trending")
+    val tabs = listOf("Featured", "Highest", "Expiring", "Trending")
 
     LaunchedEffect(Unit) {
         vm.load()
@@ -85,7 +86,9 @@ fun HotDealsScreen(
 
             HorizontalPager(
                 state = pagerState,
-                modifier = Modifier.fillMaxWidth().height(240.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(240.dp),
                 pageSpacing = 16.dp,
                 contentPadding = PaddingValues(horizontal = 0.dp)
             ) { page ->
@@ -124,35 +127,46 @@ fun HotDealsScreen(
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        // Styled tabs
-        TabRow(
-            selectedTabIndex = tabIndex,
-            containerColor = Color(0xFF0D1B2A),
-            indicator = { tabPositions ->
-                if (tabIndex < tabPositions.size) {
-                    TabRowDefaults.SecondaryIndicator(
-                        modifier = Modifier.tabIndicatorOffset(tabPositions[tabIndex]),
-                        height = 3.dp,
-                        color = Color(0xFF10B981)
-                    )
-                }
-            },
-            divider = {},
-            modifier = Modifier.fillMaxWidth()
+        // Custom tab row — each tab gets equal weight(1f),
+        // softWrap = false prevents line-breaking on any screen size
+        Column(modifier = Modifier
+            .fillMaxWidth()
+            .background(Color(0xFF0D1B2A))
         ) {
-            tabs.forEachIndexed { i, title ->
-                Tab(
-                    selected = tabIndex == i,
-                    onClick = { tabIndex = i },
-                    text = {
+            Row(modifier = Modifier.fillMaxWidth()) {
+                tabs.forEachIndexed { i, title ->
+                    val selected = tabIndex == i
+                    Column(
+                        modifier = Modifier
+                            .weight(1f)
+                            .clickable { tabIndex = i }
+                            .padding(vertical = 12.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
                         Text(
                             text = title,
-                            fontWeight = if (tabIndex == i) FontWeight.Bold else FontWeight.Normal,
+                            fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal,
                             fontSize = 14.sp,
-                            color = if (tabIndex == i) Color(0xFF10B981) else Color(0xFF9CA3AF)
+                            softWrap = false,
+                            overflow = TextOverflow.Ellipsis,
+                            textAlign = TextAlign.Center,
+                            color = if (selected) Color(0xFF10B981) else Color(0xFF9CA3AF)
                         )
                     }
-                )
+                }
+            }
+            // Indicator row — drawn separately so it aligns under each tab
+            Row(modifier = Modifier.fillMaxWidth()) {
+                tabs.forEachIndexed { i, _ ->
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(3.dp)
+                            .background(
+                                if (tabIndex == i) Color(0xFF10B981) else Color.Transparent
+                            )
+                    )
+                }
             }
         }
 
@@ -169,7 +183,9 @@ fun HotDealsScreen(
 
         if (selectedList.isEmpty()) {
             Box(
-                modifier = Modifier.fillMaxWidth().height(150.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(150.dp),
                 contentAlignment = Alignment.Center
             ) {
                 if (tabIndex == 2) {

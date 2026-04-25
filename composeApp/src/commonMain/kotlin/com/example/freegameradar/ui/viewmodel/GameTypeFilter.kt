@@ -11,7 +11,7 @@ enum class GameTypeFilter {
             ALL -> "All"
             GAMES -> "Games"
             DLC -> "DLC"
-            EARLY_ACCESS -> "Early Access"
+            EARLY_ACCESS -> "Beta"
         }
     }
 }
