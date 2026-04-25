@@ -84,7 +84,7 @@ fun GameItemCard(
                     }
                 )
 
-                // Bottom gradient overlay — taller now to back both price badges
+                // Bottom gradient overlay
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -132,33 +132,30 @@ fun GameItemCard(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(4.dp)
                 ) {
-                    // Original price crossed out
                     Text(
                         text = gameDto.worth ?: "",
                         fontSize = 10.sp,
                         fontWeight = FontWeight.Medium,
-                        color = Color(0xFFAAAAAA),
                         maxLines = 1,
                         softWrap = false,
                         overflow = TextOverflow.Ellipsis,
-                        style = LocalTextStyle.current.copy(
+                        style = androidx.compose.ui.text.TextStyle(
                             textDecoration = TextDecoration.LineThrough,
                             color = Color(0xFFAAAAAA)
                         )
                     )
-                    // Free price in green
                     Text(
                         text = "$0.00",
                         fontSize = 11.sp,
                         fontWeight = FontWeight.Bold,
                         color = Color(0xFF10B981),
                         maxLines = 1,
-                        softWrap = false,
+                        softWrap = false
                     )
                 }
             }
 
-            // Card body — title only, clean and concise
+            // Card body — always 2 lines for uniform card height
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -169,6 +166,7 @@ fun GameItemCard(
                     color = Color(0xFFE5E7EB),
                     fontSize = 13.sp,
                     fontWeight = FontWeight.SemiBold,
+                    minLines = 2,
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis,
                     lineHeight = 18.sp

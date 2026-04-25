@@ -79,8 +79,8 @@ extensions.configure<ApplicationExtension> {
         applicationId = "com.radarlabs.freegameradar"
         minSdk = libs.versions.android.minSdk.get().toInt()
         targetSdk = libs.versions.android.targetSdk.get().toInt()
-        versionCode = 7
-        versionName = "1.0.6"
+        versionCode = 8
+        versionName = "1.1.0"
     }
 
     signingConfigs {

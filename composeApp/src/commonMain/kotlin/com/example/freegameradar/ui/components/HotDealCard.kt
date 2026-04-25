@@ -134,6 +134,7 @@ fun HotDealCard(game: GameDto, onClick: () -> Unit) {
                     fontSize = 13.sp,
                     fontWeight = FontWeight.SemiBold,
                     color = Color(0xFFE5E7EB),
+                    minLines = 2,
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis,
                     lineHeight = 18.sp

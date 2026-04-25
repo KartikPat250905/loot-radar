@@ -98,7 +98,7 @@ fun HotDealsScreen(
                 }
             }
 
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(1.dp))
 
             // Styled page indicator
             Row(
@@ -125,7 +125,7 @@ fun HotDealsScreen(
             }
         }
 
-        Spacer(modifier = Modifier.height(24.dp))
+        Spacer(modifier = Modifier.height(5.dp))
 
         // Custom tab row — each tab gets equal weight(1f),
         // softWrap = false prevents line-breaking on any screen size
