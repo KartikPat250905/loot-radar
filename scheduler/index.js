@@ -1,7 +1,6 @@
 const admin = require('firebase-admin');
 const axios = require('axios');
 
-// The service account key will be provided as an environment variable
 if (!process.env.SERVICE_ACCOUNT_KEY_JSON) {
   throw new Error('The SERVICE_ACCOUNT_KEY_JSON environment variable is not set.');
 }
@@ -17,8 +16,6 @@ const GAME_API_URL = 'https://www.gamerpower.com/api/giveaways';
 
 /**
  * Normalizes platform names from the API to match the app's expected format.
- * @param {string} platformString - The platforms string from the API (e.g., "PC, Epic Games Store")
- * @returns {Array<string>} - Array of normalized platform names
  */
 function normalizePlatforms(platformString) {
   const platformMap = {
@@ -98,7 +95,22 @@ async function importDeals() {
 }
 
 /**
- * Efficiently finds all users who should be notified about new deals and sends them a
+ * Removes stale FCM tokens from a user's document in Firestore.
+ * @param {string} userId
+ * @param {string[]} tokensToRemove - The actual token strings to remove
+ */
+async function removeStaleTokens(userId, tokensToRemove) {
+  if (tokensToRemove.length === 0) return;
+
+  await db.collection('users').doc(userId).update({
+    notificationTokens: admin.firestore.FieldValue.arrayRemove(...tokensToRemove)
+  });
+
+  console.log(`  → Removed ${tokensToRemove.length} stale token(s) for user ${userId}`);
+}
+
+/**
+ * Finds all users who should be notified about new deals and sends them a
  * single notification containing only the relevant deal IDs.
  * @param {Array} newDeals - A list of the new deals that were just imported.
  */
@@ -121,11 +133,9 @@ async function notifyUsersAboutNewDeals(newDeals) {
     const userTypes = user.preferredGameTypes || [];
 
     const matchingDealsForUser = newDeals.filter(deal => {
-      // Use normalized platforms instead of raw API values
       const dealPlatforms = normalizePlatforms(deal.platforms);
       const dealType = deal.type.toLowerCase();
 
-      // If no preferences are set, match everything
       if (userPlatforms.length === 0 && userTypes.length === 0) {
         return true;
       }
@@ -142,9 +152,7 @@ async function notifyUsersAboutNewDeals(newDeals) {
       const dealIds = matchingDealsForUser.map(deal => deal.id).join(',');
 
       const message = {
-        data: {
-          deal_ids: dealIds
-        },
+        data: { deal_ids: dealIds },
         tokens: user.notificationTokens,
       };
 
@@ -152,21 +160,30 @@ async function notifyUsersAboutNewDeals(newDeals) {
 
       allNotifications.push(
         messaging.sendEachForMulticast(message)
-          .then(response => {
+          .then(async response => {
             console.log(`✓ Notification sent to user ${userId}. Success: ${response.successCount}, Failure: ${response.failureCount}`);
 
             if (response.failureCount > 0) {
+              const tokensToRemove = [];
+
               response.responses.forEach((resp, idx) => {
                 if (!resp.success) {
                   console.error(`  ✗ Token ${idx} failed:`, resp.error.code);
 
-                  if (resp.error.code === 'messaging/invalid-registration-token' ||
-                      resp.error.code === 'messaging/registration-token-not-registered') {
-                    console.log(`  → Token ${idx} should be removed from database`);
+                  if (
+                    resp.error.code === 'messaging/invalid-registration-token' ||
+                    resp.error.code === 'messaging/registration-token-not-registered'
+                  ) {
+                    // Collect the actual token string, not just the index
+                    tokensToRemove.push(user.notificationTokens[idx]);
                   }
                 }
               });
+
+              // Actually remove the stale tokens from Firestore
+              await removeStaleTokens(userId, tokensToRemove);
             }
+
             return response;
           })
           .catch(error => {
