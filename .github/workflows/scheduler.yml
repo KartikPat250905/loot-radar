@@ -2,23 +2,25 @@ name: Import Game Deals
 
 on:
   schedule:
-    - cron: "*/30 * * * *"   # Use double quotes, not single quotes
-  workflow_dispatch: {}       # Add {} to explicitly define manual trigger
+    - cron: "*/30 * * * *"
+  workflow_dispatch: {}
 
 jobs:
   import-deals:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Set up Node.js
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
           node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: ./scheduler/package-lock.json
 
       - name: Install dependencies
-        run: npm install
+        run: npm ci
         working-directory: ./scheduler
 
       - name: Run script
