@@ -38,8 +38,12 @@ const PLATFORM_MAP = {
   'origin': 'origin',
   'ubisoft': 'ubisoft',
   'android': 'android',
-  'ios': 'ios'
+  'ios': 'ios',
+  'drm-free': 'drm-free',
+  'vr': 'vr'
 };
+
+const NORMALIZED_PLATFORMS = new Set(Object.values(PLATFORM_MAP));
 
 /**
  * Normalization Map for Game Types
@@ -57,6 +61,8 @@ const TYPE_MAP = {
   'other': 'other'
 };
 
+const NORMALIZED_TYPES = new Set(Object.values(TYPE_MAP));
+
 /**
  * Normalizes platform strings by removing parenthetical info and matching against PLATFORM_MAP.
  * e.g., "PC (Windows)" -> "pc", "Epic Games Store" -> "epic-games-store"
@@ -68,6 +74,11 @@ function normalizeString(str) {
   
   if (PLATFORM_MAP[raw]) {
     return PLATFORM_MAP[raw];
+  }
+
+  // If already normalized, return as-is without warning
+  if (NORMALIZED_PLATFORMS.has(raw)) {
+    return raw;
   }
 
   const fallback = raw.replace(/\s+/g, '-');
@@ -91,6 +102,11 @@ function normalizeType(str) {
 
   if (TYPE_MAP[raw]) {
     return TYPE_MAP[raw];
+  }
+
+  // If already normalized, return as-is without warning
+  if (NORMALIZED_TYPES.has(raw)) {
+    return raw;
   }
 
   const fallback = raw.replace(/\s+/g, '-');
