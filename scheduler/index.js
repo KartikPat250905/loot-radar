@@ -197,6 +197,7 @@ async function notifyUsers(dealsToNotify) {
   let totalNotificationsSent = 0;
   const dealStats = {}; 
   const userIdsToMark = {}; // Map of dealId -> Array of userIds to update in Firestore
+  const userIdsForTier3Update = new Set(); // Track users who receive a Tier 3 fallback
 
   dealsToNotify.forEach(d => {
     dealStats[d.id] = { 
@@ -254,18 +255,26 @@ async function notifyUsers(dealsToNotify) {
         matchingDeals = tier2Matches;
         matchTier = 'Tier 2';
       } else {
-        // Tier 3: Fallback to most recent unnotified deal overall
-        const tier3Candidates = dealsToNotify
-          .filter(deal => !(deal.notifiedUserIds && deal.notifiedUserIds.includes(userId)))
-          .sort((a, b) => {
-            const timeA = (a.importedAt && a.importedAt.toMillis) ? a.importedAt.toMillis() : 0;
-            const timeB = (b.importedAt && b.importedAt.toMillis) ? b.importedAt.toMillis() : 0;
-            return timeB - timeA;
-          });
+        // Tier 3 Cooldown Check: only fire at most once every 24 hours per user
+        const twentyFourHoursAgo = Date.now() - 24 * 60 * 60 * 1000;
+        const lastTier3 = user.lastTier3NotifiedAt ? user.lastTier3NotifiedAt.toMillis() : 0;
 
-        if (tier3Candidates.length > 0) {
-          matchingDeals = [tier3Candidates[0]];
-          matchTier = 'Tier 3';
+        if (lastTier3 > twentyFourHoursAgo) {
+          console.log(`User ${userId}: Tier 3 skipped (cooldown active)`);
+        } else {
+          // Tier 3: Fallback to most recent unnotified deal overall
+          const tier3Candidates = dealsToNotify
+            .filter(deal => !(deal.notifiedUserIds && deal.notifiedUserIds.includes(userId)))
+            .sort((a, b) => {
+              const timeA = (a.importedAt && a.importedAt.toMillis) ? a.importedAt.toMillis() : 0;
+              const timeB = (b.importedAt && b.importedAt.toMillis) ? b.importedAt.toMillis() : 0;
+              return timeB - timeA;
+            });
+
+          if (tier3Candidates.length > 0) {
+            matchingDeals = [tier3Candidates[0]];
+            matchTier = 'Tier 3';
+          }
         }
       }
     }
@@ -303,6 +312,9 @@ async function notifyUsers(dealsToNotify) {
         totalNotificationsSent += response.successCount;
         
         if (response.successCount > 0) {
+          if (matchTier === 'Tier 3') {
+            userIdsForTier3Update.add(userId);
+          }
           matchingDeals.forEach(d => {
             dealStats[d.id].tokensSent += response.successCount;
             dealStats[d.id].matchedCount++;
@@ -362,6 +374,14 @@ async function notifyUsers(dealsToNotify) {
       console.log(`Deal ${deal.id} (${deal.title}): Notified ${usersToMark.length} users (T1: ${stats.tier1Matches}, T2: ${stats.tier2Matches}, T3: ${stats.tier3Matches}).`);
     }
   });
+
+  // Update user Tier 3 cooldown timestamps
+  userIdsForTier3Update.forEach(uId => {
+    batch.update(db.collection('users').doc(uId), {
+      lastTier3NotifiedAt: admin.firestore.FieldValue.serverTimestamp()
+    });
+  });
+
   await batch.commit();
 }
 
