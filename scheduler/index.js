@@ -286,25 +286,18 @@ async function notifyUsers(dealsToNotify) {
     console.log(`User ${userId}: Matched ${matchingDeals.length} deals via ${matchTier}. Sending to ${user.notificationTokens.length} tokens.`);
 
     const message = {
-      notification: {
+      data: {
         title: matchingDeals.length === 1 
           ? '🎁 New Free Game Detected!' 
           : `📡 ${matchingDeals.length} New Free Games Found!`,
         body: matchingDeals.length === 1
           ? `${matchingDeals[0].title} is now free on ${matchingDeals[0].platforms}.`
-          : `Check out the latest free games matching your radar preferences.`
-      },
-      data: { 
+          : `Check out the latest free games matching your radar preferences.`,
         deal_ids: matchingDeals.map(d => d.id).join(','),
         matchTier: matchTier
       },
       tokens: user.notificationTokens,
-      android: {
-        priority: 'high',
-        notification: {
-          channelId: 'new_deals_channel'
-        }
-      }
+      android: { priority: 'high' }
     };
 
     notificationPromises.push(
