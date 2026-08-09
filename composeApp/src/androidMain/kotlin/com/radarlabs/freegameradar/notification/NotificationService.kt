@@ -1,16 +1,19 @@
 package com.radarlabs.freegameradar.notification
 
+import android.Manifest
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.drawable.BitmapDrawable
 import android.os.Build
 import android.util.Log
 import androidx.core.app.NotificationCompat
+import androidx.core.content.ContextCompat
 import coil3.BitmapImage
 import coil3.DrawableImage
 import coil3.imageLoader
@@ -41,8 +44,18 @@ class NotificationService(private val context: Context) {
         }
     }
 
+    private fun checkPermission(): Boolean {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            if (ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
+                Log.w("NotificationService", "⚠️ POST_NOTIFICATIONS permission not granted. Notification will be suppressed.")
+                return false
+            }
+        }
+        return true
+    }
+
     fun showNewDealsNotification(deals: List<DealNotification>) {
-        if (deals.isEmpty()) return
+        if (!checkPermission() || deals.isEmpty()) return
 
         CoroutineScope(Dispatchers.IO).launch {
             val dealCount = deals.size
@@ -93,6 +106,34 @@ class NotificationService(private val context: Context) {
                 notificationManager.notify(SUMMARY_NOTIFICATION_ID, notification)
             }
         }
+    }
+
+    fun showFallbackNotification(count: Int) {
+        if (!checkPermission()) return
+
+        val intent = Intent(context, MainActivity::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+            putExtra("route", "notification")
+        }
+
+        val pendingIntent = PendingIntent.getActivity(
+            context, 0, intent, PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
+        )
+
+        val title = "📡 Radar Ping: New Signals Detected"
+        val text = "We found $count new free games! Tap to check the radar."
+
+        val notification = NotificationCompat.Builder(context, CHANNEL_ID)
+            .setSmallIcon(R.drawable.ic_notification)
+            .setColor(context.getColor(R.color.green))
+            .setContentTitle(title)
+            .setContentText(text)
+            .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+            .setContentIntent(pendingIntent)
+            .setAutoCancel(true)
+            .build()
+
+        notificationManager.notify(SUMMARY_NOTIFICATION_ID, notification)
     }
 
     private suspend fun fetchImage(url: String): Bitmap? {
