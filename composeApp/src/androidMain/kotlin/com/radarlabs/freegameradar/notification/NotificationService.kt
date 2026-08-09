@@ -108,6 +108,35 @@ class NotificationService(private val context: Context) {
         }
     }
 
+    /**
+     * Shows a daily digest notification.
+     * Tapping this notification takes the user to the notifications/deals list.
+     */
+    fun showDigestNotification(title: String, body: String) {
+        if (!checkPermission()) return
+
+        val intent = Intent(context, MainActivity::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+            putExtra("route", "notification")
+        }
+
+        val pendingIntent = PendingIntent.getActivity(
+            context, 0, intent, PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
+        )
+
+        val notification = NotificationCompat.Builder(context, CHANNEL_ID)
+            .setSmallIcon(R.drawable.ic_notification)
+            .setColor(context.getColor(R.color.green))
+            .setContentTitle(title)
+            .setContentText(body)
+            .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+            .setContentIntent(pendingIntent)
+            .setAutoCancel(true)
+            .build()
+
+        notificationManager.notify(DIGEST_NOTIFICATION_ID, notification)
+    }
+
     fun showFallbackNotification(count: Int) {
         if (!checkPermission()) return
 
@@ -180,5 +209,6 @@ class NotificationService(private val context: Context) {
     companion object {
         const val CHANNEL_ID = "new_deals_channel"
         private const val SUMMARY_NOTIFICATION_ID = -1001
+        private const val DIGEST_NOTIFICATION_ID = -1002
     }
 }

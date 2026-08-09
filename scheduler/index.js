@@ -183,6 +183,23 @@ async function removeStaleTokens(userId, tokens) {
 
 async function notifyUsers(dealsToNotify) {
   console.log(`--- Phase 2: Notifying Users for ${dealsToNotify.length} recent deals ---`);
+
+  // --- Digest Computation (Run once per notifyUsers call) ---
+  let totalWorth = 0;
+  const totalCount = dealsToNotify.length;
+  dealsToNotify.forEach(deal => {
+    if (deal.worth && typeof deal.worth === 'string' && deal.worth.toLowerCase() !== 'n/a') {
+      // Strip everything except numbers and decimal point
+      const numericString = deal.worth.replace(/[^0-9.]/g, '');
+      const worthValue = parseFloat(numericString);
+      if (!isNaN(worthValue) && worthValue > 0) {
+        totalWorth += worthValue;
+      }
+    }
+  });
+  const totalWorthFormatted = Math.floor(totalWorth);
+  console.log(`📊 Digest Summary: $${totalWorthFormatted} total worth across ${totalCount} free items.`);
+
   const usersSnapshot = await db.collection('users')
     .where('notificationsEnabled', '==', true)
     .get();
@@ -197,7 +214,7 @@ async function notifyUsers(dealsToNotify) {
   let totalNotificationsSent = 0;
   const dealStats = {}; 
   const userIdsToMark = {}; // Map of dealId -> Array of userIds to update in Firestore
-  const userIdsForTier3Update = new Set(); // Track users who receive a Tier 3 fallback
+  const userIdsForDigestUpdate = new Set(); // Track users who receive a digest
 
   dealsToNotify.forEach(d => {
     dealStats[d.id] = { 
@@ -205,8 +222,7 @@ async function notifyUsers(dealsToNotify) {
       tokensSent: 0, 
       failures: 0,
       tier1Matches: 0,
-      tier2Matches: 0,
-      tier3Matches: 0
+      tier2Matches: 0
     };
     userIdsToMark[d.id] = [];
   });
@@ -255,73 +271,72 @@ async function notifyUsers(dealsToNotify) {
         matchingDeals = tier2Matches;
         matchTier = 'Tier 2';
       } else {
-        // Tier 3 Cooldown Check: only fire at most once every 24 hours per user
+        // Daily Digest Logic (Replaces Tier 3 Fallback)
         const twentyFourHoursAgo = Date.now() - 24 * 60 * 60 * 1000;
-        const lastTier3 = user.lastTier3NotifiedAt ? user.lastTier3NotifiedAt.toMillis() : 0;
+        const lastDigest = user.lastDigestNotifiedAt ? user.lastDigestNotifiedAt.toMillis() : 0;
 
-        if (lastTier3 > twentyFourHoursAgo) {
-          console.log(`User ${userId}: Tier 3 skipped (cooldown active)`);
+        if (lastDigest > twentyFourHoursAgo) {
+          console.log(`User ${userId}: Digest skipped (cooldown active)`);
         } else {
-          // Tier 3: Fallback to most recent unnotified deal overall
-          const tier3Candidates = dealsToNotify
-            .filter(deal => !(deal.notifiedUserIds && deal.notifiedUserIds.includes(userId)))
-            .sort((a, b) => {
-              const timeA = (a.importedAt && a.importedAt.toMillis) ? a.importedAt.toMillis() : 0;
-              const timeB = (b.importedAt && b.importedAt.toMillis) ? b.importedAt.toMillis() : 0;
-              return timeB - timeA;
-            });
-
-          if (tier3Candidates.length > 0) {
-            matchingDeals = [tier3Candidates[0]];
-            matchTier = 'Tier 3';
-          }
+          matchTier = 'Digest';
         }
       }
     }
 
-    if (matchingDeals.length === 0) {
+    if (matchTier === 'None') {
       return;
     }
 
-    console.log(`User ${userId}: Matched ${matchingDeals.length} deals via ${matchTier}. Sending to ${user.notificationTokens.length} tokens.`);
-
+    // Prepare notification content
+    const isDigest = matchTier === 'Digest';
     const message = {
       data: {
-        title: matchingDeals.length === 1 
-          ? '🎁 New Free Game Detected!' 
-          : `📡 ${matchingDeals.length} New Free Games Found!`,
-        body: matchingDeals.length === 1
-          ? `${matchingDeals[0].title} is now free on ${matchingDeals[0].platforms}.`
-          : `Check out the latest free games matching your radar preferences.`,
-        deal_ids: matchingDeals.map(d => d.id).join(','),
         matchTier: matchTier
       },
       tokens: user.notificationTokens,
       android: { priority: 'high' }
     };
 
+    if (isDigest) {
+      message.data.title = `💰 $${totalWorthFormatted} in Free Games Right Now`;
+      message.data.body = `${totalCount} free games and giveaways are live — check them out.`;
+      message.data.isDigest = "true";
+    } else {
+      message.data.title = matchingDeals.length === 1 
+        ? '🎁 New Free Game Detected!' 
+        : `📡 ${matchingDeals.length} New Free Games Found!`;
+      message.data.body = matchingDeals.length === 1
+        ? `${matchingDeals[0].title} is now free on ${matchingDeals[0].platforms}.`
+        : `Check out the latest free games matching your radar preferences.`;
+      message.data.deal_ids = matchingDeals.map(d => d.id).join(',');
+    }
+
+    console.log(`User ${userId}: ${isDigest ? 'Daily Digest eligible' : `Matched ${matchingDeals.length} deals via ${matchTier}`}. Sending to ${user.notificationTokens.length} tokens.`);
+
     notificationPromises.push(
       messaging.sendEachForMulticast(message).then(async response => {
         totalNotificationsSent += response.successCount;
         
         if (response.successCount > 0) {
-          if (matchTier === 'Tier 3') {
-            userIdsForTier3Update.add(userId);
+          if (isDigest) {
+            userIdsForDigestUpdate.add(userId);
+          } else {
+            matchingDeals.forEach(d => {
+              dealStats[d.id].tokensSent += response.successCount;
+              dealStats[d.id].matchedCount++;
+              if (matchTier === 'Tier 1') dealStats[d.id].tier1Matches++;
+              else if (matchTier === 'Tier 2') dealStats[d.id].tier2Matches++;
+              userIdsToMark[d.id].push(userId);
+            });
           }
-          matchingDeals.forEach(d => {
-            dealStats[d.id].tokensSent += response.successCount;
-            dealStats[d.id].matchedCount++;
-            if (matchTier === 'Tier 1') dealStats[d.id].tier1Matches++;
-            else if (matchTier === 'Tier 2') dealStats[d.id].tier2Matches++;
-            else if (matchTier === 'Tier 3') dealStats[d.id].tier3Matches++;
-            userIdsToMark[d.id].push(userId);
-          });
         }
 
         if (response.failureCount > 0) {
-          matchingDeals.forEach(d => {
-            dealStats[d.id].failures += response.failureCount;
-          });
+          if (!isDigest) {
+            matchingDeals.forEach(d => {
+              dealStats[d.id].failures += response.failureCount;
+            });
+          }
           const stale = response.responses
             .map((r, i) => (!r.success &&
               ['messaging/invalid-registration-token', 'messaging/registration-token-not-registered']
@@ -353,7 +368,6 @@ async function notifyUsers(dealsToNotify) {
         tokensFailed: stats.failures,
         tier1Matches: stats.tier1Matches,
         tier2Matches: stats.tier2Matches,
-        tier3Matches: stats.tier3Matches,
         lastAttemptedAt: admin.firestore.FieldValue.serverTimestamp()
       }
     };
@@ -364,14 +378,14 @@ async function notifyUsers(dealsToNotify) {
 
     batch.update(db.collection('deals').doc(String(deal.id)), updateData);
     if (stats.matchedCount > 0) {
-      console.log(`Deal ${deal.id} (${deal.title}): Notified ${usersToMark.length} users (T1: ${stats.tier1Matches}, T2: ${stats.tier2Matches}, T3: ${stats.tier3Matches}).`);
+      console.log(`Deal ${deal.id} (${deal.title}): Notified ${usersToMark.length} users (T1: ${stats.tier1Matches}, T2: ${stats.tier2Matches}).`);
     }
   });
 
-  // Update user Tier 3 cooldown timestamps
-  userIdsForTier3Update.forEach(uId => {
+  // Update user Daily Digest cooldown timestamps
+  userIdsForDigestUpdate.forEach(uId => {
     batch.update(db.collection('users').doc(uId), {
-      lastTier3NotifiedAt: admin.firestore.FieldValue.serverTimestamp()
+      lastDigestNotifiedAt: admin.firestore.FieldValue.serverTimestamp()
     });
   });
 
