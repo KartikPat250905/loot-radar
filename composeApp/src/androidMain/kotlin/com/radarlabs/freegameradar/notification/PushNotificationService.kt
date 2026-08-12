@@ -20,12 +20,26 @@ class PushNotificationService : FirebaseMessagingService() {
     override fun onMessageReceived(remoteMessage: RemoteMessage) {
         super.onMessageReceived(remoteMessage)
 
+        val data = remoteMessage.data
         Log.d("FCM", "=================================")
         Log.d("FCM", "Message received from: ${remoteMessage.from}")
-        Log.d("FCM", "Data payload: ${remoteMessage.data}")
+        Log.d("FCM", "Data payload: $data")
         Log.d("FCM", "=================================")
 
-        remoteMessage.data["deal_ids"]?.let { dealIds ->
+        // Handle Digest Notification
+        if (data["isDigest"] == "true") {
+            val title = data["title"] ?: "Daily Free Game Digest"
+            val body = data["body"] ?: "Check out today's free deals!"
+            
+            val notificationService = NotificationService(applicationContext)
+            notificationService.createNotificationChannel()
+            notificationService.showDigestNotification(title, body)
+            Log.d("FCM", "✅ Displayed digest notification")
+            return
+        }
+
+        // Handle Specific Deal Notifications
+        data["deal_ids"]?.let { dealIds ->
             Log.d("FCM", "Received deal IDs: $dealIds")
 
             CoroutineScope(Dispatchers.IO).launch {
@@ -37,7 +51,7 @@ class PushNotificationService : FirebaseMessagingService() {
                 }
             }
         } ?: run {
-            Log.w("FCM", "No 'deal_ids' field in data payload!")
+            Log.w("FCM", "No 'deal_ids' or 'isDigest' field in data payload!")
         }
     }
 
