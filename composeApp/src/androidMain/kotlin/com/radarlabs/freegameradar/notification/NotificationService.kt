@@ -64,8 +64,21 @@ class NotificationService(private val context: Context) {
                 putExtra("route", "notification")
             }
 
+            // Unique request code per notification type/instance so their PendingIntents
+            // never collide. With FLAG_UPDATE_CURRENT, PendingIntents that share a request
+            // code AND a matching Intent signature (component/action/data — extras don't
+            // count) are treated as the SAME PendingIntent, so building a new one with the
+            // same code silently overwrites the extras on any already-posted notification
+            // using it. That was causing the digest notification to open the wrong screen
+            // whenever a deal notification was created afterward with request code 0.
+            val requestCode = if (dealCount == 1) {
+                NEW_DEAL_REQUEST_CODE_BASE + deals.first().id.toInt()
+            } else {
+                MULTI_DEAL_REQUEST_CODE
+            }
+
             val pendingIntent = PendingIntent.getActivity(
-                context, 0, intent, PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
+                context, requestCode, intent, PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
             )
 
             if (dealCount == 1) {
@@ -110,18 +123,22 @@ class NotificationService(private val context: Context) {
 
     /**
      * Shows a daily digest notification.
-     * Tapping this notification takes the user to the notifications/deals list.
+     * Tapping this notification takes the user to the home screen — the digest
+     * summarizes ALL currently live giveaways (via the /worth API total), not a
+     * specific set of deal IDs, so there's nothing deal-specific to deep-link into.
+     * Routing to "notification" here would open an empty list since no deals are
+     * fetched/saved for a digest send.
      */
     fun showDigestNotification(title: String, body: String) {
         if (!checkPermission()) return
 
         val intent = Intent(context, MainActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-            putExtra("route", "notification")
+            putExtra("route", "home")
         }
 
         val pendingIntent = PendingIntent.getActivity(
-            context, 0, intent, PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
+            context, DIGEST_REQUEST_CODE, intent, PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
         )
 
         val notification = NotificationCompat.Builder(context, CHANNEL_ID)
@@ -146,7 +163,7 @@ class NotificationService(private val context: Context) {
         }
 
         val pendingIntent = PendingIntent.getActivity(
-            context, 0, intent, PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
+            context, FALLBACK_REQUEST_CODE, intent, PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
         )
 
         val title = "📡 Radar Ping: New Signals Detected"
@@ -210,5 +227,15 @@ class NotificationService(private val context: Context) {
         const val CHANNEL_ID = "new_deals_channel"
         private const val SUMMARY_NOTIFICATION_ID = -1001
         private const val DIGEST_NOTIFICATION_ID = -1002
+
+        // Unique PendingIntent request codes per notification type. Must never collide,
+        // or FLAG_UPDATE_CURRENT will silently swap the extras on an already-posted
+        // notification's PendingIntent (see comment at the single/multi-deal call site).
+        private const val MULTI_DEAL_REQUEST_CODE = -2001
+        private const val DIGEST_REQUEST_CODE = -2002
+        private const val FALLBACK_REQUEST_CODE = -2003
+        // Single-deal notifications get their own code derived from the deal ID so that
+        // two different deals' notifications don't collide with each other either.
+        private const val NEW_DEAL_REQUEST_CODE_BASE = 10_000
     }
 }
