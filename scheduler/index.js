@@ -12,6 +12,7 @@ admin.initializeApp({
 const db = admin.firestore();
 const messaging = admin.messaging();
 const GAME_API_URL = 'https://www.gamerpower.com/api/giveaways';
+const GAME_WORTH_API_URL = 'https://www.gamerpower.com/api/worth';
 const CHUNK_SIZE = 30;
 
 /**
@@ -71,7 +72,7 @@ function normalizeString(str) {
   if (!str) return '';
   // Strip parentheses and content inside them, then trim extra whitespace
   const raw = str.replace(/\([^)]*\)/g, '').trim().toLowerCase();
-  
+
   if (PLATFORM_MAP[raw]) {
     return PLATFORM_MAP[raw];
   }
@@ -145,8 +146,8 @@ async function importDeals() {
     if (newDeals.length > 0) {
       const batch = db.batch();
       newDeals.forEach(deal => {
-        batch.set(dealsCollection.doc(String(deal.id)), { 
-          ...deal, 
+        batch.set(dealsCollection.doc(String(deal.id)), {
+          ...deal,
           notifiedUserIds: [], // Track notifications per-user instead of global boolean
           importedAt: admin.firestore.FieldValue.serverTimestamp()
         });
@@ -173,6 +174,29 @@ async function getRecentDeals() {
   return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 }
 
+/**
+ * Fetches the authoritative total worth of ALL currently active giveaways
+ * from GamerPower — the same source the in-app TotalWorthBar uses.
+ * Falls back to null on failure so callers can degrade gracefully.
+ */
+async function getWorthEstimate() {
+  try {
+    const { data } = await axios.get(GAME_WORTH_API_URL);
+    const worth = parseFloat(String(data.worth_estimation_usd).replace(/[^0-9.]/g, ''));
+    if (isNaN(worth)) {
+      console.log('⚠️ /worth endpoint returned unparseable value:', data.worth_estimation_usd);
+      return null;
+    }
+    return {
+      worth,
+      activeCount: data.active_giveaways_number ?? null
+    };
+  } catch (error) {
+    console.error('⚠️ Failed to fetch /worth estimate:', error.message);
+    return null;
+  }
+}
+
 async function removeStaleTokens(userId, tokens) {
   if (!tokens.length) return;
   console.log(`🧹 Cleaning up ${tokens.length} stale tokens for user ${userId}`);
@@ -183,6 +207,38 @@ async function removeStaleTokens(userId, tokens) {
 
 async function notifyUsers(dealsToNotify) {
   console.log(`--- Phase 2: Notifying Users for ${dealsToNotify.length} recent deals ---`);
+
+  // --- Digest Computation (Run once per notifyUsers call) ---
+  // Use the authoritative site-wide total (matches the in-app TotalWorthBar),
+  // not a sum of just the deals imported in this run's retention window.
+  const worthEstimate = await getWorthEstimate();
+
+  let totalWorthFormatted;
+  let totalCount;
+
+  if (worthEstimate) {
+    totalWorthFormatted = Math.floor(worthEstimate.worth);
+    totalCount = worthEstimate.activeCount ?? dealsToNotify.length;
+  } else {
+    // Fallback: manual sum over just this run's recent deals (old behavior)
+    let totalWorth = 0;
+    dealsToNotify.forEach(deal => {
+      if (deal.worth && typeof deal.worth === 'string' && deal.worth.toLowerCase() !== 'n/a') {
+        // Strip everything except numbers and decimal point
+        const numericString = deal.worth.replace(/[^0-9.]/g, '');
+        const worthValue = parseFloat(numericString);
+        if (!isNaN(worthValue) && worthValue > 0) {
+          totalWorth += worthValue;
+        }
+      }
+    });
+    totalWorthFormatted = Math.floor(totalWorth);
+    totalCount = dealsToNotify.length;
+    console.log('⚠️ Using fallback manual worth calculation (API total unavailable)');
+  }
+
+  console.log(`📊 Digest Summary: $${totalWorthFormatted} total worth across ${totalCount} free items.`);
+
   const usersSnapshot = await db.collection('users')
     .where('notificationsEnabled', '==', true)
     .get();
@@ -193,20 +249,19 @@ async function notifyUsers(dealsToNotify) {
   }
 
   console.log(`Checking matches for ${usersSnapshot.size} active users.`);
-  
+
   let totalNotificationsSent = 0;
-  const dealStats = {}; 
+  const dealStats = {};
   const userIdsToMark = {}; // Map of dealId -> Array of userIds to update in Firestore
-  const userIdsForTier3Update = new Set(); // Track users who receive a Tier 3 fallback
+  const userIdsForDigestUpdate = new Set(); // Track users who receive a digest
 
   dealsToNotify.forEach(d => {
-    dealStats[d.id] = { 
-      matchedCount: 0, 
-      tokensSent: 0, 
+    dealStats[d.id] = {
+      matchedCount: 0,
+      tokensSent: 0,
       failures: 0,
       tier1Matches: 0,
-      tier2Matches: 0,
-      tier3Matches: 0
+      tier2Matches: 0
     };
     userIdsToMark[d.id] = [];
   });
@@ -216,7 +271,7 @@ async function notifyUsers(dealsToNotify) {
   usersSnapshot.forEach(doc => {
     const user = doc.data();
     const userId = doc.id;
-    
+
     if (!user.notificationTokens || user.notificationTokens.length === 0) {
       return;
     }
@@ -255,73 +310,72 @@ async function notifyUsers(dealsToNotify) {
         matchingDeals = tier2Matches;
         matchTier = 'Tier 2';
       } else {
-        // Tier 3 Cooldown Check: only fire at most once every 24 hours per user
+        // Daily Digest Logic (Replaces Tier 3 Fallback)
         const twentyFourHoursAgo = Date.now() - 24 * 60 * 60 * 1000;
-        const lastTier3 = user.lastTier3NotifiedAt ? user.lastTier3NotifiedAt.toMillis() : 0;
+        const lastDigest = user.lastDigestNotifiedAt ? user.lastDigestNotifiedAt.toMillis() : 0;
 
-        if (lastTier3 > twentyFourHoursAgo) {
-          console.log(`User ${userId}: Tier 3 skipped (cooldown active)`);
+        if (lastDigest > twentyFourHoursAgo) {
+          console.log(`User ${userId}: Digest skipped (cooldown active)`);
         } else {
-          // Tier 3: Fallback to most recent unnotified deal overall
-          const tier3Candidates = dealsToNotify
-            .filter(deal => !(deal.notifiedUserIds && deal.notifiedUserIds.includes(userId)))
-            .sort((a, b) => {
-              const timeA = (a.importedAt && a.importedAt.toMillis) ? a.importedAt.toMillis() : 0;
-              const timeB = (b.importedAt && b.importedAt.toMillis) ? b.importedAt.toMillis() : 0;
-              return timeB - timeA;
-            });
-
-          if (tier3Candidates.length > 0) {
-            matchingDeals = [tier3Candidates[0]];
-            matchTier = 'Tier 3';
-          }
+          matchTier = 'Digest';
         }
       }
     }
 
-    if (matchingDeals.length === 0) {
+    if (matchTier === 'None') {
       return;
     }
 
-    console.log(`User ${userId}: Matched ${matchingDeals.length} deals via ${matchTier}. Sending to ${user.notificationTokens.length} tokens.`);
-
+    // Prepare notification content
+    const isDigest = matchTier === 'Digest';
     const message = {
       data: {
-        title: matchingDeals.length === 1 
-          ? '🎁 New Free Game Detected!' 
-          : `📡 ${matchingDeals.length} New Free Games Found!`,
-        body: matchingDeals.length === 1
-          ? `${matchingDeals[0].title} is now free on ${matchingDeals[0].platforms}.`
-          : `Check out the latest free games matching your radar preferences.`,
-        deal_ids: matchingDeals.map(d => d.id).join(','),
         matchTier: matchTier
       },
       tokens: user.notificationTokens,
       android: { priority: 'high' }
     };
 
+    if (isDigest) {
+      message.data.title = `💰 $${totalWorthFormatted} in Free Games Right Now`;
+      message.data.body = `${totalCount} free games and giveaways are live — check them out.`;
+      message.data.isDigest = "true";
+    } else {
+      message.data.title = matchingDeals.length === 1
+        ? '🎁 New Free Game Detected!'
+        : `📡 ${matchingDeals.length} New Free Games Found!`;
+      message.data.body = matchingDeals.length === 1
+        ? `${matchingDeals[0].title} is now free on ${matchingDeals[0].platforms}.`
+        : `Check out the latest free games matching your radar preferences.`;
+      message.data.deal_ids = matchingDeals.map(d => d.id).join(',');
+    }
+
+    console.log(`User ${userId}: ${isDigest ? 'Daily Digest eligible' : `Matched ${matchingDeals.length} deals via ${matchTier}`}. Sending to ${user.notificationTokens.length} tokens.`);
+
     notificationPromises.push(
       messaging.sendEachForMulticast(message).then(async response => {
         totalNotificationsSent += response.successCount;
-        
+
         if (response.successCount > 0) {
-          if (matchTier === 'Tier 3') {
-            userIdsForTier3Update.add(userId);
+          if (isDigest) {
+            userIdsForDigestUpdate.add(userId);
+          } else {
+            matchingDeals.forEach(d => {
+              dealStats[d.id].tokensSent += response.successCount;
+              dealStats[d.id].matchedCount++;
+              if (matchTier === 'Tier 1') dealStats[d.id].tier1Matches++;
+              else if (matchTier === 'Tier 2') dealStats[d.id].tier2Matches++;
+              userIdsToMark[d.id].push(userId);
+            });
           }
-          matchingDeals.forEach(d => {
-            dealStats[d.id].tokensSent += response.successCount;
-            dealStats[d.id].matchedCount++;
-            if (matchTier === 'Tier 1') dealStats[d.id].tier1Matches++;
-            else if (matchTier === 'Tier 2') dealStats[d.id].tier2Matches++;
-            else if (matchTier === 'Tier 3') dealStats[d.id].tier3Matches++;
-            userIdsToMark[d.id].push(userId);
-          });
         }
 
         if (response.failureCount > 0) {
-          matchingDeals.forEach(d => {
-            dealStats[d.id].failures += response.failureCount;
-          });
+          if (!isDigest) {
+            matchingDeals.forEach(d => {
+              dealStats[d.id].failures += response.failureCount;
+            });
+          }
           const stale = response.responses
             .map((r, i) => (!r.success &&
               ['messaging/invalid-registration-token', 'messaging/registration-token-not-registered']
@@ -345,7 +399,7 @@ async function notifyUsers(dealsToNotify) {
   dealsToNotify.forEach(deal => {
     const stats = dealStats[deal.id];
     const usersToMark = userIdsToMark[deal.id];
-    
+
     const updateData = {
       notificationAnalytics: {
         usersMatched: stats.matchedCount,
@@ -353,7 +407,6 @@ async function notifyUsers(dealsToNotify) {
         tokensFailed: stats.failures,
         tier1Matches: stats.tier1Matches,
         tier2Matches: stats.tier2Matches,
-        tier3Matches: stats.tier3Matches,
         lastAttemptedAt: admin.firestore.FieldValue.serverTimestamp()
       }
     };
@@ -364,14 +417,14 @@ async function notifyUsers(dealsToNotify) {
 
     batch.update(db.collection('deals').doc(String(deal.id)), updateData);
     if (stats.matchedCount > 0) {
-      console.log(`Deal ${deal.id} (${deal.title}): Notified ${usersToMark.length} users (T1: ${stats.tier1Matches}, T2: ${stats.tier2Matches}, T3: ${stats.tier3Matches}).`);
+      console.log(`Deal ${deal.id} (${deal.title}): Notified ${usersToMark.length} users (T1: ${stats.tier1Matches}, T2: ${stats.tier2Matches}).`);
     }
   });
 
-  // Update user Tier 3 cooldown timestamps
-  userIdsForTier3Update.forEach(uId => {
+  // Update user Daily Digest cooldown timestamps
+  userIdsForDigestUpdate.forEach(uId => {
     batch.update(db.collection('users').doc(uId), {
-      lastTier3NotifiedAt: admin.firestore.FieldValue.serverTimestamp()
+      lastDigestNotifiedAt: admin.firestore.FieldValue.serverTimestamp()
     });
   });
 
@@ -381,7 +434,7 @@ async function notifyUsers(dealsToNotify) {
 async function main() {
   try {
     await importDeals();
-    
+
     const recentDeals = await getRecentDeals();
     if (recentDeals.length > 0) {
       console.log(`Found ${recentDeals.length} recent deals to process.`);
@@ -389,7 +442,7 @@ async function main() {
     } else {
       console.log('No deals within the retention window found.');
     }
-    
+
     console.log('--- Workflow Completed Successfully ---');
   } catch (err) {
     console.error('--- ❌ Workflow Failed ❌ ---');
