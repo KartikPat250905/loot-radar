@@ -1,35 +1,72 @@
-This is a Kotlin Multiplatform project targeting Android, iOS.
+# Loot Radar 🎮📡
 
-* [/composeApp](./composeApp/src) is for code that will be shared across your Compose Multiplatform applications.
-  It contains several subfolders:
-  - [commonMain](./composeApp/src/commonMain/kotlin) is for code that’s common for all targets.
-  - Other folders are for Kotlin code that will be compiled for only the platform indicated in the folder name.
-    For example, if you want to use Apple’s CoreCrypto for the iOS part of your Kotlin app,
-    the [iosMain](./composeApp/src/iosMain/kotlin) folder would be the right place for such calls.
-    Similarly, if you want to edit the Desktop (JVM) specific part, the [jvmMain](./composeApp/src/jvmMain/kotlin)
-    folder is the appropriate location.
+📲 **Get it on Google Play:** [Loot Radar on the Play Store](https://play.google.com/store/apps/details?id=com.radarlabs.freegameradar)
 
-* [/iosApp](./iosApp/iosApp) contains iOS applications. Even if you’re sharing your UI with Compose Multiplatform,
-  you need this entry point for your iOS app. This is also where you should add SwiftUI code for your project.
+Loot Radar is a free game giveaway tracker built around one core idea: **notifications should be precise, not noisy.**
 
-### Build and Run Android Application
+Instead of dumping every possible deal on you, Loot Radar lets you pick exactly which platforms and giveaway types you care about — then only notifies you about those.
 
-To build and run the development version of the Android app, use the run configuration from the run widget
-in your IDE’s toolbar or build it directly from the terminal:
-- on macOS/Linux
-  ```shell
-  ./gradlew :composeApp:assembleDebug
-  ```
-- on Windows
-  ```shell
-  .\gradlew.bat :composeApp:assembleDebug
-  ```
+## The Problem
 
-### Build and Run iOS Application
+Free game giveaways are scattered across Reddit threads, Discord servers, and half a dozen tracker apps — most of which are built around lists, not around getting the *notification* experience right. Reddit in particular buries giveaway posts under discussions and comments that have nothing to do with "what's free right now."
 
-To build and run the development version of the iOS app, use the run configuration from the run widget
-in your IDE’s toolbar or open the [/iosApp](./iosApp) directory in Xcode and run it from there.
+Loot Radar exists to fix that: **tell me when a game goes free, and only tell me about the things I actually asked for.**
 
----
+## Features
 
-Learn more about [Kotlin Multiplatform](https://www.jetbrains.com/help/kotlin-multiplatform-dev/get-started.html)…
+- **Filtered push notifications** — choose your platforms and giveaway types; everything else is filtered out
+- **Multi-platform tracking** — Epic Games Store, Steam, GOG, Ubisoft Connect, Battle.net, EA, itch.io, Xbox, PlayStation, Nintendo, mobile, VR, and DRM-free titles
+- **Home feed** — active giveaways with cover art, platform, and expiration time
+- **Hot Deals** — surfaces giveaways getting the most attention
+- **Stats** — tracks games collected and estimated value saved
+- **Optional accounts** — usable anonymously, or sign in to sync preferences across devices
+
+## Tech Stack
+
+- **Kotlin Multiplatform (KMP)** — shared application logic
+- **Compose Multiplatform / Jetpack Compose** — UI, built with **Material Design 3**
+- **Firebase Authentication** — user accounts
+- **Cloud Firestore** — data storage and **real-time sync**
+- **Background/scheduled tasks** — continuous giveaway monitoring and change detection
+- **Push notifications** — filtered delivery based on user preferences
+- **GitHub Actions** — CI/CD
+
+## Getting Started
+
+### Prerequisites
+
+- [Android Studio](https://developer.android.com/studio) (latest stable version recommended)
+- JDK 17+
+- A Firebase project (for Authentication and Firestore) if you want auth/sync to work locally
+
+### Setup
+
+1. Clone the repo:
+   ```bash
+   git clone https://github.com/KartikPat250905/loot-radar.git
+   ```
+2. Open the project in **Android Studio** (`File > Open`, select the project root).
+3. Let Gradle sync — Android Studio will download the required KMP/Compose dependencies automatically.
+4. Add your own `google-services.json` file to the app module if you want Firebase Authentication and Firestore to work with your own backend. *(Not included in this repo for security reasons.)*
+5. Select the `androidApp` run configuration and hit **Run** ▶️ on an emulator or physical device.
+
+That's it — no separate build steps or CLI setup needed beyond what Android Studio handles for you.
+
+## Project Status
+
+Loot Radar is live on the **Google Play Store** and under active development. Ongoing work is focused on improving giveaway tracking accuracy, notification timing, and overall app experience.
+
+## Feedback
+
+If you try the app, I'd genuinely appreciate feedback — good or bad:
+
+- Leave a review on the **Google Play Store**
+- Or email **radarlabs.dev@gmail.com**
+
+## Contributing
+
+Issues and pull requests are welcome. If you're planning a larger change, please open an issue first to discuss what you'd like to do.
+
+## License
+
+Apache 2.0
