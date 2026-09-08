@@ -21,6 +21,7 @@ if (keystorePropertiesFile.exists()) {
 }
 
 kotlin {
+    jvmToolchain(17)
     androidTarget {
         compilerOptions {
             jvmTarget.set(JvmTarget.JVM_11)
@@ -34,8 +35,8 @@ kotlin {
             implementation(libs.ktor.client.okhttp)
             implementation(kotlin("reflect"))
             implementation(libs.sqldelight.android.driver)
-            implementation(platform("com.google.firebase:firebase-bom:33.1.0"))
-            implementation(platform("io.opentelemetry:opentelemetry-bom:1.18.0"))
+            implementation(project.dependencies.platform("com.google.firebase:firebase-bom:33.1.0"))
+            implementation(project.dependencies.platform("io.opentelemetry:opentelemetry-bom:1.18.0"))
             implementation("com.google.firebase:firebase-auth-ktx")
             implementation("com.google.firebase:firebase-analytics")
             implementation(libs.firebase.firestore.ktx)
