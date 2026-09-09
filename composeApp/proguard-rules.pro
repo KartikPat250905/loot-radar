@@ -1,65 +1,35 @@
 # Add project specific ProGuard rules here.
 
-# Keep your data models (CRITICAL - prevents crashes!)
--keep class com.radarlabs.freegameradar.data.model.** { *; }
--keep class com.radarlabs.freegameradar.data.state.** { *; }
+# Data models should be kept if they are used for serialization
+# without the @Serializable annotation, or if they are accessed via reflection.
+# It's better to use @androidx.annotation.Keep on specific classes.
+-keep @androidx.annotation.Keep class ** { *; }
 
-# Keep Kotlin serialization
+# Keep Kotlin serialization (standard rules)
 -keepattributes *Annotation*, InnerClasses
 -dontnote kotlinx.serialization.AnnotationsKt
--keep class kotlinx.serialization.** { *; }
--keepclassmembers class kotlinx.serialization.json.** {
-    *** Companion;
-}
--keepclasseswithmembers class kotlinx.serialization.json.** {
-    kotlinx.serialization.KSerializer serializer(...);
-}
 
-# Keep Ktor (for API calls)
--keep class io.ktor.** { *; }
--keep class kotlinx.coroutines.** { *; }
+# Remove broad library keeps - these libraries provide their own rules:
+# - io.ktor.**
+# - com.google.firebase.**
+# - androidx.compose.**
+# - coil3.**
+# - app.cash.sqldelight.**
+
+# Keep generic signature (for reflection and serialization)
+-keepattributes Signature
+
+# Keep annotations
+-keepattributes *Annotation*
+
+# Suppress warnings for missing libraries that are not used at runtime
+-dontwarn org.slf4j.**
 -dontwarn io.ktor.**
 -dontwarn okhttp3.**
 -dontwarn okio.**
-
-# Keep Firebase
--keep class com.google.firebase.** { *; }
--keep class com.google.android.gms.** { *; }
--dontwarn com.google.firebase.**
--dontwarn com.google.android.gms.**
-
-# Keep Coil (for image loading)
--keep class coil3.** { *; }
--dontwarn coil3.**
-
-# Keep SQLDelight (database)
--keep class app.cash.sqldelight.** { *; }
--keep class com.radarlabs.freegameradar.db.** { *; }
--keep class com.radarlabs.freegameradar.GameDatabase** { *; }
-
-# Keep Compose
--keep class androidx.compose.** { *; }
--keep class androidx.compose.runtime.** { *; }
--dontwarn androidx.compose.**
-
-# Keep ViewModels
--keep class * extends androidx.lifecycle.ViewModel { *; }
--keep class * extends androidx.lifecycle.AndroidViewModel { *; }
-
-# Keep Vico (charts library)
--keep class com.patrykandpatrick.vico.** { *; }
-
-# Keep multiplatform-settings
--keep class com.russhwolf.settings.** { *; }
-
+-dontwarn com.google.android.gms.internal.ads.**
 -dontwarn android.media.LoudnessCodecController
 -dontwarn android.media.LoudnessCodecController$OnLoudnessCodecUpdateListener
-
--dontwarn org.slf4j.**
--dontwarn org.slf4j.impl.StaticLoggerBinder
-
--dontwarn com.google.android.gms.internal.ads.**
--keep class com.google.android.gms.ads.** { *; }
 
 # Remove all logging in release builds
 -assumenosideeffects class android.util.Log {
@@ -72,12 +42,6 @@
 # Keep line numbers for crash reports
 -keepattributes SourceFile,LineNumberTable
 -renamesourcefileattribute SourceFile
-
-# Keep generic signature (for reflection)
--keepattributes Signature
-
-# Keep annotations
--keepattributes *Annotation*
 
 # Keep native methods
 -keepclasseswithmembernames class * {
