@@ -1,5 +1,6 @@
 package com.radarlabs.freegameradar.ui.components
 
+import androidx.compose.animation.*
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -49,7 +50,7 @@ fun TotalWorthBar(
         initialValue = 1f,
         targetValue = 1.02f,
         animationSpec = infiniteRepeatable(
-            animation = tween(2000, easing = FastOutSlowInEasing),
+            animation = tween(1200, easing = FastOutSlowInEasing),
             repeatMode = RepeatMode.Reverse
         ),
         label = "scale"
@@ -133,48 +134,74 @@ fun TotalWorthBar(
                             Spacer(modifier = Modifier.height(3.dp))
 
                             Row(verticalAlignment = Alignment.CenterVertically) {
-                                val (label, color) = when (dataSource) {
-                                    DataSource.NETWORK -> "LIVE" to Color(0xFF10B981)
-                                    DataSource.CACHE -> "CACHED" to Color(0xFFF59E0B)
+                                val label = when (dataSource) {
+                                    DataSource.NETWORK -> "LIVE"
+                                    DataSource.CACHE -> "CACHED"
                                 }
+                                val color by animateColorAsState(
+                                    targetValue = when (dataSource) {
+                                        DataSource.NETWORK -> Color(0xFF10B981)
+                                        DataSource.CACHE -> Color(0xFFF59E0B)
+                                    },
+                                    animationSpec = tween(300),
+                                    label = "statusColor"
+                                )
                                 Box(
                                     modifier = Modifier
                                         .size(6.dp)
                                         .background(color, shape = RoundedCornerShape(50))
                                 )
                                 Spacer(modifier = Modifier.width(5.dp))
-                                Text(
-                                    text = label,
-                                    style = MaterialTheme.typography.labelSmall,
-                                    color = color,
-                                    letterSpacing = 1.sp,
-                                    fontWeight = FontWeight.SemiBold
-                                )
+                                AnimatedContent(
+                                    targetState = label,
+                                    transitionSpec = {
+                                        fadeIn(animationSpec = tween(200)) togetherWith
+                                                fadeOut(animationSpec = tween(200))
+                                    },
+                                    label = "statusLabel"
+                                ) { text ->
+                                    Text(
+                                        text = text,
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = color,
+                                        letterSpacing = 1.sp,
+                                        fontWeight = FontWeight.SemiBold
+                                    )
+                                }
                             }
                         }
 
-                        val priceText = buildAnnotatedString {
-                            withStyle(
-                                style = SpanStyle(
-                                    brush = Brush.linearGradient(
-                                        colors = listOf(
-                                            Color(0xFF10B981),
-                                            Color(0xFF34D399),
-                                            Color(0xFF6EE7B7)
-                                        )
-                                    ),
-                                    fontWeight = FontWeight.ExtraBold,
-                                    fontSize = 28.sp
-                                )
-                            ) {
-                                append(formattedTotal)
+                        AnimatedContent(
+                            targetState = formattedTotal,
+                            transitionSpec = {
+                                fadeIn(animationSpec = tween(300)) togetherWith
+                                        fadeOut(animationSpec = tween(300))
+                            },
+                            label = "priceAnimation"
+                        ) { text ->
+                            val priceText = buildAnnotatedString {
+                                withStyle(
+                                    style = SpanStyle(
+                                        brush = Brush.linearGradient(
+                                            colors = listOf(
+                                                Color(0xFF10B981),
+                                                Color(0xFF34D399),
+                                                Color(0xFF6EE7B7)
+                                            )
+                                        ),
+                                        fontWeight = FontWeight.ExtraBold,
+                                        fontSize = 28.sp
+                                    )
+                                ) {
+                                    append(text)
+                                }
                             }
-                        }
 
-                        Text(
-                            text = priceText,
-                            style = MaterialTheme.typography.displaySmall
-                        )
+                            Text(
+                                text = priceText,
+                                style = MaterialTheme.typography.displaySmall
+                            )
+                        }
                     }
                 }
             }

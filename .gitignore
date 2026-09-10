@@ -49,6 +49,7 @@ xcuserdata/
 # Kotlin Multiplatform
 .kotlin/
 composeApp/build/
+composeApp/release/
 
 *.keystore
 keystore.properties
