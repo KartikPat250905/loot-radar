@@ -68,3 +68,7 @@
     java.lang.Object writeReplace();
     java.lang.Object readResolve();
 }
+
+# Keep WorkManager's Room-generated database (fixes reflection lookup crash)
+-keep class androidx.work.impl.WorkDatabase
+-keep class androidx.work.impl.WorkDatabase_Impl
