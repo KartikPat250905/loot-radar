@@ -185,8 +185,12 @@ class NotificationService(private val context: Context) {
     private suspend fun fetchImage(url: String): Bitmap? {
         if (url.isBlank()) return null
         return withContext(Dispatchers.IO) {
+            val width = context.resources.getDimensionPixelSize(android.R.dimen.notification_large_icon_width)
+            val height = context.resources.getDimensionPixelSize(android.R.dimen.notification_large_icon_height)
+
             val request = ImageRequest.Builder(context)
                 .data(url)
+                .size(width, height)
                 .build()
 
             try {

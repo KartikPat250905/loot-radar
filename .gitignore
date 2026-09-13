@@ -53,3 +53,6 @@ composeApp/release/
 
 *.keystore
 keystore.properties
+
+# IDE Artifacts
+.artifacts/
