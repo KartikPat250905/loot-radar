@@ -83,6 +83,7 @@ fun HomeScreen(
 ) {
     val games by gameViewModel.games.collectAsState()
     val isRefreshing by gameViewModel.isRefreshing.collectAsState()
+    val isLoading by gameViewModel.isLoading.collectAsState()
     val canRefresh by gameViewModel.canRefresh.collectAsState()
     val remainingCooldown by gameViewModel.remainingCooldown.collectAsState()
     val preferencesState by userPreferencesViewModel.uiState.collectAsState()
@@ -228,19 +229,27 @@ fun HomeScreen(
             contentAlignment = Alignment.Center
         ) {
             when {
-                games.isEmpty() && dataSource == DataSource.CACHE -> {
-                    Log.d("HomeScreen", "📺 RENDERING: Cache empty message")
+                isLoading && games.isEmpty() -> {
+                    Log.d("HomeScreen", "📺 RENDERING: Loading with AppLoadingScreen")
+                    AppLoadingScreen(fullScreen = false)
+                }
+                games.isEmpty() -> {
+                    Log.d("HomeScreen", "📺 RENDERING: Empty state")
+                    val emptyMessage = if (searchText.isNotBlank()) {
+                        "No free games found matching \"$searchText\""
+                    } else if (dataSource == DataSource.CACHE) {
+                        "😿 No freebies found!\nCache is empty and new data couldn't load.\nCheck your internet connection and try again."
+                    } else {
+                        "No free games currently available."
+                    }
+                    
                     Text(
-                        text = "😿 No freebies found!\nCache is empty and new data couldn't load.\nCheck your internet connection and try again.",
+                        text = emptyMessage,
                         textAlign = TextAlign.Center,
                         modifier = Modifier.padding(16.dp),
                         fontSize = 18.sp,
                         color = Color(0xFF9CA3AF)
                     )
-                }
-                games.isEmpty() -> {
-                    Log.d("HomeScreen", "📺 RENDERING: Loading with AppLoadingScreen")
-                    AppLoadingScreen(fullScreen = false)
                 }
                 else -> {
                     Log.d("HomeScreen", "📺 RENDERING: Game grid with ${games.size} games")

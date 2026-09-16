@@ -87,6 +87,9 @@ class GameViewModel(
     private val _isRefreshing = MutableStateFlow(false)
     val isRefreshing: StateFlow<Boolean> = _isRefreshing.asStateFlow()
 
+    private val _isLoading = MutableStateFlow(true)
+    val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
+
     private val _lastRefreshTime = MutableStateFlow(0L)
     val lastRefreshTime: StateFlow<Long> = _lastRefreshTime.asStateFlow()
 
@@ -130,6 +133,7 @@ class GameViewModel(
                 .catch { e ->
                     println("❌ Error fetching games: ${e.message}")
                     e.printStackTrace()
+                    _isLoading.value = false
                 }
                 .collect { gameList ->
                     if (gameList.isNotEmpty()) {
@@ -138,6 +142,7 @@ class GameViewModel(
                     } else {
                         println("⚠️ Skipped empty game list emission")
                     }
+                    _isLoading.value = false
                 }
         }
     }
