@@ -34,15 +34,17 @@ kotlin {
             implementation(libs.androidx.activity.compose)
             implementation(libs.ktor.client.okhttp)
             implementation(libs.sqldelight.android.driver)
-            implementation(project.dependencies.platform("com.google.firebase:firebase-bom:33.1.0"))
+            implementation(project.dependencies.platform("com.google.firebase:firebase-bom:34.9.0"))
             implementation(project.dependencies.platform("io.opentelemetry:opentelemetry-bom:1.18.0"))
-            implementation("com.google.firebase:firebase-auth-ktx")
+            // KTX artifacts were removed from the Firebase BoM starting at v34.0.0 (July 2025) -
+            // the KTX APIs were merged into these main modules back in Oct 2023, so no -ktx suffix needed.
+            implementation("com.google.firebase:firebase-auth")
             implementation("com.google.firebase:firebase-analytics")
-            implementation(libs.firebase.firestore.ktx)
-            implementation(libs.firebase.messaging.ktx)
+            implementation("com.google.firebase:firebase-firestore")
+            implementation("com.google.firebase:firebase-messaging")
             implementation(libs.kotlinx.coroutines.play.services)
             implementation(libs.androidx.fragment)
-            implementation("com.google.android.gms:play-services-ads:23.5.0")
+            implementation("com.google.android.gms:play-services-ads:25.4.0")
         }
         commonMain.dependencies {
             implementation(compose.runtime)
@@ -80,8 +82,8 @@ extensions.configure<ApplicationExtension> {
         applicationId = "com.radarlabs.freegameradar"
         minSdk = libs.versions.android.minSdk.get().toInt()
         targetSdk = libs.versions.android.targetSdk.get().toInt()
-        versionCode = 17
-        versionName = "1.3.2"
+        versionCode = 21
+        versionName = "1.3.6"
     }
 
     signingConfigs {
