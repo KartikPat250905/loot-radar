@@ -9,9 +9,9 @@ import com.radarlabs.freegameradar.data.auth.AuthRepository
 import com.radarlabs.freegameradar.db.User_settings
 import com.radarlabs.freegameradar.settings.UserSettings
 import com.google.firebase.firestore.SetOptions
-import com.google.firebase.firestore.ktx.firestore
-import com.google.firebase.firestore.ktx.toObject
-import com.google.firebase.ktx.Firebase
+import com.google.firebase.firestore.firestore
+import com.google.firebase.firestore.toObject
+import com.google.firebase.Firebase
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
