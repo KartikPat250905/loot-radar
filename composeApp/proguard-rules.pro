@@ -28,8 +28,14 @@
 -dontwarn okhttp3.**
 -dontwarn okio.**
 -dontwarn com.google.android.gms.internal.ads.**
+-dontwarn com.google.firebase.auth.api.internal.**
 -dontwarn android.media.LoudnessCodecController
 -dontwarn android.media.LoudnessCodecController$OnLoudnessCodecUpdateListener
+
+# Prevent crashes in reflection/JNI paths for Ads and Firebase Auth internal classes under R8 Full Mode
+-keep class com.google.android.gms.internal.ads.** { *; }
+-keep class com.google.firebase.auth.api.internal.** { *; }
+-keep class com.google.android.gms.internal.** { *; }
 
 # Remove all logging in release builds
 -assumenosideeffects class android.util.Log {
