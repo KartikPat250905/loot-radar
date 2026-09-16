@@ -33,7 +33,6 @@ kotlin {
             implementation(compose.preview)
             implementation(libs.androidx.activity.compose)
             implementation(libs.ktor.client.okhttp)
-            implementation(kotlin("reflect"))
             implementation(libs.sqldelight.android.driver)
             implementation(project.dependencies.platform("com.google.firebase:firebase-bom:33.1.0"))
             implementation(project.dependencies.platform("io.opentelemetry:opentelemetry-bom:1.18.0"))
@@ -81,8 +80,8 @@ extensions.configure<ApplicationExtension> {
         applicationId = "com.radarlabs.freegameradar"
         minSdk = libs.versions.android.minSdk.get().toInt()
         targetSdk = libs.versions.android.targetSdk.get().toInt()
-        versionCode = 15
-        versionName = "1.3.0"
+        versionCode = 17
+        versionName = "1.3.2"
     }
 
     signingConfigs {
