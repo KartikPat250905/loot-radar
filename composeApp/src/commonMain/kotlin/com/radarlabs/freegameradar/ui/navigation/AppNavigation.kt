@@ -46,6 +46,7 @@ import com.radarlabs.freegameradar.util.isNotificationPermissionGranted
 import com.radarlabs.freegameradar.util.openAppSettings
 import com.radarlabs.freegameradar.util.rememberPermissionRequestLauncher
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.StateFlow
 
 @Composable
 fun AppNavigation(
@@ -59,10 +60,26 @@ fun AppNavigation(
     setupViewModel: SetupViewModel,
     onBottomBarVisibilityChange: (Boolean) -> Unit,
     startRoute: String? = null,
+    routeFlow: StateFlow<String?>? = null,
+    onRouteConsumed: () -> Unit = {},
     onShowRefreshAd: () -> Unit = {},
     onShowSettingsAd: () -> Unit = {},
     onShowGameDetailAd: () -> Unit = {}
 ) {
+    val currentRoute by (routeFlow?.collectAsState() ?: remember { mutableStateOf(startRoute) })
+
+    LaunchedEffect(currentRoute) {
+        val route = currentRoute
+        if (route != null && navController.currentDestination?.route != null && navController.currentDestination?.route != Screen.Gate.route) {
+            val destination = if (route == "notification") Screen.Notification.route else Screen.Home.route
+            Log.d("AppNavigation", "🔔 Intent route received while running: $destination")
+            navController.navigate(destination) {
+                launchSingleTop = true
+            }
+            onRouteConsumed()
+        }
+    }
+
     NavHost(
         navController = navController,
         startDestination = Screen.Gate.route
@@ -93,15 +110,17 @@ fun AppNavigation(
                 if (preferencesState.isLoaded) {
                     // Small delay to ensure smooth transition
                     delay(150)
-                    val destination = if (startRoute == "notification") {
+                    val route = routeFlow?.value ?: startRoute
+                    val destination = if (route == "notification") {
                         Screen.Notification.route
                     } else {
                         if (preferencesState.setupComplete) Screen.Home.route else Screen.Setup.route
                     }
-                    Log.d("AppNavigation", "🚪 GATE ROUTE - Navigating to: $destination (setupComplete=${preferencesState.setupComplete}, startRoute=$startRoute)")
+                    Log.d("AppNavigation", "🚪 GATE ROUTE - Navigating to: $destination (setupComplete=${preferencesState.setupComplete}, route=$route)")
                     navController.navigate(destination) {
                         popUpTo(Screen.Gate.route) { inclusive = true }
                     }
+                    onRouteConsumed()
                 }
             }
         }

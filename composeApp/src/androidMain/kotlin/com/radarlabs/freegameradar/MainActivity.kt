@@ -1,6 +1,7 @@
 package com.radarlabs.freegameradar
 
 import android.Manifest
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
@@ -22,12 +23,24 @@ import com.radarlabs.freegameradar.ui.viewmodel.AdFreeViewModel
 import com.radarlabs.freegameradar.ui.viewmodel.AuthInitViewModel
 import com.radarlabs.freegameradar.ui.viewmodel.AuthViewModel
 import com.russhwolf.settings.SharedPreferencesSettings
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
 
 class MainActivity : ComponentActivity() {
 
     private lateinit var adManager: AdManager
     private lateinit var adFreeViewModel: AdFreeViewModel
+
+    private val routeFlow = MutableStateFlow<String?>(null)
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        intent.getStringExtra("route")?.let { route ->
+            Log.d("MainActivity", "🔔 onNewIntent received route: $route")
+            routeFlow.value = route
+        }
+    }
 
     private val requestPermissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestPermission(),
@@ -41,6 +54,7 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        routeFlow.value = intent.getStringExtra("route")
 
         val authRepository = AuthRepositoryImpl()
         val settings = SharedPreferencesSettings.Factory(this).create("user_stats_settings")
@@ -100,6 +114,8 @@ class MainActivity : ComponentActivity() {
                         userSettingsRepository = userSettingsRepository,
                         userStatsRepository = userStatsRepository,  // ADD THIS
                         startRoute = startRoute,
+                        routeFlow = routeFlow,
+                        onRouteConsumed = { routeFlow.value = null },
                         onShowRefreshAd = ::showRefreshAd,
                         onShowSettingsAd = ::showSettingsAd,
                         onShowGameDetailAd = ::showGameDetailAd

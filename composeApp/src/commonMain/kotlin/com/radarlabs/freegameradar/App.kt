@@ -36,6 +36,7 @@ import com.radarlabs.freegameradar.ui.viewmodel.SettingsViewModel
 import com.radarlabs.freegameradar.ui.viewmodel.UserPreferencesViewModel
 import com.radarlabs.freegameradar.ui.viewmodel.UserStatsViewModel
 import com.radarlabs.freegameradar.ui.viewmodel.SetupViewModel
+import kotlinx.coroutines.flow.StateFlow
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -46,6 +47,8 @@ fun App(
     userSettingsRepository: UserSettingsRepository,
     userStatsRepository: UserStatsRepository,
     startRoute: String? = null,
+    routeFlow: StateFlow<String?>? = null,
+    onRouteConsumed: () -> Unit = {},
     onShowRefreshAd: () -> Unit = {},
     onShowSettingsAd: () -> Unit = {},
     onShowGameDetailAd: () -> Unit = {}
@@ -94,6 +97,8 @@ fun App(
                         setupViewModel = setupViewModel,
                         onBottomBarVisibilityChange = { isBottomBarVisible = it },
                         startRoute = startRoute,
+                        routeFlow = routeFlow,
+                        onRouteConsumed = onRouteConsumed,
                         onShowRefreshAd = onShowRefreshAd,
                         onShowSettingsAd = onShowSettingsAd,
                         onShowGameDetailAd = onShowGameDetailAd
