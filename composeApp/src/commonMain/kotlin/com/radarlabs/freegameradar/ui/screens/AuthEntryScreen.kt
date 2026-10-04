@@ -32,6 +32,8 @@ fun AuthEntryScreen(
             }
         }
 
+        AuthState.Idle,
+        AuthState.Submitting,
         is AuthState.Guest,
         is AuthState.Error,
         is AuthState.Success -> {
