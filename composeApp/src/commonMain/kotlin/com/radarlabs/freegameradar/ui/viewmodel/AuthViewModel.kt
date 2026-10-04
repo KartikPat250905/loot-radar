@@ -35,7 +35,7 @@ class AuthViewModel(
         viewModelScope.launch {
             authRepository.getAuthStateFlow().collect { user ->
                 _authState.value = when {
-                    user == null -> AuthState.Error("Not logged in")
+                    user == null -> AuthState.Idle
                     user.isAnonymous -> AuthState.Guest
                     else -> {
                         Logger.d("AuthViewModel", "User logged in, syncing stats...")
@@ -49,7 +49,7 @@ class AuthViewModel(
 
     fun login(email: String, password: String) {
         viewModelScope.launch {
-            _authState.value = AuthState.Loading
+            _authState.value = AuthState.Submitting
             Logger.d("AuthViewModel", "Attempting login...")
             val result = authRepository.login(email, password)
             if (result.isSuccess) {
@@ -58,7 +58,7 @@ class AuthViewModel(
                 // Don't set Success here, let checkAuthState() handle it
                 // The flow will automatically update to LoggedIn
             } else {
-                Logger.e("AuthViewModel", "Login failed: ${result.exceptionOrNull()?.message}")
+                Logger.e("AuthViewModel", "Login failed: ${result.exceptionOrNull()?.message}", result.exceptionOrNull())
                 _authState.value = AuthState.Error(result.exceptionOrNull()?.message ?: "Login failed")
             }
         }
@@ -67,7 +67,7 @@ class AuthViewModel(
 
     fun signUp(email: String, password: String) {
         viewModelScope.launch {
-            _authState.value = AuthState.Loading
+            _authState.value = AuthState.Submitting
             Logger.d("AuthViewModel", "Attempting sign up...")
             val result = authRepository.register(email, password)
             if (result.isSuccess) {
@@ -75,7 +75,7 @@ class AuthViewModel(
                 userStatsRepository.syncClaimedValue()
                 _authState.value = AuthState.Success("Account created successfully!")
             } else {
-                Logger.e("AuthViewModel", "Sign up failed: ${result.exceptionOrNull()?.message}")
+                Logger.e("AuthViewModel", "Sign up failed: ${result.exceptionOrNull()?.message}", result.exceptionOrNull())
                 _authState.value = AuthState.Error(result.exceptionOrNull()?.message ?: "Sign up failed")
             }
         }
@@ -83,7 +83,7 @@ class AuthViewModel(
 
     fun continueAsGuest() {
         viewModelScope.launch {
-            _authState.value = AuthState.Loading
+            _authState.value = AuthState.Submitting
             Logger.d("AuthViewModel", "Continuing as guest...")
             val result = authRepository.signInAsGuest()
             if (result.isSuccess) {
@@ -103,6 +103,12 @@ class AuthViewModel(
             } else {
                 _authState.value = AuthState.Error(result.exceptionOrNull()?.message ?: "Failed to send reset email")
             }
+        }
+    }
+
+    fun clearError() {
+        if (_authState.value is AuthState.Error) {
+            _authState.value = AuthState.Idle
         }
     }
 }
