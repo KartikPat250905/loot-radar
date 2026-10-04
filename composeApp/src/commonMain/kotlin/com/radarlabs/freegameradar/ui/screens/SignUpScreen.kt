@@ -8,6 +8,7 @@ import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
@@ -29,14 +30,22 @@ fun SignUpScreen(
     authViewModel: AuthViewModel,
     onLoginClicked: () -> Unit,
 ) {
-    var email by remember { mutableStateOf("") }
-    var password by remember { mutableStateOf("") }
-    var confirmPassword by remember { mutableStateOf("") }
-    var passwordVisibility by remember { mutableStateOf(false) }
-    var confirmPasswordVisibility by remember { mutableStateOf(false) }
-    var localError by remember { mutableStateOf<String?>(null) }
+    var email by rememberSaveable { mutableStateOf("") }
+    var password by rememberSaveable { mutableStateOf("") }
+    var confirmPassword by rememberSaveable { mutableStateOf("") }
+    var passwordVisibility by rememberSaveable { mutableStateOf(false) }
+    var confirmPasswordVisibility by rememberSaveable { mutableStateOf(false) }
+    var localError by rememberSaveable { mutableStateOf<String?>(null) }
 
     val authState by authViewModel.authState.collectAsState()
+    val isSubmitting = authState is AuthState.Submitting
+
+    LaunchedEffect(authState) {
+        if (authState is AuthState.Error) {
+            password = ""
+            confirmPassword = ""
+        }
+    }
 
     Box(
         modifier = Modifier
@@ -101,7 +110,9 @@ fun SignUpScreen(
                 onValueChange = {
                     email = it
                     localError = null
+                    authViewModel.clearError()
                 },
+                enabled = !isSubmitting,
                 label = { Text("Email / Username") },
                 singleLine = true,
                 modifier = Modifier.fillMaxWidth(),
@@ -123,7 +134,9 @@ fun SignUpScreen(
                 onValueChange = {
                     password = it
                     localError = null
+                    authViewModel.clearError()
                 },
+                enabled = !isSubmitting,
                 label = { Text("Password") },
                 visualTransformation = if (passwordVisibility) VisualTransformation.None else PasswordVisualTransformation(),
                 singleLine = true,
@@ -138,7 +151,10 @@ fun SignUpScreen(
                     unfocusedLabelColor = Color(0xFF9CA3AF)
                 ),
                 trailingIcon = {
-                    IconButton(onClick = { passwordVisibility = !passwordVisibility }) {
+                    IconButton(
+                        onClick = { passwordVisibility = !passwordVisibility },
+                        enabled = !isSubmitting
+                    ) {
                         Icon(
                             imageVector = if (passwordVisibility) Icons.Filled.Visibility else Icons.Filled.VisibilityOff,
                             contentDescription = "toggle password visibility",
@@ -155,7 +171,9 @@ fun SignUpScreen(
                 onValueChange = {
                     confirmPassword = it
                     localError = null
+                    authViewModel.clearError()
                 },
+                enabled = !isSubmitting,
                 label = { Text("Confirm Password") },
                 visualTransformation = if (confirmPasswordVisibility) VisualTransformation.None else PasswordVisualTransformation(),
                 singleLine = true,
@@ -173,7 +191,10 @@ fun SignUpScreen(
                     errorLabelColor = Color(0xFFEF4444)
                 ),
                 trailingIcon = {
-                    IconButton(onClick = { confirmPasswordVisibility = !confirmPasswordVisibility }) {
+                    IconButton(
+                        onClick = { confirmPasswordVisibility = !confirmPasswordVisibility },
+                        enabled = !isSubmitting
+                    ) {
                         Icon(
                             imageVector = if (confirmPasswordVisibility) Icons.Filled.Visibility else Icons.Filled.VisibilityOff,
                             contentDescription = "toggle password visibility",
@@ -187,22 +208,20 @@ fun SignUpScreen(
 
             when (val state = authState) {
                 is AuthState.Error -> {
-                    if (!state.message.contains("not logged in", ignoreCase = true)) {
-                        Card(
-                            modifier = Modifier.fillMaxWidth(),
-                            colors = CardDefaults.cardColors(containerColor = Color(0x33EF4444)),
-                            shape = RoundedCornerShape(12.dp)
-                        ) {
-                            Text(
-                                text = state.message,
-                                color = Color(0xFFEF4444),
-                                modifier = Modifier.padding(12.dp),
-                                textAlign = TextAlign.Center,
-                                fontSize = 14.sp
-                            )
-                        }
-                        Spacer(modifier = Modifier.height(16.dp))
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = CardDefaults.cardColors(containerColor = Color(0x33EF4444)),
+                        shape = RoundedCornerShape(12.dp)
+                    ) {
+                        Text(
+                            text = state.message,
+                            color = Color(0xFFEF4444),
+                            modifier = Modifier.padding(12.dp),
+                            textAlign = TextAlign.Center,
+                            fontSize = 14.sp
+                        )
                     }
+                    Spacer(modifier = Modifier.height(16.dp))
                 }
                 else -> {}
             }
@@ -232,6 +251,7 @@ fun SignUpScreen(
                         localError = "Passwords do not match"
                     }
                 },
+                enabled = !isSubmitting,
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(50.dp),
@@ -241,11 +261,19 @@ fun SignUpScreen(
                 ),
                 shape = RoundedCornerShape(12.dp)
             ) {
-                Text(
-                    "Sign Up",
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Bold
-                )
+                if (isSubmitting) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(24.dp),
+                        color = Color.White,
+                        strokeWidth = 2.dp
+                    )
+                } else {
+                    Text(
+                        "Sign Up",
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
             }
 
             Spacer(modifier = Modifier.height(24.dp))
@@ -261,6 +289,7 @@ fun SignUpScreen(
                 )
                 TextButton(
                     onClick = onLoginClicked,
+                    enabled = !isSubmitting,
                     contentPadding = PaddingValues(horizontal = 8.dp, vertical = 0.dp),
                     colors = ButtonDefaults.textButtonColors(contentColor = Color(0xFF10B981))
                 ) {
