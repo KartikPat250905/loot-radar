@@ -27,6 +27,8 @@ fun AuthGate(
             AuthState.LoggedIn, AuthState.Guest -> {
                 content()
             }
+            AuthState.Idle,
+            AuthState.Submitting,
             is AuthState.Success,
             is AuthState.Error -> {
                 AuthScreen(
