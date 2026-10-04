@@ -8,6 +8,7 @@ import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
@@ -30,13 +31,20 @@ fun LoginScreen(
     authViewModel: AuthViewModel,
     onSignUpClicked: () -> Unit,
 ) {
-    var email by remember { mutableStateOf("") }
-    var password by remember { mutableStateOf("") }
-    var passwordVisibility by remember { mutableStateOf(false) }
-    var showForgotPasswordDialog by remember { mutableStateOf(false) }
-    var forgotPasswordEmail by remember { mutableStateOf("") }
+    var email by rememberSaveable { mutableStateOf("") }
+    var password by rememberSaveable { mutableStateOf("") }
+    var passwordVisibility by rememberSaveable { mutableStateOf(false) }
+    var showForgotPasswordDialog by rememberSaveable { mutableStateOf(false) }
+    var forgotPasswordEmail by rememberSaveable { mutableStateOf("") }
 
     val authState by authViewModel.authState.collectAsState()
+    val isSubmitting = authState is AuthState.Submitting
+
+    LaunchedEffect(authState) {
+        if (authState is AuthState.Error) {
+            password = ""
+        }
+    }
 
     if (showForgotPasswordDialog) {
         AlertDialog(
@@ -149,7 +157,11 @@ fun LoginScreen(
 
             OutlinedTextField(
                 value = email,
-                onValueChange = { email = it },
+                onValueChange = {
+                    email = it
+                    authViewModel.clearError()
+                },
+                enabled = !isSubmitting,
                 label = { Text("Email / Username") },
                 singleLine = true,
                 modifier = Modifier.fillMaxWidth(),
@@ -168,7 +180,11 @@ fun LoginScreen(
 
             OutlinedTextField(
                 value = password,
-                onValueChange = { password = it },
+                onValueChange = {
+                    password = it
+                    authViewModel.clearError()
+                },
+                enabled = !isSubmitting,
                 label = { Text("Password") },
                 visualTransformation = if (passwordVisibility) VisualTransformation.None else PasswordVisualTransformation(),
                 singleLine = true,
@@ -183,7 +199,10 @@ fun LoginScreen(
                     unfocusedLabelColor = Color(0xFF9CA3AF)
                 ),
                 trailingIcon = {
-                    IconButton(onClick = { passwordVisibility = !passwordVisibility }) {
+                    IconButton(
+                        onClick = { passwordVisibility = !passwordVisibility },
+                        enabled = !isSubmitting
+                    ) {
                         Icon(
                             imageVector = if (passwordVisibility) Icons.Filled.Visibility else Icons.Filled.VisibilityOff,
                             contentDescription = "toggle password visibility",
@@ -197,6 +216,7 @@ fun LoginScreen(
 
             TextButton(
                 onClick = { showForgotPasswordDialog = true },
+                enabled = !isSubmitting,
                 modifier = Modifier.align(Alignment.End),
                 colors = ButtonDefaults.textButtonColors(contentColor = Color(0xFF10B981))
             ) {
@@ -207,22 +227,20 @@ fun LoginScreen(
 
             when (val state = authState) {
                 is AuthState.Error -> {
-                    if (!state.message.contains("not logged in", ignoreCase = true)) {
-                        Card(
-                            modifier = Modifier.fillMaxWidth(),
-                            colors = CardDefaults.cardColors(containerColor = Color(0x33EF4444)),
-                            shape = RoundedCornerShape(12.dp)
-                        ) {
-                            Text(
-                                text = state.message,
-                                color = Color(0xFFEF4444),
-                                modifier = Modifier.padding(12.dp),
-                                textAlign = TextAlign.Center,
-                                fontSize = 14.sp
-                            )
-                        }
-                        Spacer(modifier = Modifier.height(16.dp))
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = CardDefaults.cardColors(containerColor = Color(0x33EF4444)),
+                        shape = RoundedCornerShape(12.dp)
+                    ) {
+                        Text(
+                            text = state.message,
+                            color = Color(0xFFEF4444),
+                            modifier = Modifier.padding(12.dp),
+                            textAlign = TextAlign.Center,
+                            fontSize = 14.sp
+                        )
                     }
+                    Spacer(modifier = Modifier.height(16.dp))
                 }
                 is AuthState.Success -> {
                     Card(
@@ -245,6 +263,7 @@ fun LoginScreen(
 
             Button(
                 onClick = { authViewModel.login(email, password) },
+                enabled = !isSubmitting,
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(50.dp),
@@ -254,11 +273,19 @@ fun LoginScreen(
                 ),
                 shape = RoundedCornerShape(12.dp)
             ) {
-                Text(
-                    "Login",
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Bold
-                )
+                if (isSubmitting) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(24.dp),
+                        color = Color.White,
+                        strokeWidth = 2.dp
+                    )
+                } else {
+                    Text(
+                        "Login",
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
             }
 
             Spacer(modifier = Modifier.height(16.dp))
@@ -281,6 +308,7 @@ fun LoginScreen(
 
             OutlinedButton(
                 onClick = { authViewModel.continueAsGuest() },
+                enabled = !isSubmitting,
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(50.dp),
@@ -323,6 +351,7 @@ fun LoginScreen(
                 )
                 TextButton(
                     onClick = onSignUpClicked,
+                    enabled = !isSubmitting,
                     contentPadding = PaddingValues(horizontal = 8.dp, vertical = 0.dp),
                     colors = ButtonDefaults.textButtonColors(contentColor = Color(0xFF10B981))
                 ) {
