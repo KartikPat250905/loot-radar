@@ -4,14 +4,18 @@ import android.app.Application
 import android.content.Context
 import android.util.Log
 import androidx.core.app.NotificationManagerCompat
+import coil3.ImageLoader
+import coil3.PlatformContext
+import coil3.SingletonImageLoader
 import com.google.firebase.FirebaseApp
+import com.radarlabs.freegameradar.core.image.AppImageLoader
 import com.radarlabs.freegameradar.data.DatabaseDriverFactory
 import com.radarlabs.freegameradar.data.repository.NotificationRepository
 import com.radarlabs.freegameradar.db.GameDatabase
 import com.radarlabs.freegameradar.notification.NotificationService
 import com.radarlabs.freegameradar.notification.TokenManager
 
-class FreeGameRadarApp : Application() {
+class FreeGameRadarApp : Application(), SingletonImageLoader.Factory {
 
     lateinit var notificationRepository: NotificationRepository
         private set
@@ -23,10 +27,16 @@ class FreeGameRadarApp : Application() {
             private set
     }
 
+    override fun newImageLoader(context: PlatformContext): ImageLoader {
+        return AppImageLoader.get(context)
+    }
+
     override fun onCreate() {
         super.onCreate()
         instance = this
         appContext = applicationContext
+
+        SingletonImageLoader.setSafe(this)
 
         try {
             // Initialize Firebase explicitly
