@@ -7,6 +7,7 @@ import com.radarlabs.freegameradar.data.models.WorthDto
 import com.radarlabs.freegameradar.data.remote.ApiService
 import com.radarlabs.freegameradar.data.repository.GameRepository
 import com.radarlabs.freegameradar.data.state.DataSource
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -147,6 +148,13 @@ class GameViewModel(
         }
     }
 
+    private val _error = MutableStateFlow<String?>(null)
+    val error: StateFlow<String?> = _error.asStateFlow()
+
+    fun clearError() {
+        _error.value = null
+    }
+
     fun refreshGames() {
         if (!_canRefresh.value || _isRefreshing.value) {
             println("⚠️ Refresh blocked: canRefresh=${_canRefresh.value}, isRefreshing=${_isRefreshing.value}")
@@ -155,6 +163,7 @@ class GameViewModel(
 
         viewModelScope.launch {
             _isRefreshing.value = true
+            _error.value = null
             println("🔄 Starting refresh...")
 
             try {
@@ -183,6 +192,8 @@ class GameViewModel(
                 println("⏱️ Cooldown started, next refresh available in ${REFRESH_COOLDOWN_MS / 1000}s")
 
             } catch (e: Exception) {
+                if (e is CancellationException) throw e
+                _error.value = "Couldn't refresh. Check your connection."
                 println("❌ Refresh failed: ${e.message}")
                 e.printStackTrace()
 
