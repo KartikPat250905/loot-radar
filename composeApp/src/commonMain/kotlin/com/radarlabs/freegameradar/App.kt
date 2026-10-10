@@ -61,7 +61,7 @@ fun App(
 
         AppContainer { gameRepository, notificationRepository, _ ->
             val gameViewModel: GameViewModel = viewModel { GameViewModel() }
-            val notificationViewModel: NotificationViewModel = viewModel { NotificationViewModel(notificationRepository) }
+            val notificationViewModel: NotificationViewModel = viewModel { NotificationViewModel(notificationRepository, gameRepository) }
             val userStatsViewModel: UserStatsViewModel = viewModel { UserStatsViewModel(userStatsRepository, gameRepository) }
             val settingsViewModel: SettingsViewModel = viewModel { SettingsViewModel(authRepository, userSettingsRepository) }
             val userPreferencesViewModel: UserPreferencesViewModel = viewModel { UserPreferencesViewModel(userSettingsRepository) }
