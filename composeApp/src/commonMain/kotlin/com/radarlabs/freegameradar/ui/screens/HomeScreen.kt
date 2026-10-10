@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
@@ -26,6 +27,8 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBarDefaults
@@ -57,6 +60,7 @@ import com.radarlabs.freegameradar.ui.components.AppLoadingScreen
 import com.radarlabs.freegameradar.ui.components.GameGrid
 import com.radarlabs.freegameradar.ui.components.GameTypeFilterTabs
 import com.radarlabs.freegameradar.ui.components.SearchAndRefreshBar
+import com.radarlabs.freegameradar.ui.components.ThemedSnackbarHost
 import com.radarlabs.freegameradar.ui.components.TotalWorthBar
 import com.radarlabs.freegameradar.ui.navigation.Screen
 import com.radarlabs.freegameradar.ui.viewmodel.GameTypeFilter
@@ -207,20 +211,37 @@ fun HomeScreen(
         gameViewModel.showRefreshAd.collectLatest { onShowRefreshAd() }
     }
 
-    Box(
-        modifier = modifier
-            .fillMaxSize()
-            .background(
-                brush = Brush.verticalGradient(
-                    colors = listOf(
-                        Color(0xFF0D1B2A),
-                        Color(0xFF1B263B),
-                        Color(0xFF0D1B2A)
+    val error by gameViewModel.error.collectAsState()
+    val snackbarHostState = remember { SnackbarHostState() }
+
+    LaunchedEffect(error) {
+        error?.let { errorMessage ->
+            snackbarHostState.showSnackbar(errorMessage)
+            gameViewModel.clearError()
+        }
+    }
+
+    Scaffold(
+        snackbarHost = { ThemedSnackbarHost(snackbarHostState, bottomPadding = 80.dp) },
+        containerColor = Color.Transparent,
+        contentWindowInsets = WindowInsets(0),
+        modifier = modifier.fillMaxSize()
+    ) { innerPadding ->
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(
+                    brush = Brush.verticalGradient(
+                        colors = listOf(
+                            Color(0xFF0D1B2A),
+                            Color(0xFF1B263B),
+                            Color(0xFF0D1B2A)
+                        )
                     )
                 )
-            )
-            .nestedScroll(scrollBehavior.nestedScrollConnection)
-    ) {
+                .padding(innerPadding)
+                .nestedScroll(scrollBehavior.nestedScrollConnection)
+        ) {
         // ✅ Grid top padding tracks the bar in real time — no dead space ever
         Box(
             modifier = Modifier
@@ -337,6 +358,7 @@ fun HomeScreen(
             )
         }
     }
+}
 
     LaunchedEffect(selectedFilter, searchText) {
         gridState.scrollToItem(0)
