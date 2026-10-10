@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -21,11 +22,17 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -42,6 +49,7 @@ import androidx.navigation.NavController
 import coil3.compose.AsyncImage
 import com.radarlabs.freegameradar.ui.components.AppLoadingScreen
 import com.radarlabs.freegameradar.ui.components.GameWorth
+import com.radarlabs.freegameradar.ui.components.ThemedSnackbarHost
 import com.radarlabs.freegameradar.ui.navigation.Screen
 import com.radarlabs.freegameradar.ui.viewmodel.NotificationViewModel
 
@@ -53,65 +61,99 @@ fun NotificationScreen(
 ) {
     val notifications by viewModel.notifications.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
+    val isRefreshing by viewModel.isRefreshing.collectAsState()
+    val error by viewModel.error.collectAsState()
+    val snackbarHostState = remember { SnackbarHostState() }
 
-    Column(
-        modifier = modifier
-            .fillMaxSize()
-            .background(
-                Brush.verticalGradient(
-                    listOf(
-                        Color(0xFF0D1B2A),
-                        Color(0xFF1B263B),
-                        Color(0xFF0D1B2A)
+    LaunchedEffect(error) {
+        error?.let { errorMessage ->
+            snackbarHostState.showSnackbar(errorMessage)
+            viewModel.clearError()
+        }
+    }
+
+    Scaffold(
+        snackbarHost = { ThemedSnackbarHost(snackbarHostState) },
+        contentWindowInsets = WindowInsets(0),
+        containerColor = Color.Transparent,
+        modifier = modifier.fillMaxSize()
+    ) { innerPadding ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(
+                    Brush.verticalGradient(
+                        listOf(
+                            Color(0xFF0D1B2A),
+                            Color(0xFF1B263B),
+                            Color(0xFF0D1B2A)
+                        )
                     )
                 )
-            )
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 12.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
+                .padding(innerPadding)
         ) {
-            Text(
-                text = "Notifications",
-                fontSize = 24.sp,
-                fontWeight = FontWeight.ExtraBold,
-                color = Color(0xFFE5E7EB)
-            )
-
-            // Themed Clear All Button
-            ThemedClearButton(
-                onClick = { viewModel.clearAllnotifications() },
-                enabled = notifications.isNotEmpty()
-            )
-        }
-
-        if (isLoading) {
-            AppLoadingScreen(fullScreen = true)
-        } else if (notifications.isEmpty()) {
-            EmptyNotifications()
-        } else {
-            LazyColumn(
-                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 12.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                items(notifications) { notification ->
-                    NotificationCard(
-                        title = notification.title,
-                        imageUrl = notification.imageUrl,
-                        worth = notification.worth,
-                        onClick = {
-                            viewModel.markAsRead(notification.id)
-                            navController.navigate(
-                                Screen.Details.createRoute(notification.id)
-                            )
-                        },
-                        onDelete = {
-                            viewModel.deleteNotification(notification.id)
-                        }
+                Text(
+                    text = "Notifications",
+                    fontSize = 24.sp,
+                    fontWeight = FontWeight.ExtraBold,
+                    color = Color(0xFFE5E7EB)
+                )
+
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    IconButton(
+                        onClick = { viewModel.refreshNotifications() },
+                        enabled = !isRefreshing
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Refresh,
+                            contentDescription = "Refresh Notifications",
+                            tint = if (!isRefreshing) Color(0xFF10B981) else Color(0xFF6B7280)
+                        )
+                    }
+
+                    // Themed Clear All Button
+                    ThemedClearButton(
+                        onClick = { viewModel.clearAllnotifications() },
+                        enabled = notifications.isNotEmpty()
                     )
+                }
+            }
+
+            if (isLoading) {
+                AppLoadingScreen(fullScreen = true)
+            } else if (notifications.isEmpty()) {
+                EmptyNotifications()
+            } else {
+                LazyColumn(
+                    contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    items(notifications) { notification ->
+                        NotificationCard(
+                            title = notification.title,
+                            imageUrl = notification.imageUrl,
+                            worth = notification.worth,
+                            onClick = {
+                                viewModel.markAsRead(notification.id)
+                                navController.navigate(
+                                    Screen.Details.createRoute(notification.id)
+                                )
+                            },
+                            onDelete = {
+                                viewModel.deleteNotification(notification.id)
+                            }
+                        )
+                    }
                 }
             }
         }
