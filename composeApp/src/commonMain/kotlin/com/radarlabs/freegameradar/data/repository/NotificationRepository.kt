@@ -72,6 +72,7 @@ class NotificationRepository(private val database: GameDatabase) {
     }
 
     fun deleteExpiredNotifications(validGameIds: List<Long>) {
+        if (validGameIds.isEmpty()) return
         queries.deleteExpiredNotifications(validGameIds)
     }
 }
