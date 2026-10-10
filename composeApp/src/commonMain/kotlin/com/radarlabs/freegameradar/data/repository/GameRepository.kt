@@ -7,6 +7,7 @@ import com.radarlabs.freegameradar.data.models.GameDto
 import com.radarlabs.freegameradar.data.models.WorthDto
 import com.radarlabs.freegameradar.data.remote.ApiService
 import com.radarlabs.freegameradar.data.state.DataSource
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
@@ -15,6 +16,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.withContext
 
 class GameRepository(
@@ -31,11 +33,14 @@ class GameRepository(
     private val database = GameDatabaseProvider.getDatabase()
     private val notificationRepository = NotificationRepository(database)
 
-    fun getFreeGames(forceRefresh: Boolean = false): Flow<List<GameDto>> = flow {
+    fun getFreeGamesState(forceRefresh: Boolean = false): Flow<List<GameDto>?> = flow {
+        var hasEmittedCache = false
+        emit(null)
         if (!forceRefresh) {
             val cached = database.gameQueries.selectAll().executeAsList().map { it.toDto() }
             if (cached.isNotEmpty()) {
                 _dataSource.value = DataSource.CACHE
+                hasEmittedCache = true
                 emit(cached)
             }
         }
@@ -70,7 +75,11 @@ class GameRepository(
                 // Perform database operations in the background
                 withContext(Dispatchers.Default) {
                     val validGameIds = remoteGames.mapNotNull { it.id?.toLong() }
-                    notificationRepository.deleteExpiredNotifications(validGameIds)
+                    if (validGameIds.isNotEmpty()) {
+                        notificationRepository.deleteExpiredNotifications(validGameIds)
+                    } else {
+                        notificationRepository.deleteAllNotifications()
+                    }
 
                     database.transaction {
                         database.gameQueries.deleteAll()
@@ -98,9 +107,19 @@ class GameRepository(
                 }
             }
         } catch (e: Exception) {
+            if (e is CancellationException) throw e
             println("API failed, using cached data if available: ${e.message}")
             _dataSource.value = DataSource.CACHE
+            if (!hasEmittedCache) {
+                val cached = database.gameQueries.selectAll().executeAsList().map { it.toDto() }
+                if (cached.isNotEmpty()) {
+                    emit(cached)
+                }
+            }
             if (forceRefresh) throw e
         }
     }
+
+    fun getFreeGames(forceRefresh: Boolean = false): Flow<List<GameDto>> =
+        getFreeGamesState(forceRefresh).mapNotNull { it }
 }
