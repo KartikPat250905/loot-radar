@@ -86,7 +86,6 @@ fun AppNavigation(
     ) {
         composable(Screen.Gate.route) {
             Log.d("AppNavigation", "🚪 GATE ROUTE - Loading preferences")
-            val preferencesState by userPreferencesViewModel.uiState.collectAsState()
 
             // Full screen loading with proper background
             Box(
@@ -106,22 +105,31 @@ fun AppNavigation(
                 AppLoadingScreen(fullScreen = true)
             }
 
-            LaunchedEffect(preferencesState.isLoaded) {
-                if (preferencesState.isLoaded) {
-                    // Small delay to ensure smooth transition
-                    delay(150)
-                    val route = routeFlow?.value ?: startRoute
-                    val destination = if (route == "notification") {
-                        Screen.Notification.route
-                    } else {
-                        if (preferencesState.setupComplete) Screen.Home.route else Screen.Setup.route
-                    }
-                    Log.d("AppNavigation", "🚪 GATE ROUTE - Navigating to: $destination (setupComplete=${preferencesState.setupComplete}, route=$route)")
-                    navController.navigate(destination) {
-                        popUpTo(Screen.Gate.route) { inclusive = true }
-                    }
-                    onRouteConsumed()
+            LaunchedEffect(Unit) {
+                var elapsed = 0L
+                val maxGateTimeoutMs = 8_000L
+                while (!userPreferencesViewModel.uiState.value.isLoaded && elapsed < maxGateTimeoutMs) {
+                    delay(100L)
+                    elapsed += 100L
                 }
+
+                if (!userPreferencesViewModel.uiState.value.isLoaded) {
+                    Log.w("AppNavigation", "⚠️ GATE ROUTE - Gate timeout reached (8s), proceeding with local defaults.")
+                }
+
+                delay(150)
+                val currentPrefs = userPreferencesViewModel.uiState.value
+                val route = routeFlow?.value ?: startRoute
+                val destination = if (route == "notification") {
+                    Screen.Notification.route
+                } else {
+                    if (currentPrefs.setupComplete) Screen.Home.route else Screen.Setup.route
+                }
+                Log.d("AppNavigation", "🚪 GATE ROUTE - Navigating to: $destination (setupComplete=${currentPrefs.setupComplete}, route=$route)")
+                navController.navigate(destination) {
+                    popUpTo(Screen.Gate.route) { inclusive = true }
+                }
+                onRouteConsumed()
             }
         }
 
