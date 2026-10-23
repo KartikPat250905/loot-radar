@@ -4,18 +4,21 @@ import com.radarlabs.freegameradar.data.auth.AuthRepository
 import com.radarlabs.freegameradar.util.Logger
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.SetOptions
+import com.google.firebase.firestore.Source
 import com.google.firebase.firestore.firestore
 import com.google.firebase.Firebase
 import com.russhwolf.settings.ObservableSettings
 import com.russhwolf.settings.coroutines.FlowSettings
 import com.russhwolf.settings.coroutines.toFlowSettings
 import com.russhwolf.settings.set
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeoutOrNull
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 
@@ -114,7 +117,22 @@ class UserStatsRepository(private val authRepository: AuthRepository, private va
                 return@withContext
             }
             val docRef = firestore.collection(USERS_COLLECTION).document(uid)
-            val snapshot = docRef.get().await()
+
+            val snapshot = withTimeoutOrNull(3_000) {
+                try {
+                    docRef.get(Source.CACHE).await()
+                } catch (e: Exception) {
+                    if (e is CancellationException) throw e
+                    null
+                }
+            } ?: withTimeoutOrNull(5_000) {
+                try {
+                    docRef.get().await()
+                } catch (e: Exception) {
+                    if (e is CancellationException) throw e
+                    null
+                }
+            }
 
             val localValue = settings.getFloat(CLAIMED_VALUE_KEY, 0f)
             val localGamesWithTimestampsJson = settings.getString(CLAIMED_GAMES_WITH_TIMESTAMPS_KEY, "{}")
@@ -127,7 +145,7 @@ class UserStatsRepository(private val authRepository: AuthRepository, private va
 
             Logger.d("UserStatsRepository", "Local - Value: $localValue, Games: ${localGamesWithTimestamps.size} items")
 
-            if (snapshot.exists()) {
+            if (snapshot != null && snapshot.exists()) {
                 val remoteValue = (snapshot.getDouble(TOTAL_CLAIMED_VALUE_FIELD) ?: 0.0).toFloat()
                 val remoteGameIds = (snapshot.get(CLAIMED_GAME_IDS_FIELD) as? List<*>)
                     ?.mapNotNull {
@@ -180,11 +198,11 @@ class UserStatsRepository(private val authRepository: AuthRepository, private va
                         CLAIMED_GAMES_WITH_TIMESTAMPS_FIELD to mergedGamesWithTimestamps.mapKeys { it.key.toString() }
                     ),
                     SetOptions.merge()
-                ).await()
+                )
 
                 Logger.d("UserStatsRepository", "Successfully synced user stats.")
-            } else {
-                Logger.d("UserStatsRepository", "No user stats document found, creating one.")
+            } else if (snapshot != null && !snapshot.exists()) {
+                Logger.d("UserStatsRepository", "No user stats document found, creating initial stats doc.")
                 val gameIdsList = localGamesWithTimestamps.keys.toList().sorted()
                 docRef.set(
                     mapOf(
@@ -192,9 +210,12 @@ class UserStatsRepository(private val authRepository: AuthRepository, private va
                         CLAIMED_GAME_IDS_FIELD to gameIdsList,
                         CLAIMED_GAMES_WITH_TIMESTAMPS_FIELD to localGamesWithTimestamps.mapKeys { it.key.toString() }
                     )
-                ).await()
+                )
+            } else {
+                Logger.d("UserStatsRepository", "Remote snapshot unavailable, skipping stats overwrite.")
             }
         } catch (e: Exception) {
+            if (e is CancellationException) throw e
             Logger.e("UserStatsRepository", "Failed to sync user stats with Firestore: ", e)
         }
     }
