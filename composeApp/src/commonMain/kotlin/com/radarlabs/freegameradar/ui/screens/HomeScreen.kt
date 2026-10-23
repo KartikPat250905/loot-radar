@@ -66,9 +66,14 @@ import com.radarlabs.freegameradar.ui.navigation.Screen
 import com.radarlabs.freegameradar.ui.viewmodel.GameTypeFilter
 import com.radarlabs.freegameradar.ui.viewmodel.GameViewModel
 import com.radarlabs.freegameradar.ui.viewmodel.UserPreferencesViewModel
+import com.radarlabs.freegameradar.util.ConnectivityObserver
 import com.radarlabs.freegameradar.util.isNotificationPermissionGranted
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.isActive
 import kotlin.math.roundToInt
 
 private object PermissionPromptTracker {
@@ -264,13 +269,36 @@ fun HomeScreen(
                         "No free games currently available."
                     }
                     
-                    Text(
-                        text = emptyMessage,
-                        textAlign = TextAlign.Center,
-                        modifier = Modifier.padding(16.dp),
-                        fontSize = 18.sp,
-                        color = Color(0xFF9CA3AF)
-                    )
+                    Column(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(24.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.Center
+                    ) {
+                        Text(
+                            text = emptyMessage,
+                            textAlign = TextAlign.Center,
+                            fontSize = 16.sp,
+                            color = Color(0xFF9CA3AF)
+                        )
+                        if (searchText.isBlank()) {
+                            Spacer(modifier = Modifier.height(16.dp))
+                            Button(
+                                onClick = { gameViewModel.loadGames() },
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = Color(0xFF10B981)
+                                ),
+                                shape = RoundedCornerShape(8.dp)
+                            ) {
+                                Text(
+                                    text = "Retry",
+                                    color = Color(0xFFE5E7EB),
+                                    fontWeight = FontWeight.SemiBold
+                                )
+                            }
+                        }
+                    }
                 }
                 else -> {
                     Log.d("HomeScreen", "📺 RENDERING: Game grid with ${games.size} games")
@@ -368,6 +396,49 @@ fun HomeScreen(
     LaunchedEffect(Unit) {
         Log.d("HomeScreen", "🚀 Calling loadGames()")
         gameViewModel.loadGames()
+    }
+
+    // 1. Connectivity Observer: Re-check immediately when connectivity recovers
+    val connectivityObserver = remember { ConnectivityObserver() }
+    LaunchedEffect(Unit) {
+        connectivityObserver.isOnline.collect { isOnline ->
+            if (isOnline && gameViewModel.dataSource.value == DataSource.CACHE) {
+                Log.d("HomeScreen", "🌐 Network online detected while on CACHE, triggering silentReload()")
+                gameViewModel.silentReload()
+            }
+        }
+    }
+
+    // 2. Exponential Backoff Polling while on CACHE (10s -> 20s -> 40s -> 60s max)
+    LaunchedEffect(dataSource) {
+        if (dataSource == DataSource.CACHE) {
+            var delayMs = 10_000L
+            while (isActive && dataSource == DataSource.CACHE) {
+                delay(delayMs)
+                if (dataSource == DataSource.CACHE) {
+                    Log.d("HomeScreen", "🔄 Backoff polling triggering silentReload() (${delayMs / 1000}s interval)")
+                    gameViewModel.silentReload()
+                }
+                delayMs = (delayMs * 2).coerceAtMost(60_000L)
+            }
+        }
+    }
+
+    // 3. Foreground / ON_RESUME handler: Reload if returning while on CACHE
+    val lifecycleOwner = LocalLifecycleOwner.current
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME) {
+                if (gameViewModel.dataSource.value == DataSource.CACHE) {
+                    Log.d("HomeScreen", "📱 App foregrounded while on CACHE, triggering silentReload()")
+                    gameViewModel.silentReload()
+                }
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(observer)
+        }
     }
 
     DisposableEffect(Unit) {
