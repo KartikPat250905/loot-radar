@@ -5,13 +5,16 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.auth
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.SetOptions
+import com.google.firebase.firestore.Source
 import com.google.firebase.firestore.firestore
 import com.google.firebase.Firebase
 import com.google.firebase.messaging.FirebaseMessaging
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
+import kotlinx.coroutines.withTimeoutOrNull
 
 object TokenManager {
 
@@ -49,6 +52,7 @@ object TokenManager {
                 Log.d("TokenManager", "✅ Retrieved FCM token: $token for user: $uid")
                 saveTokenToFirestore(token)
             } catch (e: Exception) {
+                if (e is CancellationException) throw e
                 Log.e("TokenManager", "❌ Failed to get FCM token", e)
             }
         }
@@ -72,11 +76,25 @@ object TokenManager {
         val userDocRef = firestore.collection("users").document(uid)
 
         try {
-            // ✅ Check if document exists first
-            val snapshot = userDocRef.get().await()
+            // ✅ Cache-first read with timeout
+            val snapshot = withTimeoutOrNull(3_000) {
+                try {
+                    userDocRef.get(Source.CACHE).await()
+                } catch (e: Exception) {
+                    if (e is CancellationException) throw e
+                    null
+                }
+            } ?: withTimeoutOrNull(5_000) {
+                try {
+                    userDocRef.get().await()
+                } catch (e: Exception) {
+                    if (e is CancellationException) throw e
+                    null
+                }
+            }
 
-            if (!snapshot.exists()) {
-                // ✅ NEW DOCUMENT: Create with default settings AND token
+            if (snapshot != null && !snapshot.exists()) {
+                // ✅ CONFIRMED NEW DOCUMENT: Create with default settings AND token
                 val initialData = mapOf(
                     "notificationTokens" to listOf(token),
                     "setupComplete" to false,
@@ -84,18 +102,19 @@ object TokenManager {
                     "preferredGamePlatforms" to emptyList<String>(),
                     "preferredGameTypes" to emptyList<String>()
                 )
-                userDocRef.set(initialData).await()
+                userDocRef.set(initialData)
                 Log.d("TokenManager", "✅ Created new user document with default settings for: $uid")
             } else {
-                // ✅ EXISTING DOCUMENT: Just add token
+                // ✅ EXISTING OR UNKNOWN/OFFLINE DOCUMENT: Merge token safely
                 userDocRef.set(
                     mapOf("notificationTokens" to FieldValue.arrayUnion(token)),
                     SetOptions.merge()
-                ).await()
-                Log.d("TokenManager", "✅ Token added to existing document for: $uid")
+                )
+                Log.d("TokenManager", "✅ Token merged for user: $uid")
             }
 
         } catch (e: Exception) {
+            if (e is CancellationException) throw e
             Log.e("TokenManager", "❌ Failed to save token for UID: $uid")
             Log.e("TokenManager", "Error message: ${e.message}")
             e.printStackTrace()
