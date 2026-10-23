@@ -12,6 +12,8 @@ import com.google.firebase.firestore.SetOptions
 import com.google.firebase.firestore.firestore
 import com.google.firebase.firestore.toObject
 import com.google.firebase.Firebase
+import com.google.firebase.firestore.Source
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
@@ -23,6 +25,7 @@ import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeoutOrNull
 
 actual class UserSettingsRepositoryImpl actual constructor(
     private val authRepository: AuthRepository,
@@ -68,10 +71,25 @@ actual class UserSettingsRepositoryImpl actual constructor(
             try {
                 Log.d("UserSettingsRepo", "🔄 Starting sync for user: ${user.uid}")
                 val docRef = Firebase.firestore.collection("users").document(user.uid)
-                val snapshot = docRef.get().await()
 
-                Log.d("UserSettingsRepo", "📄 Document exists: ${snapshot.exists()}")
-                Log.d("UserSettingsRepo", "📄 Raw data: ${snapshot.data}")
+                val snapshot = withTimeoutOrNull(3_000) {
+                    try {
+                        docRef.get(Source.CACHE).await()
+                    } catch (e: Exception) {
+                        if (e is CancellationException) throw e
+                        null
+                    }
+                } ?: withTimeoutOrNull(5_000) {
+                    try {
+                        docRef.get().await()
+                    } catch (e: Exception) {
+                        if (e is CancellationException) throw e
+                        null
+                    }
+                }
+
+                Log.d("UserSettingsRepo", "📄 Document exists: ${snapshot?.exists()}")
+                Log.d("UserSettingsRepo", "📄 Raw data: ${snapshot?.data}")
 
                 val emptySettings = UserSettings(setupComplete = false)
 
@@ -106,9 +124,12 @@ actual class UserSettingsRepositoryImpl actual constructor(
                         Log.d("UserSettingsRepo", "Document exists but data is null")
                         emptySettings
                     }
-                } else {
+                } else if (snapshot != null && !snapshot.exists()) {
                     Log.d("UserSettingsRepo", "No remote settings found for user ${user.uid}")
                     emptySettings
+                } else {
+                    Log.d("UserSettingsRepo", "Remote unavailable (snapshot == null), preserving local settings")
+                    getSettings().first()
                 }
 
                 Log.d("UserSettingsRepo", "💾 Saving to local: setupComplete=${remoteSettings.setupComplete}, notif=${remoteSettings.notificationsEnabled}")
@@ -125,6 +146,7 @@ actual class UserSettingsRepositoryImpl actual constructor(
                 Log.d("UserSettingsRepo", "✅ Settings synced - setupComplete=${remoteSettings.setupComplete}")
 
             } catch (e: Exception) {
+                if (e is CancellationException) throw e
                 Log.e("UserSettingsRepo", "❌ Failed to sync settings: ${e.message}", e)
                 e.printStackTrace()
             } finally {
@@ -153,10 +175,11 @@ actual class UserSettingsRepositoryImpl actual constructor(
                     "setupComplete" to userSettings.setupComplete
                 )
                 Firebase.firestore.collection("users").document(userId)
-                    .set(settingsData, SetOptions.merge()).await()
+                    .set(settingsData, SetOptions.merge())
 
                 Log.d("UserSettingsRepo", "✅ Settings saved for user: $userId")
             } catch (e: Exception) {
+                if (e is kotlinx.coroutines.CancellationException) throw e
                 Log.e("UserSettingsRepo", "❌ Failed to save settings: ${e.message}", e)
             }
         }
