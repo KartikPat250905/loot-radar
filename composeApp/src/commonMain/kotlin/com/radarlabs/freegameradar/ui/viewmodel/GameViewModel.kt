@@ -129,22 +129,55 @@ class GameViewModel(
     }
 
     fun loadGames() {
+        _isLoading.value = true
         viewModelScope.launch {
-            repository.getFreeGames()
-                .catch { e ->
-                    println("❌ Error fetching games: ${e.message}")
-                    e.printStackTrace()
-                    _isLoading.value = false
-                }
-                .collect { gameList ->
-                    if (gameList.isNotEmpty()) {
-                        _allGames.value = gameList
-                        println("✅ Loaded ${gameList.size} games")
-                    } else {
-                        println("⚠️ Skipped empty game list emission")
+            try {
+                repository.getFreeGames()
+                    .catch { e ->
+                        if (e is CancellationException) throw e
+                        println("❌ Error fetching games: ${e.message}")
+                        e.printStackTrace()
                     }
-                    _isLoading.value = false
-                }
+                    .collect { gameList ->
+                        if (gameList.isNotEmpty()) {
+                            _allGames.value = gameList
+                            println("✅ Loaded ${gameList.size} games")
+                        } else {
+                            println("⚠️ Skipped empty game list emission")
+                        }
+                        _isLoading.value = false
+                    }
+            } finally {
+                _isLoading.value = false
+            }
+        }
+    }
+
+    private var isReloading = false
+
+    fun silentReload() {
+        if (isReloading) return
+        isReloading = true
+
+        viewModelScope.launch {
+            try {
+                repository.getFreeGames()
+                    .catch { e ->
+                        if (e is CancellationException) throw e
+                        println("⚠️ Silent reload failed: ${e.message}")
+                    }
+                    .collect { gameList ->
+                        if (gameList.isNotEmpty()) {
+                            _allGames.value = gameList
+                            println("✅ Silent reload updated ${gameList.size} games")
+                        }
+                    }
+            } catch (e: Exception) {
+                if (e is CancellationException) throw e
+                println("⚠️ Silent reload exception: ${e.message}")
+            } finally {
+                isReloading = false
+            }
         }
     }
 
