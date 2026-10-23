@@ -1,6 +1,7 @@
 package com.radarlabs.freegameradar.data.remote
 
 import io.ktor.client.HttpClient
+import io.ktor.client.plugins.HttpTimeout
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.plugins.defaultRequest
 import io.ktor.client.request.header
@@ -11,6 +12,12 @@ import kotlinx.serialization.json.Json
 
 object NetworkClient {
     val client = HttpClient {
+        install(HttpTimeout) {
+            connectTimeoutMillis = 5_000L
+            socketTimeoutMillis = 10_000L
+            requestTimeoutMillis = 15_000L
+        }
+
         install(ContentNegotiation) {
             json(Json {
                 ignoreUnknownKeys = true
