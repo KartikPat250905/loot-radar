@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.radarlabs.freegameradar.data.repository.UserSettingsRepository
 import com.radarlabs.freegameradar.data.repository.UserStatsRepository
 import com.radarlabs.freegameradar.util.Logger
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -26,11 +27,21 @@ class AuthInitViewModel(
                 userSettingsRepository.syncUserSettings()
                 Logger.d("AuthInitViewModel", "✅ Settings synced")
 
-                userStatsRepository.syncClaimedValue()
-                Logger.d("AuthInitViewModel", "✅ Stats synced")
-
+                // Gate release as soon as local settings are ready
                 _isInitialized.value = true
+
+                // Stats sync runs in background coroutine and does not block initialization
+                launch {
+                    try {
+                        userStatsRepository.syncClaimedValue()
+                        Logger.d("AuthInitViewModel", "✅ Stats synced")
+                    } catch (e: Exception) {
+                        if (e is CancellationException) throw e
+                        Logger.e("AuthInitViewModel", "❌ Stats sync failed: ", e)
+                    }
+                }
             } catch (e: Exception) {
+                if (e is CancellationException) throw e
                 Logger.e("AuthInitViewModel", "❌ Sync failed: ", e)
                 _isInitialized.value = true
             }
