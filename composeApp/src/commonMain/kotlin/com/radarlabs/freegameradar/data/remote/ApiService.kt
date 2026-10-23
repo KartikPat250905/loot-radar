@@ -7,6 +7,7 @@ import io.ktor.client.request.get
 import io.ktor.client.request.parameter
 import io.ktor.http.ContentType
 import io.ktor.http.contentType
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 
@@ -20,6 +21,7 @@ class ApiService {
             }
             emit(response.body<List<GameDto>>())
         } catch (e: Exception) {
+            if (e is CancellationException) throw e
             println("API Error: ${e.message}")
             throw e
         }
