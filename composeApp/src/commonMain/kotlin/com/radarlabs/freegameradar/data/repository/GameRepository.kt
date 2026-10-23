@@ -52,7 +52,8 @@ class GameRepository(
                 val worthDeferred = async {
                     try {
                         api.getTotalWorth()
-                    } catch (_: Exception) {
+                    } catch (e: Exception) {
+                        if (e is CancellationException) throw e
                         null
                     }
                 }
