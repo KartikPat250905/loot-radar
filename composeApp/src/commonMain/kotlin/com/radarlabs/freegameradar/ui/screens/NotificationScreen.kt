@@ -30,6 +30,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -60,6 +61,7 @@ fun NotificationScreen(
     modifier: Modifier = Modifier
 ) {
     val notifications by viewModel.notifications.collectAsState()
+    val endedNotificationIds by viewModel.endedNotificationIds.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
     val isRefreshing by viewModel.isRefreshing.collectAsState()
     val error by viewModel.error.collectAsState()
@@ -139,10 +141,12 @@ fun NotificationScreen(
                     verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
                     items(notifications) { notification ->
+                        val isEnded = notification.id in endedNotificationIds
                         NotificationCard(
                             title = notification.title,
                             imageUrl = notification.imageUrl,
                             worth = notification.worth,
+                            isEnded = isEnded,
                             onClick = {
                                 viewModel.markAsRead(notification.id)
                                 navController.navigate(
@@ -237,6 +241,7 @@ private fun NotificationCard(
     title: String,
     imageUrl: String,
     worth: String,
+    isEnded: Boolean = false,
     onClick: () -> Unit,
     onDelete: () -> Unit
 ) {
@@ -246,7 +251,7 @@ private fun NotificationCard(
             .clickable(onClick = onClick),
         shape = RoundedCornerShape(14.dp),
         colors = CardDefaults.cardColors(
-            containerColor = Color(0xFF1B263B)
+            containerColor = if (isEnded) Color(0xFF1B263B).copy(alpha = 0.6f) else Color(0xFF1B263B)
         ),
         elevation = CardDefaults.cardElevation(1.dp)
     ) {
@@ -263,7 +268,8 @@ private fun NotificationCard(
                 AsyncImage(
                     model = imageUrl,
                     contentDescription = title,
-                    modifier = Modifier.fillMaxSize()
+                    modifier = Modifier.fillMaxSize(),
+                    alpha = if (isEnded) 0.5f else 1.0f
                 )
 
                 Box(
@@ -273,7 +279,7 @@ private fun NotificationCard(
                             Brush.verticalGradient(
                                 listOf(
                                     Color.Transparent,
-                                    Color(0x660D1B2A)
+                                    if (isEnded) Color(0x990D1B2A) else Color(0x660D1B2A)
                                 )
                             )
                         )
@@ -290,14 +296,33 @@ private fun NotificationCard(
                     text = title,
                     fontSize = 15.sp,
                     fontWeight = FontWeight.Medium,
-                    color = Color(0xFFE5E7EB),
+                    color = if (isEnded) Color(0xFF9CA3AF) else Color(0xFFE5E7EB),
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis
                 )
 
                 Spacer(modifier = Modifier.height(4.dp))
 
-                GameWorth(price = worth)
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    GameWorth(price = worth)
+                    if (isEnded) {
+                        Surface(
+                            color = Color(0xFFEF4444).copy(alpha = 0.2f),
+                            shape = RoundedCornerShape(4.dp)
+                        ) {
+                            Text(
+                                text = "Ended",
+                                color = Color(0xFFEF4444),
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.Bold,
+                                modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                            )
+                        }
+                    }
+                }
             }
 
             // Compact delete (no 48dp inflation)
