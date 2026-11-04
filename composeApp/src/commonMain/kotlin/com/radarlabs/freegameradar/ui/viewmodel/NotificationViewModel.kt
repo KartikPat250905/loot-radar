@@ -5,11 +5,14 @@ import androidx.lifecycle.viewModelScope
 import com.radarlabs.freegameradar.data.model.DealNotification
 import com.radarlabs.freegameradar.data.repository.GameRepository
 import com.radarlabs.freegameradar.data.repository.NotificationRepository
+import com.radarlabs.freegameradar.ui.screens.isExpired
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.stateIn
@@ -41,6 +44,29 @@ class NotificationViewModel(
             started = SharingStarted.WhileSubscribed(5000),
             initialValue = emptyList()
         )
+
+    val endedNotificationIds: StateFlow<Set<Long>> = combine(
+        notifications,
+        gameRepository.getFreeGames().catch { emit(emptyList()) }
+    ) { notificationsList, gamesList ->
+        if (gamesList.isEmpty()) {
+            emptySet()
+        } else {
+            val gameMap = gamesList.associateBy { it.id }
+            notificationsList.filter { notification ->
+                val game = gameMap[notification.id]
+                game == null ||
+                        game.status?.equals("Ended", ignoreCase = true) == true ||
+                        game.status?.equals("Expired", ignoreCase = true) == true ||
+                        game.status?.equals("Closed", ignoreCase = true) == true ||
+                        isExpired(game.end_date)
+            }.map { it.id }.toSet()
+        }
+    }.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = emptySet()
+    )
 
     val unreadNotificationCount: StateFlow<Int> = notificationRepository.getUnreadCount()
         .map { it.toInt() }
