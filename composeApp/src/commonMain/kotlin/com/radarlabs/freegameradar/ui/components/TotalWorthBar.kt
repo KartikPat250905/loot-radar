@@ -9,17 +9,23 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.radarlabs.freegameradar.data.models.GameDto
 import com.radarlabs.freegameradar.data.state.DataSource
+import com.radarlabs.freegameradar.util.formatWorth
 import kotlin.math.round
 
 @Composable
@@ -43,7 +49,8 @@ fun TotalWorthBar(
         }.sum()
     }
 
-    val formattedTotal = "$${round(total * 100) / 100}"
+    val exactFormattedTotal = "$${round(total * 100) / 100}"
+    val formattedTotal = formatWorth(total)
 
     val infiniteTransition = rememberInfiniteTransition(label = "pulse")
     val scale by infiniteTransition.animateFloat(
@@ -65,7 +72,6 @@ fun TotalWorthBar(
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(60.dp)
                 .background(
                     brush = Brush.radialGradient(
                         colors = listOf(Color(0x4410B981), Color.Transparent),
@@ -114,7 +120,7 @@ fun TotalWorthBar(
                             ),
                             shape = RoundedCornerShape(14.dp)
                         )
-                        .padding(horizontal = 20.dp, vertical = 8.dp),
+                        .padding(horizontal = 20.dp, vertical = 12.dp),
                     contentAlignment = Alignment.Center
                 ) {
                     Row(
@@ -122,11 +128,14 @@ fun TotalWorthBar(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
-                        Column(verticalArrangement = Arrangement.Center) {
+                        Column(
+                            modifier = Modifier.wrapContentWidth(),
+                            verticalArrangement = Arrangement.Center
+                        ) {
                             Text(
                                 text = "FREE GAMES VALUE",
                                 style = MaterialTheme.typography.labelSmall,
-                                color = Color(0xFF6EE7B7),
+                                color = Color(0xFF9CA3AF),
                                 letterSpacing = 1.5.sp,
                                 fontWeight = FontWeight.Medium
                             )
@@ -177,8 +186,19 @@ fun TotalWorthBar(
                                 fadeIn(animationSpec = tween(300)) togetherWith
                                         fadeOut(animationSpec = tween(300))
                             },
+                            modifier = Modifier
+                                .weight(1f, fill = false)
+                                .semantics {
+                                    contentDescription = "Total Value: $exactFormattedTotal"
+                                },
                             label = "priceAnimation"
                         ) { text ->
+                            var fontScale by remember(text) { mutableStateOf(1f) }
+                            var isSettled by remember(text) { mutableStateOf(false) }
+
+                            val baseSp = 22.sp
+                            val effectiveFontSize = baseSp * fontScale
+
                             val priceText = buildAnnotatedString {
                                 withStyle(
                                     style = SpanStyle(
@@ -190,7 +210,8 @@ fun TotalWorthBar(
                                             )
                                         ),
                                         fontWeight = FontWeight.ExtraBold,
-                                        fontSize = 28.sp
+                                        fontSize = effectiveFontSize,
+                                        fontFeatureSettings = "tnum"
                                     )
                                 ) {
                                     append(text)
@@ -199,7 +220,28 @@ fun TotalWorthBar(
 
                             Text(
                                 text = priceText,
-                                style = MaterialTheme.typography.displaySmall
+                                style = MaterialTheme.typography.displaySmall.copy(
+                                    fontSize = effectiveFontSize,
+                                    fontFeatureSettings = "tnum"
+                                ),
+                                maxLines = 1,
+                                softWrap = false,
+                                overflow = TextOverflow.Clip,
+                                textAlign = TextAlign.End,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .drawWithContent {
+                                        if (isSettled || fontScale <= 0.6f) {
+                                            drawContent()
+                                        }
+                                    },
+                                onTextLayout = { result ->
+                                    if ((result.hasVisualOverflow || result.didOverflowWidth) && fontScale > 0.6f) {
+                                        fontScale *= 0.9f
+                                    } else {
+                                        isSettled = true
+                                    }
+                                }
                             )
                         }
                     }
