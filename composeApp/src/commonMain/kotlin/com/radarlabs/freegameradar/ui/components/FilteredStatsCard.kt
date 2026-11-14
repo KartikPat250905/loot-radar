@@ -14,6 +14,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.radarlabs.freegameradar.ui.viewmodel.FilteredStats
+import com.radarlabs.freegameradar.util.formatWorth
 
 @Composable
 fun FilteredStatsCard(filteredStats: FilteredStats) {
@@ -32,7 +33,7 @@ fun FilteredStatsCard(filteredStats: FilteredStats) {
             }
             Row {
                 Text("Total Worth: ", style = MaterialTheme.typography.bodyMedium)
-                Text(String.format("$%.2f", filteredStats.totalWorth), style = MaterialTheme.typography.bodyLarge)
+                Text(formatWorth(filteredStats.totalWorth), style = MaterialTheme.typography.bodyLarge)
             }
         }
     }
