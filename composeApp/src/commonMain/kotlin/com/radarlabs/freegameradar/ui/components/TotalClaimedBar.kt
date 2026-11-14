@@ -8,21 +8,29 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.radarlabs.freegameradar.util.formatWorth
+import kotlin.math.round
 
 @Composable
 fun TotalClaimedBar(
     claimedValue: Float
 ) {
-    val formattedTotal = "$${String.format("%.2f", claimedValue)}"
+    val exactFormattedTotal = "$${round(claimedValue.toDouble() * 100) / 100}"
+    val formattedTotal = formatWorth(claimedValue.toDouble())
 
     // Pulse animation for the entire card
     val infiniteTransition = rememberInfiniteTransition(label = "pulse")
@@ -120,6 +128,12 @@ fun TotalClaimedBar(
 
                         Spacer(modifier = Modifier.height(8.dp))
 
+                        var fontScale by remember(formattedTotal) { mutableStateOf(1f) }
+                        var isSettled by remember(formattedTotal) { mutableStateOf(false) }
+
+                        val baseSp = 36.sp
+                        val effectiveFontSize = baseSp * fontScale
+
                         // Price display with gradient - NEON GREEN
                         val priceText = buildAnnotatedString {
                             withStyle(
@@ -132,7 +146,8 @@ fun TotalClaimedBar(
                                         )
                                     ),
                                     fontWeight = FontWeight.ExtraBold,
-                                    fontSize = 36.sp
+                                    fontSize = effectiveFontSize,
+                                    fontFeatureSettings = "tnum"
                                 )
                             ) {
                                 append(formattedTotal)
@@ -141,7 +156,31 @@ fun TotalClaimedBar(
 
                         Text(
                             text = priceText,
-                            style = MaterialTheme.typography.displaySmall
+                            style = MaterialTheme.typography.displaySmall.copy(
+                                fontSize = effectiveFontSize,
+                                fontFeatureSettings = "tnum"
+                            ),
+                            maxLines = 1,
+                            softWrap = false,
+                            overflow = TextOverflow.Clip,
+                            textAlign = TextAlign.Center,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .semantics {
+                                    contentDescription = "Total Claimed Value: $exactFormattedTotal"
+                                }
+                                .drawWithContent {
+                                    if (isSettled || fontScale <= 0.6f) {
+                                        drawContent()
+                                    }
+                                },
+                            onTextLayout = { result ->
+                                if ((result.hasVisualOverflow || result.didOverflowWidth) && fontScale > 0.6f) {
+                                    fontScale *= 0.9f
+                                } else {
+                                    isSettled = true
+                                }
+                            }
                         )
 
                         Spacer(modifier = Modifier.height(6.dp))
