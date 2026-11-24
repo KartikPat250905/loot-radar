@@ -10,9 +10,18 @@ import com.radarlabs.freegameradar.data.repository.GameRepository
 import com.radarlabs.freegameradar.data.repository.NotificationRepository
 import com.radarlabs.freegameradar.data.repository.UserStatsRepository
 import com.radarlabs.freegameradar.db.GameDatabase
+import com.radarlabs.freegameradar.review.ReviewSettingsRepository
+import com.radarlabs.freegameradar.review.ReviewSettingsRepositoryImpl
 
 @Composable
-fun AppContainer(content: @Composable (gameRepository: GameRepository, notificationRepository: NotificationRepository, userStatsRepository: UserStatsRepository) -> Unit) {
+fun AppContainer(
+    content: @Composable (
+        gameRepository: GameRepository,
+        notificationRepository: NotificationRepository,
+        userStatsRepository: UserStatsRepository,
+        reviewSettingsRepository: ReviewSettingsRepository
+    ) -> Unit
+) {
     // Create a single instance of the database and repository for the UI
     val driver = remember { DatabaseDriverFactory.createDriver() }
     val database = remember { GameDatabase(driver) }
@@ -22,6 +31,7 @@ fun AppContainer(content: @Composable (gameRepository: GameRepository, notificat
     val authRepository = remember { AuthRepositoryImpl() }
     val settings = remember { createSettings() } // Use the new factory
     val userStatsRepository = remember { UserStatsRepository(authRepository, settings) }
+    val reviewSettingsRepository = remember { ReviewSettingsRepositoryImpl(settings) }
 
-    content(gameRepository, notificationRepository, userStatsRepository)
+    content(gameRepository, notificationRepository, userStatsRepository, reviewSettingsRepository)
 }
