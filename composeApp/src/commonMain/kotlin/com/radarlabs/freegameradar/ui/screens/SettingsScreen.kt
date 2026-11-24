@@ -23,10 +23,13 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
+import androidx.compose.ui.platform.LocalUriHandler
+import com.radarlabs.freegameradar.isDebugBuild
 import com.radarlabs.freegameradar.ui.components.FilterChip
 import com.radarlabs.freegameradar.ui.components.settings.SettingsItem
 import com.radarlabs.freegameradar.ui.components.settings.SettingsSectionHeader
 import com.radarlabs.freegameradar.ui.navigation.Screen
+import com.radarlabs.freegameradar.ui.viewmodel.ReviewViewModel
 import com.radarlabs.freegameradar.ui.viewmodel.SettingsViewModel
 import com.radarlabs.freegameradar.ui.viewmodel.UserPreferencesViewModel
 import com.radarlabs.freegameradar.util.PermissionRequestResult
@@ -40,12 +43,15 @@ import kotlinx.coroutines.flow.collectLatest
 fun SettingsScreen(
     viewModel: SettingsViewModel,
     userPreferencesViewModel: UserPreferencesViewModel,
+    reviewViewModel: ReviewViewModel,
     navController: NavHostController,
     modifier: Modifier = Modifier,
     onSettingsScreenOpen: () -> Unit = {}
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val preferencesState by userPreferencesViewModel.uiState.collectAsState()
+    val reviewState by reviewViewModel.uiState.collectAsState()
+    val uriHandler = LocalUriHandler.current
 
     var showDeleteConfirmation by remember { mutableStateOf(false) }
     var showUpgradeDialog by remember { mutableStateOf(false) }
@@ -293,6 +299,31 @@ fun SettingsScreen(
             subtitle = "View app information and credits",
             onClick = { navController.navigate(Screen.About.route) }
         )
+        SettingsItem(
+            icon = Icons.Default.Star,
+            title = "Rate Loot Radar",
+            subtitle = "Rate us on Google Play Store",
+            onClick = {
+                try {
+                    uriHandler.openUri("market://details?id=com.radarlabs.freegameradar")
+                } catch (_: Exception) {
+                    uriHandler.openUri("https://play.google.com/store/apps/details?id=com.radarlabs.freegameradar")
+                }
+            }
+        )
+
+        if (isDebugBuild()) {
+            Spacer(modifier = Modifier.height(16.dp))
+            SettingsSectionHeader(title = "Debug")
+            SettingsItem(
+                icon = Icons.Default.BugReport,
+                title = "Reset Review Prompts (Debug)",
+                subtitle = "Claims: ${reviewState.successfulClaimCount}, Prompts: ${reviewState.reviewPromptCount}",
+                onClick = {
+                    reviewViewModel.resetCounters()
+                }
+            )
+        }
     }
 
     if (showUpgradeDialog) {
