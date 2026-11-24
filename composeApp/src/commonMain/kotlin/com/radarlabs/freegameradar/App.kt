@@ -38,6 +38,10 @@ import com.radarlabs.freegameradar.ui.viewmodel.UserStatsViewModel
 import com.radarlabs.freegameradar.ui.viewmodel.SetupViewModel
 import kotlinx.coroutines.flow.StateFlow
 
+import com.radarlabs.freegameradar.core.createSettings
+import com.radarlabs.freegameradar.review.ReviewSettingsRepositoryImpl
+import com.radarlabs.freegameradar.ui.viewmodel.ReviewViewModel
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun App(
@@ -59,7 +63,8 @@ fun App(
         val currentRoute = navBackStackEntry?.destination?.route
         var isBottomBarVisible by remember { mutableStateOf(true) }
 
-        AppContainer { gameRepository, notificationRepository, _ ->
+        AppContainer { gameRepository, notificationRepository, _, reviewSettingsRepository ->
+            val reviewViewModel: ReviewViewModel = viewModel { ReviewViewModel(reviewSettingsRepository) }
             val gameViewModel: GameViewModel = viewModel { GameViewModel() }
             val notificationViewModel: NotificationViewModel = viewModel { NotificationViewModel(notificationRepository, gameRepository) }
             val userStatsViewModel: UserStatsViewModel = viewModel { UserStatsViewModel(userStatsRepository, gameRepository) }
@@ -95,6 +100,7 @@ fun App(
                         userStatsViewModel = userStatsViewModel,
                         settingsViewModel = settingsViewModel,
                         setupViewModel = setupViewModel,
+                        reviewViewModel = reviewViewModel,
                         onBottomBarVisibilityChange = { isBottomBarVisible = it },
                         startRoute = startRoute,
                         routeFlow = routeFlow,
