@@ -37,6 +37,7 @@ import com.radarlabs.freegameradar.ui.screens.StatsScreen
 import com.radarlabs.freegameradar.ui.screens.SupportScreen
 import com.radarlabs.freegameradar.ui.viewmodel.GameViewModel
 import com.radarlabs.freegameradar.ui.viewmodel.NotificationViewModel
+import com.radarlabs.freegameradar.ui.viewmodel.ReviewViewModel
 import com.radarlabs.freegameradar.ui.viewmodel.SettingsViewModel
 import com.radarlabs.freegameradar.ui.viewmodel.SetupViewModel
 import com.radarlabs.freegameradar.ui.viewmodel.UserPreferencesViewModel
@@ -58,6 +59,7 @@ fun AppNavigation(
     userStatsViewModel: UserStatsViewModel,
     settingsViewModel: SettingsViewModel,
     setupViewModel: SetupViewModel,
+    reviewViewModel: ReviewViewModel,
     onBottomBarVisibilityChange: (Boolean) -> Unit,
     startRoute: String? = null,
     routeFlow: StateFlow<String?>? = null,
@@ -235,6 +237,7 @@ fun AppNavigation(
             SettingsScreen(
                 viewModel = settingsViewModel,
                 userPreferencesViewModel = userPreferencesViewModel,
+                reviewViewModel = reviewViewModel,
                 navController = navController,
                 modifier = Modifier.padding(innerPadding),
                 onSettingsScreenOpen = onShowSettingsAd
@@ -255,6 +258,7 @@ fun AppNavigation(
                 navController = navController,
                 gameId = gameId,
                 userStatsViewModel = userStatsViewModel,
+                reviewViewModel = reviewViewModel,
                 modifier = Modifier.padding(innerPadding),
                 onShowGameDetailAd = onShowGameDetailAd
             )
