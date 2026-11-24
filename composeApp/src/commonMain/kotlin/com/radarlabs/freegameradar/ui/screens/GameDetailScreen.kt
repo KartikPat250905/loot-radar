@@ -37,6 +37,9 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.collectLatest
+import com.radarlabs.freegameradar.review.rememberReviewPrompter
+import com.radarlabs.freegameradar.ui.viewmodel.ReviewViewModel
+import com.radarlabs.freegameradar.util.ConnectivityObserver
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.withContext
 import kotlinx.datetime.*
@@ -46,6 +49,7 @@ fun GameDetailScreen(
     navController: NavHostController,
     gameId: Long?,
     userStatsViewModel: UserStatsViewModel,
+    reviewViewModel: ReviewViewModel,
     modifier: Modifier = Modifier,
     onShowGameDetailAd: () -> Unit = {}
 ) {
@@ -59,6 +63,28 @@ fun GameDetailScreen(
     var timeRemaining by remember { mutableStateOf<String?>(null) }
     val claimedGameIds by userStatsViewModel.claimedGameIds.collectAsState()
     val isClaimed = gameId in claimedGameIds
+
+    val reviewPrompter = rememberReviewPrompter()
+    val reviewState by reviewViewModel.uiState.collectAsState()
+    val connectivityObserver = remember { ConnectivityObserver() }
+    val isOnline by connectivityObserver.isOnline.collectAsState(initial = true)
+    val isOnlineNow by rememberUpdatedState(isOnline)
+
+    DisposableEffect(Unit) {
+        onDispose {
+            reviewViewModel.clearPendingPrompt()
+        }
+    }
+
+    LaunchedEffect(reviewState.pendingPrompt) {
+        if (!reviewState.pendingPrompt) return@LaunchedEffect
+        if (!isOnlineNow || fetchError != null) {
+            reviewViewModel.clearPendingPrompt()
+            return@LaunchedEffect
+        }
+        reviewPrompter.requestReview()
+        reviewViewModel.onPromptPresented()
+    }
 
     // Load selected game based on ID
     LaunchedEffect(gameId, retryCount) {
@@ -488,6 +514,7 @@ fun GameDetailScreen(
                                     if (!isClaimed && !isGiveawayEnded) {
                                         g.id?.let { id ->
                                             userStatsViewModel.addToClaimedValue(id, g.worth)
+                                            reviewViewModel.onSuccessfulClaim()
                                         }
                                     }
                                     if (!isGiveawayEnded) {
