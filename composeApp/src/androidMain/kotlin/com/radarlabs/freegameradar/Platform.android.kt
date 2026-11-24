@@ -1,5 +1,6 @@
 package com.radarlabs.freegameradar
 
+import android.content.pm.ApplicationInfo
 import android.os.Build
 
 class AndroidPlatform : Platform {
@@ -7,3 +8,6 @@ class AndroidPlatform : Platform {
 }
 
 actual fun getPlatform(): Platform = AndroidPlatform()
+
+actual fun isDebugBuild(): Boolean =
+    (FreeGameRadarApp.appContext.applicationInfo.flags and ApplicationInfo.FLAG_DEBUGGABLE) != 0
