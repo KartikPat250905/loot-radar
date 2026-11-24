@@ -44,7 +44,9 @@ kotlin {
             implementation("com.google.firebase:firebase-messaging")
             implementation(libs.kotlinx.coroutines.play.services)
             implementation(libs.androidx.fragment)
+            implementation(libs.androidx.lifecycle.runtime.ktx)
             implementation("com.google.android.gms:play-services-ads:25.4.0")
+            implementation(libs.play.review.ktx)
         }
         commonMain.dependencies {
             implementation(compose.runtime)
@@ -71,6 +73,9 @@ kotlin {
             implementation(libs.vico.compose.m3)
             implementation(libs.vico.core)
         }
+        commonTest.dependencies {
+            implementation(kotlin("test"))
+        }
     }
 }
 
@@ -82,8 +87,8 @@ extensions.configure<ApplicationExtension> {
         applicationId = "com.radarlabs.freegameradar"
         minSdk = libs.versions.android.minSdk.get().toInt()
         targetSdk = libs.versions.android.targetSdk.get().toInt()
-        versionCode = 26
-        versionName = "1.4.1"
+        versionCode = 27
+        versionName = "1.4.2"
     }
 
     signingConfigs {
